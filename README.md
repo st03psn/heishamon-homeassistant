@@ -27,6 +27,10 @@ Entities for optional parts of an installation (DHW tank, buffer tank, solar, bi
 
 Entities disabled by hand are never enabled, and an entity enabled again by hand while its part is missing is left alone. Entities are only enabled once HeishaMon has published their topic, so entities unknown to the installed firmware stay disabled. Entities without a matching part (sensor offsets, efficiency stages, anti freeze, defrost signal, ...) are enabled by hand.
 
+### Sub-devices
+
+Entities are grouped on sub-devices of the heat pump: DHW, cooling, bivalent, solar/buffer/pool, external control (SG ready, demand control) and installer settings. New sub-devices start in the area of the heat pump. Entity IDs do not change; automations using a device trigger on the heat pump do not see the moved entities anymore.
+
 ### Installer menu settings
 
 Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. TOP170 to TOP196 and SET56 to SET104 need a HeishaMon firmware providing them; they were tested on M series only; may work on other series, not tested there.

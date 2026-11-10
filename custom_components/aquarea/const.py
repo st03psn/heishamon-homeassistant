@@ -8,6 +8,24 @@ DOMAIN = "aquarea"
 class DeviceType(Enum):
     HEATPUMP = 1
     HEISHAMON = 2
+    # sub-devices of the heat pump, grouping its entities
+    DHW = 3
+    COOLING = 4
+    BIVALENT = 5
+    SOLAR_BUFFER = 6
+    EXTERNAL_CONTROL = 7
+    INSTALLER = 8
+
+
+# identifier suffix and translation key of the heat pump sub-devices
+SUB_DEVICES: dict[DeviceType, str] = {
+    DeviceType.DHW: "dhw",
+    DeviceType.COOLING: "cooling",
+    DeviceType.BIVALENT: "bivalent",
+    DeviceType.SOLAR_BUFFER: "solar_buffer",
+    DeviceType.EXTERNAL_CONTROL: "external_control",
+    DeviceType.INSTALLER: "installer",
+}
 
 
 class Feature(Enum):

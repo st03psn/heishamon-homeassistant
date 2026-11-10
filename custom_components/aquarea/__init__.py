@@ -9,7 +9,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from . import definitions
-from .const import DOMAIN, DeviceType, Feature
+from .const import DOMAIN, SUB_DEVICES, DeviceType, Feature
 from .features import FeatureTracker, ManagedEntity, managed_entities
 
 PLATFORMS = [
@@ -52,12 +52,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         identifiers={identifiers[DeviceType.HEISHAMON]},
         name="HeishaMon",
     )
-    device_registry.async_get_or_create(
+    heatpump_device = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={identifiers[DeviceType.HEATPUMP]},
         name="Aquarea HeatPump",
         manufacturer="Aquarea",
     )
+    for device_type in SUB_DEVICES:
+        sub_identifier = _sub_device_identifier(mqtt_topic, device_type)
+        existing = device_registry.async_get_device(identifiers={sub_identifier})
+        sub_device = device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={sub_identifier},
+            translation_key=SUB_DEVICES[device_type],
+            manufacturer="Aquarea",
+            via_device=identifiers[DeviceType.HEATPUMP],
+        )
+        if existing is None and heatpump_device.area_id is not None:
+            # new sub-devices start in the area of the heat pump
+            device_registry.async_update_device(
+                sub_device.id, area_id=heatpump_device.area_id
+            )
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {"heishamon_device_id": heishamon_device.id}
@@ -110,9 +125,21 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
+def _sub_device_identifier(mqtt_topic: str, device_type: DeviceType) -> tuple[str, str]:
+    heatpump_identifier = _compute_identifiers(mqtt_topic)[DeviceType.HEATPUMP][1]
+    return (DOMAIN, f"{heatpump_identifier}-{SUB_DEVICES[device_type]}")
+
+
 def build_device_info(hass: HomeAssistant, device_type: DeviceType, mqtt_topic: str, config_entry_id: str) -> DeviceInfo:
     """Return device info for the given device type."""
     identifiers = _compute_identifiers(mqtt_topic)
+    if device_type in SUB_DEVICES:
+        return DeviceInfo(
+            identifiers={_sub_device_identifier(mqtt_topic, device_type)},
+            translation_key=SUB_DEVICES[device_type],
+            manufacturer="Aquarea",
+            via_device=identifiers[DeviceType.HEATPUMP],
+        )
     if device_type == DeviceType.HEATPUMP:
         device_info_fields = {
             "identifiers": {identifiers[DeviceType.HEATPUMP]},
