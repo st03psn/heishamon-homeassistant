@@ -13,11 +13,31 @@ Just make sure you have an MQTT integration configured. Heishamon mqtt messages 
 
 ℹ This integration supports any heishamon MQTT topic prefix (defaults to `panasonic_heat_pump`) and multiple heatpumps (experimental).
 
-ℹ️ By default, all sensors related to less common setups (cooling, buffer, solar or pool) are disabled by default. They can easily enabled when looking at the "Aquarea HeatPump Indoor Unit" device under "entities not shown".
+ℹ️ Entities of optional parts (DHW tank, buffer tank, solar, bivalent, SG ready, optional PCB, cooling) follow what the heat pump reports, see below.
+
+## Additions in this fork
+
+This fork (`st03psn/heishamon-homeassistant`) adds the topics and commands of an extended HeishaMon firmware (`st03psn/HeishaMon`, branch `aquarea-parity-draft`) and a few changes to the integration itself. They were tested on M series only; may work on other series, not tested there.
+
+### Firmware compatibility
+
+| HeishaMon firmware | What you get |
+|---|---|
+| Extended firmware (TOP170-TOP196, SET56-SET104) | everything below |
+| Official firmware with TOP144-TOP169 and SET49-SET55 | all entities of the official firmware; the entities of the extended firmware stay disabled |
+| Older official firmware | as before; newer entities stay disabled |
+
+New entities are created disabled and are only enabled once HeishaMon has published their topic. Commands of the extended firmware whose readback topic already exists in the official firmware (for example anti freeze, TOP109) additionally wait for a topic only the extended firmware publishes (`Static_Pressure`, TOP170). With the official firmware they therefore stay disabled. If you enable one by hand anyway, the official firmware ignores the command: nothing changes in the heat pump, and the entity falls back to the value the heat pump reports after the retries. Updating the firmware later needs no change in Home Assistant: the entities are enabled when the new topics arrive.
+
+The parts SG ready and cooling are recognised from TOP149 and TOP168, which older firmwares do not publish. Their entities are then neither enabled nor disabled automatically.
+
+### Installation of the fork
+
+Add `https://github.com/st03psn/heishamon-homeassistant` as a custom repository (type integration) in the Marketplace / HACS. It uses the same folder (`custom_components/aquarea`) as the original integration, so only one of the two can be installed. On Home Assistant 2026.11 and later, uninstalling the original from the Marketplace while it is set up offers only "Delete and uninstall", which also removes the setup with its devices and entities. To keep them, replace the files in `custom_components/aquarea` by hand (Samba, SSH, file editor) and restart Home Assistant; the setup, entity IDs and history stay as they are.
 
 ### Entities of optional parts
 
-Entities for optional parts of an installation (DHW tank, buffer tank, solar, bivalent, SG ready, optional PCB, cooling) are disabled by default. The heat pump reports which parts are installed, and the integration follows it. The behaviour is chosen in the options of the integration (Settings > Devices & services > HeishaMon > Configure):
+The heat pump reports which optional parts are installed: DHW tank (TOP100), buffer tank (TOP99), solar (TOP101), bivalent (TOP129), SG ready (TOP149), optional PCB (TOP110), cooling (TOP168). Solar and SG ready also need the optional PCB. Entities of a part are created disabled and follow the part. The behaviour is chosen in the options of the integration (Settings > Devices & services > HeishaMon > Configure):
 
 | Option | Part reported as installed | Part reported as not installed |
 |---|---|---|
@@ -25,15 +45,17 @@ Entities for optional parts of an installation (DHW tank, buffer tank, solar, bi
 | Unavailable | its entities are enabled | its entities are shown as unavailable |
 | Disable | its entities are enabled | its entities are disabled |
 
-Entities disabled by hand are never enabled, and an entity enabled again by hand while its part is missing is left alone. Entities are only enabled once HeishaMon has published their topic, so entities unknown to the installed firmware stay disabled. Entities without a matching part (sensor offsets, efficiency stages, anti freeze, defrost signal, ...) are enabled by hand.
+Changes are applied about 10 seconds after a message, so that the burst of messages after a start is evaluated as a whole. Entities disabled by hand are never enabled, and an entity enabled again by hand while its part is missing is left alone. Enabling entities reloads the integration once, so its entities are unavailable for a moment.
+
+Entities that belong to no optional part (heater capacity, sensor offsets, efficiency stages, heating on/off, anti freeze, DHW tank switch, ...) are enabled once HeishaMon publishes their topic and are never disabled automatically.
 
 ### Faults
 
-The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44); its attributes hold the code and its meaning. A Repairs issue (Settings > System > Repairs) is shown at the same time and disappears when the fault is gone. Code meanings come from the error code tables of the H, J, K, L and M series service manuals.
+The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44); its attributes hold the code and its meaning. A Repairs issue (Settings > System > Repairs) is shown at the same time and disappears when the fault is gone. Code meanings come from the error code tables of the H, J, K, L and M series service manuals. A fault can be reset with the button `Reset fault code` (SetReset) once its cause is removed.
 
 ### Entity names
 
-Entity names no longer start with "Aquarea" (Home Assistant already shows the device name), and they start with their topic (DHW, Heater, Heating, Cooling, Bivalent, Solar, Buffer, Pool, SG ready, Zone 1/2, Sensor offset, External ...), so that related entities sort next to each other on the device page. Readbacks of settings are shown under "Diagnostic". Entity IDs do not change. Sub-devices created by earlier versions of this fork are removed; their entities move back to the heat pump first.
+Entity names do not start with "Aquarea" (Home Assistant already shows the device name), are kept short and start with their topic (DHW, Heater, Heating, Cooling, Bivalent, Solar, Buffer, Pool, SG ready, Zone 1/2, Sensor offset, External, Emulated PCB ...), so that related entities sort next to each other on the device page. Readbacks of settings are shown under "Diagnostic". Entity IDs do not change. A switch whose topic already has a binary sensor gets no extra "(readonly)" copy.
 
 ### Emulated optional PCB
 
@@ -41,15 +63,17 @@ HeishaMon can stand in for the optional PCB of the heat pump ("optional PCB emul
 
 ### Installer menu settings
 
-Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. Those that do not belong to an optional part (heater capacity, sensor offsets, efficiency stages, heating on/off, DHW tank switch, ...) are enabled automatically once HeishaMon publishes their topic, so they stay hidden with firmwares that do not provide them. TOP170 to TOP196 and SET56 to SET104 need a HeishaMon firmware providing them; they were tested on M series only; may work on other series, not tested there.
+Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. They change installer settings, and some of them have side effects in the heat pump:
 
-These commands change installer settings. Some of them have side effects in the heat pump:
-
-- Buffer tank set to yes without a buffer sensor raises error H43, which stays until it is reset.
+- A part switched on without its sensor raises a fault that stops the heat pump and stays until it is reset: solar without solar sensor raised H28, buffer tank without buffer sensor raised H43 (M series).
 - Defrost signal and bivalent control share one terminal: enabling one disables the other.
 - The water temperature mode (compensation curve / direct) changes the heating and cooling curve values.
 - The heat pump does not check a setting against the part it belongs to (for instance DHW settings without a DHW tank).
 - Internal heater capacity offers 3, 6 and 9 kW whatever the installed heater.
+
+### Other fixes
+
+- The bivalent advanced start and stop temperatures (SET37, SET38) were sent to command topics HeishaMon does not know (`SetBivalentAStartTemp`, `SetBivalentAStopTemp`); they now use `SetBivalentAPStartTemp` and `SetBivalentAPStopTemp`.
 
 ## Alternatives
 
