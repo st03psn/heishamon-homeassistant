@@ -2514,14 +2514,16 @@ def build_buttons(
 # Heater, Heating, Cooling, Bivalent, Solar, Buffer, Zone 1/2, External ...), so
 # that related entities sort next to each other on the device page. The prefix
 # "Aquarea " is dropped: Home Assistant shows the device name in front.
+# "Emulated PCB ...": values of HeishaMon's optional PCB emulation.
 # Entity IDs do not depend on these names.
 ENTITY_NAMES: dict[str, str] = {
-    "OPT0": "Zone 1 pump request",
-    "OPT1": "Zone 1 mixing valve",
-    "OPT2": "Zone 2 pump request",
-    "OPT3": "Zone 2 mixing valve",
-    "OPT4": "Pool pump request",
-    "OPT5": "Solar pump request",
+    "OPT6": "Emulated PCB alarm",
+    "OPT0": "Emulated PCB Z1 pump",
+    "OPT1": "Emulated PCB Z1 mixing valve",
+    "OPT2": "Emulated PCB Z2 pump",
+    "OPT3": "Emulated PCB Z2 mixing valve",
+    "OPT4": "Emulated PCB pool pump",
+    "OPT5": "Emulated PCB solar pump",
     "SET1": "Main power",
     "SET10": "DHW force",
     "SET11": "DHW target temperature",
@@ -2551,9 +2553,9 @@ ENTITY_NAMES: dict[str, str] = {
     "SET7": "Zone 2 heat shift",
     "SET8": "Zone 2 cool shift",
     "SET9": "Operating mode",
-    "SetCompressorState": "Opt. PCB compressor",
-    "SetDemandControl": "Opt. PCB demand control",
-    "SetSmartGridMode": "Opt. PCB SG ready signal",
+    "SetCompressorState": "Emulated PCB compressor",
+    "SetDemandControl": "Emulated PCB demand control",
+    "SetSmartGridMode": "Emulated PCB SG ready signal",
     "TOP1": "Pump flow",
     "TOP10": "DHW tank temperature",
     "TOP100": "DHW installed",
