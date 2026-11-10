@@ -32,7 +32,7 @@ def test_names_and_categories():
     heatpump = [d for d in descriptions if getattr(d, "device", None) != DeviceType.HEISHAMON]
     assert [d.name for d in heatpump if d.name.startswith("Aquarea")] == []
     by_id = {d.heishamon_topic_id: d for d in descriptions if getattr(d, "heishamon_topic_id", None)}
-    assert by_id["TOP10"].name == "DHW tank temperature"
+    assert by_id["TOP10"].name == "DHW tank temp"
     assert by_id["SET67"].name == "Sensor offset remote thermistor 1"
     assert by_id["TOP29"].name == "Zone 1 heat curve target high"
     assert by_id["SET39"].name == "Heating control"
