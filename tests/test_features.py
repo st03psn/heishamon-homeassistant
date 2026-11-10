@@ -140,7 +140,7 @@ def test_switches_reporting_a_feature_do_not_depend_on_it():
         (e.platform, e.unique_id.split("-")[-1]): e
         for e in managed_entities("entry", PREFIX, _descriptions())
     }
-    assert ("switch", "SET86") not in managed  # DHW tank
+    assert managed[("switch", "SET86")].requires == ()  # DHW tank: enabled, never disabled
     assert ("binary_sensor", "TOP100") not in managed
     assert ("switch", "SET28") not in managed  # buffer tank
     assert ("switch", "SET34") not in managed  # bivalent
@@ -280,3 +280,31 @@ async def test_delay_survives_restart(hass, no_side_effects):
     # reported installed again: the stored time is forgotten
     _publish(tracker, "main/DHW_Installed", "1")
     assert Feature.DHW not in tracker._stored_missing_since
+
+
+def test_new_entities_without_part_are_managed():
+    managed = {
+        (e.platform, e.unique_id.split("-")[-1]): e
+        for e in managed_entities("entry", PREFIX, _descriptions())
+    }
+    heater = managed[("select", "SET76")]  # heater capacity: no optional part
+    assert heater.requires == ()
+    assert heater.topics == ("main/Internal_Heater_Capacity", "main/Static_Pressure")
+    assert ("switch", "SET86") in managed  # DHW tank switch
+    assert ("number", "SET5") not in managed  # existing entity, default unchanged
+
+
+async def test_entity_without_part_enabled_once_published(hass, no_side_effects):
+    entities = [("select", "SET76", (), ("main/Internal_Heater_Capacity", "main/Static_Pressure"))]
+    entry, tracker = _tracker(hass, MODE_DISABLE, entities)
+    heater = _register(hass, entry, "select", "SET76", INTEGRATION)
+    _publish(tracker, "main/Internal_Heater_Capacity", "3")
+    tracker.async_evaluate()
+    assert _disabled_by(hass, heater) == INTEGRATION  # firmware marker missing
+    _publish(tracker, "main/Static_Pressure", "0")
+    tracker.async_evaluate()
+    assert _disabled_by(hass, heater) is None
+    # never disabled again: it needs no part
+    _publish(tracker, "main/DHW_Installed", "0")
+    tracker.async_evaluate()
+    assert _disabled_by(hass, heater) is None

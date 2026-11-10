@@ -37,7 +37,7 @@ Entity names no longer start with "Aquarea" (Home Assistant already shows the de
 
 ### Installer menu settings
 
-Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. TOP170 to TOP196 and SET56 to SET104 need a HeishaMon firmware providing them; they were tested on M series only; may work on other series, not tested there.
+Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. Those that do not belong to an optional part (heater capacity, sensor offsets, efficiency stages, heating on/off, DHW tank switch, ...) are enabled automatically once HeishaMon publishes their topic, so they stay hidden with firmwares that do not provide them. TOP170 to TOP196 and SET56 to SET104 need a HeishaMon firmware providing them; they were tested on M series only; may work on other series, not tested there.
 
 These commands change installer settings. Some of them have side effects in the heat pump:
 

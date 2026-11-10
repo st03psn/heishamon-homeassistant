@@ -332,6 +332,10 @@ class HeishaMonEntityDescription:
     # when its own topic is older than the entity
     firmware_marker: str | None = None
 
+    # entity created disabled, enabled once HeishaMon has published its topic
+    # (and firmware_marker), so that it stays hidden on firmwares without it
+    auto_enable: bool = False
+
 
 @frozendataclass
 class HeishaMonSensorEntityDescription(
@@ -4236,6 +4240,15 @@ def _display_name(topic_id: Optional[str], name) -> Any:
     return name[:1].upper() + name[1:]
 
 
+def _is_new_topic(topic_id: Optional[str]) -> bool:
+    """TOP144-TOP196 and SET49-SET104: enabled once the firmware publishes them."""
+    match = re.fullmatch(r"(TOP|SET)(\d+)", topic_id or "")
+    if match is None:
+        return False
+    number = int(match.group(2))
+    return 144 <= number <= 196 if match.group(1) == "TOP" else 49 <= number <= 104
+
+
 def _arranged(build: Callable) -> Callable:
     """Apply display names, sub-devices and diagnostic categories to built descriptions."""
 
@@ -4254,6 +4267,8 @@ def _arranged(build: Callable) -> Callable:
                 changes["device"] = device
             if topic_id in DIAGNOSTIC_READBACKS and description.entity_category is None:
                 changes["entity_category"] = EntityCategory.DIAGNOSTIC
+            if _is_new_topic(topic_id) and not getattr(description, "requires", ()):
+                changes["auto_enable"] = True
             result.append(replace(description, **changes) if changes else description)
         return result
 

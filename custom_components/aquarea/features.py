@@ -76,7 +76,7 @@ def managed_entities(
     for platform, descriptions in descriptions_by_platform.items():
         for description in descriptions:
             requires = tuple(getattr(description, "requires", ()) or ())
-            if not requires:
+            if not requires and not getattr(description, "auto_enable", False):
                 continue
             topics = [description.key.removeprefix(prefix)]
             marker = getattr(description, "firmware_marker", None)
