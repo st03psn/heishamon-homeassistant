@@ -8,16 +8,12 @@ DOMAIN = "aquarea"
 class DeviceType(Enum):
     HEATPUMP = 1
     HEISHAMON = 2
-    # sub-device of the heat pump holding the installer settings
-    INSTALLER = 3
 
 
-# identifier suffix and translation key of the heat pump sub-devices
-SUB_DEVICES: dict[DeviceType, str] = {
-    DeviceType.INSTALLER: "installer",
-}
+# identifier suffix and translation key of the heat pump sub-devices (none at the moment)
+SUB_DEVICES: dict[DeviceType, str] = {}
 # identifier suffixes of sub-devices created by earlier versions of the fork
-OBSOLETE_SUB_DEVICES = ["dhw", "cooling", "bivalent", "solar_buffer", "external_control"]
+OBSOLETE_SUB_DEVICES = ["dhw", "cooling", "bivalent", "solar_buffer", "external_control", "installer"]
 
 
 class Feature(Enum):

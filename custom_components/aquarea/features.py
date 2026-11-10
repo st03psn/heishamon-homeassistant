@@ -116,11 +116,19 @@ class FeatureTracker:
         # unique ids disabled by this tracker, and the ones the user enabled again
         self._auto_disabled: set[str] = set()
         self._user_kept: set[str] = set()
+        self._stored_missing_since: dict[Feature, float] = {}
 
     async def async_start(self) -> None:
         data = await self._store.async_load() or {}
         self._auto_disabled = set(data.get("auto_disabled", []))
         self._user_kept = set(data.get("user_kept", []))
+        # when a feature was first reported missing, kept across restarts and reloads
+        # so that the delay before disabling does not start again each time
+        self._stored_missing_since = {
+            feature: since
+            for feature in Feature
+            if (since := data.get("missing_since", {}).get(feature.value)) is not None
+        }
         self._unsubscribe = await mqtt.async_subscribe(
             self.hass, f"{self.prefix}main/+", self._message_received, 1
         )
@@ -186,14 +194,38 @@ class FeatureTracker:
 
     @callback
     def _features_changed(self) -> None:
-        now = time.monotonic()
+        now = time.time()
+        before = dict(self._missing_since)
         for feature in Feature:
-            if self.is_installed(feature) is False:
-                self._missing_since.setdefault(feature, now)
-            else:
+            installed = self.is_installed(feature)
+            if installed is False:
+                self._missing_since.setdefault(
+                    feature, self._stored_missing_since.get(feature, now)
+                )
+            elif installed is True:
                 self._missing_since.pop(feature, None)
+                self._stored_missing_since.pop(feature, None)
+        if self._missing_since != before:
+            self._save()
         for listener in list(self._listeners):
             listener()
+
+    @callback
+    def _save(self) -> None:
+        self._store.async_delay_save(
+            lambda: {
+                "auto_disabled": sorted(self._auto_disabled),
+                "user_kept": sorted(self._user_kept),
+                "missing_since": {
+                    feature.value: since
+                    for feature, since in {
+                        **self._stored_missing_since,
+                        **self._missing_since,
+                    }.items()
+                },
+            },
+            1.0,
+        )
 
     @callback
     def _schedule_evaluation(self, delay: float) -> None:
@@ -212,7 +244,7 @@ class FeatureTracker:
     def async_evaluate(self) -> None:
         """Apply the features to the entity registry."""
         registry = er.async_get(self.hass)
-        now = time.monotonic()
+        now = time.time()
         enabled = False
         stored_before = (set(self._auto_disabled), set(self._user_kept))
         next_check: Optional[float] = None
@@ -283,13 +315,7 @@ class FeatureTracker:
             )
 
         if (self._auto_disabled, self._user_kept) != stored_before:
-            self._store.async_delay_save(
-                lambda: {
-                    "auto_disabled": sorted(self._auto_disabled),
-                    "user_kept": sorted(self._user_kept),
-                },
-                1.0,
-            )
+            self._save()
         if next_check is not None:
             self._schedule_evaluation(next_check + 1.0)
         if enabled:

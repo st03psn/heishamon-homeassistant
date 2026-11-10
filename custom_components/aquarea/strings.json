@@ -30,11 +30,6 @@
       }
     }
   },
-  "device": {
-    "installer": {
-      "name": "Aquarea Settings"
-    }
-  },
   "issues": {
     "heat_pump_fault": {
       "title": "Heat pump fault {code}",

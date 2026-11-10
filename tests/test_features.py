@@ -270,3 +270,19 @@ def test_bivalent_advanced_temperature_commands():
     numbers = {n.heishamon_topic_id: n for n in build_numbers(PREFIX)}
     assert numbers["SET37"].command_topic == f"{PREFIX}commands/SetBivalentAPStartTemp"
     assert numbers["SET38"].command_topic == f"{PREFIX}commands/SetBivalentAPStopTemp"
+
+
+async def test_delay_survives_restart(hass, no_side_effects):
+    """The delay before disabling counts from the first report, not from the last start."""
+    entry, tracker = _tracker(hass, MODE_DISABLE, [DHW_NUMBER])
+    number = _register(hass, entry, "number", "SET63", None)
+    long_ago = features.time.time() - features.DISABLE_DELAY - 60
+    tracker._stored_missing_since = {Feature.DHW: long_ago}  # as loaded from storage
+    _publish(tracker, "main/DHW_Installed", "0")
+    assert tracker._missing_since[Feature.DHW] == long_ago
+    tracker.async_evaluate()
+    assert _disabled_by(hass, number) == INTEGRATION
+
+    # reported installed again: the stored time is forgotten
+    _publish(tracker, "main/DHW_Installed", "1")
+    assert Feature.DHW not in tracker._stored_missing_since

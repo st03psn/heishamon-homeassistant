@@ -80,7 +80,7 @@ async def async_setup_entry(
     description = MultiMQTTSensorEntityDescription(
         unique_id=f"{config_entry.entry_id}-heishamon_w_production",
         key=f"{discovery_prefix}/production",
-        name=f"Aquarea Pump total production",
+        name="Total heat production",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement="W",
         state_class=SensorStateClass.MEASUREMENT,
@@ -111,7 +111,7 @@ async def async_setup_entry(
     description = MultiMQTTSensorEntityDescription(
         unique_id=f"{config_entry.entry_id}-heishamon_w_consumption",
         key=f"{discovery_prefix}/consumption",
-        name=f"Aquarea Pump total consumption",
+        name="Total power consumption",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement="W",
         state_class=SensorStateClass.MEASUREMENT,
@@ -141,7 +141,7 @@ async def async_setup_entry(
     description = MultiMQTTSensorEntityDescription(
         unique_id=f"{config_entry.entry_id}-heishamon_cop",
         key=f"{discovery_prefix}/cop",
-        name=f"Aquarea COP",
+        name="COP",
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         topics=[

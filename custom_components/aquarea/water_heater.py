@@ -52,7 +52,7 @@ async def async_setup_entry(
     """Set up HeishaMon water heater from config entry."""
     description = WaterHeaterEntityDescription(
         key=f"{discovery_prefix}main/DHW_Target_Temp",
-        name="Aquarea Domestic Water Heater",
+        name="DHW",
     )
     async_add_entities([HeishaMonDHW(hass, description, config_entry)])
 

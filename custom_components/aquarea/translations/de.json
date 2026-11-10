@@ -30,11 +30,6 @@
       }
     }
   },
-  "device": {
-    "installer": {
-      "name": "Aquarea Einstellungen"
-    }
-  },
   "issues": {
     "heat_pump_fault": {
       "title": "Störung der Wärmepumpe {code}",

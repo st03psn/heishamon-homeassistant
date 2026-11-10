@@ -1667,7 +1667,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
                             entity_category=EntityCategory.CONFIG,
                             native_min_value=ranges[action][loc][0],
                             native_max_value=ranges[action][loc][1],
-                            name=f"Aquarea Zone {zone_id} {loc} water temperature at {point.lower()}est {dual_location(loc).lower()} temperature on {action.lower()}ing curve",
+                            name=f"Aquarea Zone {zone_id} {action.lower()}ing curve {loc.lower()} {point.lower()}",
                             device_class=NumberDeviceClass.TEMPERATURE,
                             native_unit_of_measurement="°C",
                             # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
@@ -4061,189 +4061,166 @@ def build_buttons(
     ]
 
 
-# installer settings and their readbacks, shown on a sub-device of the heat pump
-SUB_DEVICE_OF_TOPIC: dict[str, DeviceType] = {
-    "TOP70": DeviceType.INSTALLER,
-    "TOP71": DeviceType.INSTALLER,
-    "TOP100": DeviceType.INSTALLER,
-    "TOP140": DeviceType.INSTALLER,
-    "TOP145": DeviceType.INSTALLER,
-    "TOP148": DeviceType.INSTALLER,
-    "TOP151": DeviceType.INSTALLER,
-    "TOP158": DeviceType.INSTALLER,
-    "TOP159": DeviceType.INSTALLER,
-    "TOP173": DeviceType.INSTALLER,
-    "TOP195": DeviceType.INSTALLER,
-    "SET20": DeviceType.INSTALLER,
-    "SET40": DeviceType.INSTALLER,
-    "SET43": DeviceType.INSTALLER,
-    "SET49": DeviceType.INSTALLER,
-    "SET50": DeviceType.INSTALLER,
-    "SET53": DeviceType.INSTALLER,
-    "SET54": DeviceType.INSTALLER,
-    "SET59": DeviceType.INSTALLER,
-    "SET63": DeviceType.INSTALLER,
-    "SET85": DeviceType.INSTALLER,
-    "SET86": DeviceType.INSTALLER,
-    "SET103": DeviceType.INSTALLER,
-    "TOP24": DeviceType.INSTALLER,
-    "TOP79": DeviceType.INSTALLER,
-    "TOP80": DeviceType.INSTALLER,
-    "TOP81": DeviceType.INSTALLER,
-    "TOP168": DeviceType.INSTALLER,
-    "TOP72": DeviceType.INSTALLER,
-    "TOP73": DeviceType.INSTALLER,
-    "TOP74": DeviceType.INSTALLER,
-    "TOP75": DeviceType.INSTALLER,
-    "TOP86": DeviceType.INSTALLER,
-    "TOP87": DeviceType.INSTALLER,
-    "TOP88": DeviceType.INSTALLER,
-    "TOP89": DeviceType.INSTALLER,
-    "SET19": DeviceType.INSTALLER,
-    "SET51": DeviceType.INSTALLER,
-    "SET52": DeviceType.INSTALLER,
-    "SET83": DeviceType.INSTALLER,
-    "TOP131": DeviceType.INSTALLER,
-    "TOP132": DeviceType.INSTALLER,
-    "TOP133": DeviceType.INSTALLER,
-    "TOP136": DeviceType.INSTALLER,
-    "TOP137": DeviceType.INSTALLER,
-    "TOP138": DeviceType.INSTALLER,
-    "TOP180": DeviceType.INSTALLER,
-    "TOP181": DeviceType.INSTALLER,
-    "SET34": DeviceType.INSTALLER,
-    "SET35": DeviceType.INSTALLER,
-    "SET36": DeviceType.INSTALLER,
-    "SET37": DeviceType.INSTALLER,
-    "SET38": DeviceType.INSTALLER,
-    "SET69": DeviceType.INSTALLER,
-    "SET70": DeviceType.INSTALLER,
-    "SET71": DeviceType.INSTALLER,
-    "SET72": DeviceType.INSTALLER,
-    "SET73": DeviceType.INSTALLER,
-    "TOP101": DeviceType.INSTALLER,
-    "TOP102": DeviceType.INSTALLER,
-    "TOP103": DeviceType.INSTALLER,
-    "TOP104": DeviceType.INSTALLER,
-    "TOP105": DeviceType.INSTALLER,
-    "TOP113": DeviceType.INSTALLER,
-    "TOP153": DeviceType.INSTALLER,
-    "SET27": DeviceType.INSTALLER,
-    "SET28": DeviceType.INSTALLER,
-    "SET57": DeviceType.INSTALLER,
-    "SET77": DeviceType.INSTALLER,
-    "SET78": DeviceType.INSTALLER,
-    "SET79": DeviceType.INSTALLER,
-    "SET87": DeviceType.INSTALLER,
-    "SET88": DeviceType.INSTALLER,
-    "TOP149": DeviceType.INSTALLER,
-    "TOP150": DeviceType.INSTALLER,
-    "TOP154": DeviceType.INSTALLER,
-    "TOP155": DeviceType.INSTALLER,
-    "TOP156": DeviceType.INSTALLER,
-    "TOP157": DeviceType.INSTALLER,
-    "TOP184": DeviceType.INSTALLER,
-    "TOP185": DeviceType.INSTALLER,
-    "TOP186": DeviceType.INSTALLER,
-    "TOP187": DeviceType.INSTALLER,
-    "TOP188": DeviceType.INSTALLER,
-    "TOP189": DeviceType.INSTALLER,
-    "TOP190": DeviceType.INSTALLER,
-    "TOP191": DeviceType.INSTALLER,
-    "TOP192": DeviceType.INSTALLER,
-    "SET30": DeviceType.INSTALLER,
-    "SET31": DeviceType.INSTALLER,
-    "SET32": DeviceType.INSTALLER,
-    "SET33": DeviceType.INSTALLER,
-    "SET58": DeviceType.INSTALLER,
-    "SET89": DeviceType.INSTALLER,
-    "SET90": DeviceType.INSTALLER,
-    "SET91": DeviceType.INSTALLER,
-    "SET92": DeviceType.INSTALLER,
-    "SET93": DeviceType.INSTALLER,
-    "SET94": DeviceType.INSTALLER,
-    "SET95": DeviceType.INSTALLER,
-    "SET96": DeviceType.INSTALLER,
-    "SET97": DeviceType.INSTALLER,
-    "SET98": DeviceType.INSTALLER,
-    "TOP76": DeviceType.INSTALLER,
-    "TOP78": DeviceType.INSTALLER,
-    "TOP106": DeviceType.INSTALLER,
-    "TOP107": DeviceType.INSTALLER,
-    "TOP109": DeviceType.INSTALLER,
-    "TOP110": DeviceType.INSTALLER,
-    "TOP111": DeviceType.INSTALLER,
-    "TOP112": DeviceType.INSTALLER,
-    "TOP139": DeviceType.INSTALLER,
-    "TOP144": DeviceType.INSTALLER,
-    "TOP146": DeviceType.INSTALLER,
-    "TOP147": DeviceType.INSTALLER,
-    "TOP152": DeviceType.INSTALLER,
-    "TOP167": DeviceType.INSTALLER,
-    "TOP170": DeviceType.INSTALLER,
-    "TOP171": DeviceType.INSTALLER,
-    "TOP172": DeviceType.INSTALLER,
-    "TOP174": DeviceType.INSTALLER,
-    "TOP175": DeviceType.INSTALLER,
-    "TOP176": DeviceType.INSTALLER,
-    "TOP177": DeviceType.INSTALLER,
-    "TOP178": DeviceType.INSTALLER,
-    "TOP179": DeviceType.INSTALLER,
-    "TOP182": DeviceType.INSTALLER,
-    "TOP183": DeviceType.INSTALLER,
-    "TOP193": DeviceType.INSTALLER,
-    "TOP194": DeviceType.INSTALLER,
-    "TOP196": DeviceType.INSTALLER,
-    "SET15": DeviceType.INSTALLER,
-    "SET21": DeviceType.INSTALLER,
-    "SET22": DeviceType.INSTALLER,
-    "SET23": DeviceType.INSTALLER,
-    "SET25": DeviceType.INSTALLER,
-    "SET26": DeviceType.INSTALLER,
-    "SET29": DeviceType.INSTALLER,
-    "SET39": DeviceType.INSTALLER,
-    "SET42": DeviceType.INSTALLER,
-    "SET46": DeviceType.INSTALLER,
-    "SET56": DeviceType.INSTALLER,
-    "SET60": DeviceType.INSTALLER,
-    "SET61": DeviceType.INSTALLER,
-    "SET62": DeviceType.INSTALLER,
-    "SET64": DeviceType.INSTALLER,
-    "SET65": DeviceType.INSTALLER,
-    "SET66": DeviceType.INSTALLER,
-    "SET67": DeviceType.INSTALLER,
-    "SET68": DeviceType.INSTALLER,
-    "SET74": DeviceType.INSTALLER,
-    "SET75": DeviceType.INSTALLER,
-    "SET76": DeviceType.INSTALLER,
-    "SET81": DeviceType.INSTALLER,
-    "SET82": DeviceType.INSTALLER,
-    "SET84": DeviceType.INSTALLER,
-    "SET99": DeviceType.INSTALLER,
-    "SET100": DeviceType.INSTALLER,
-    "SET102": DeviceType.INSTALLER,
-    "SET104": DeviceType.INSTALLER,
+# entities moved to a sub-device of the heat pump (none at the moment)
+SUB_DEVICE_OF_TOPIC: dict[str, DeviceType] = {}
+
+# Display names, so that the entities of one topic sort next to each other in
+# the device page (Home Assistant sorts them by name). The prefix "Aquarea " is
+# removed from all names: Home Assistant shows the device name in front.
+ENTITY_NAMES: dict[str, str] = {
+    # sensors
+    "TOP1": "Pump flow",
+    "TOP5": "Water inlet temperature",
+    "TOP6": "Water outlet temperature",
+    "TOP7": "Water outlet target temperature",
+    "TOP10": "DHW tank temperature",
+    "TOP14": "Outdoor temperature",
+    "TOP20": "Valve 3-way",
+    "TOP125": "Valve 2-way",
+    "TOP23": "Heating delta",
+    "TOP24": "Cooling delta",
+    "TOP25": "DHW holiday shift temperature",
+    "TOP38": "Cooling power produced",
+    "TOP39": "Cooling power consumed",
+    "TOP40": "DHW power produced",
+    "TOP41": "DHW power consumed",
+    "TOP15": "Heat power produced",
+    "TOP16": "Heat power consumed",
+    "TOP44": "Error code",
+    "TOP45": "Heating holiday shift temperature",
+    "TOP46": "Buffer temperature",
+    "TOP47": "Solar temperature",
+    "TOP48": "Pool temperature",
+    "TOP56": "Zone 1 temperature",
+    "TOP57": "Zone 2 temperature",
+    "TOP64": "Pressure high",
+    "TOP66": "Pressure low",
+    "TOP70": "DHW sterilization temperature",
+    "TOP71": "DHW sterilization maximum time",
+    "TOP76": "Heating water temperature mode",
+    "TOP78": "Heater on outdoor temperature",
+    "TOP79": "Auto mode heat to cool outdoor temperature",
+    "TOP80": "Auto mode cool to heat outdoor temperature",
+    "TOP81": "Cooling water temperature mode",
+    "TOP90": "Heater operating time room",
+    "TOP91": "Heater operating time DHW",
+    "TOP92": "Heat pump model",
+    "TOP106": "Pump flow rate mode",
+    "TOP113": "Buffer delta",
+    "TOP116": "Water inlet 2 temperature",
+    "TOP118": "Remote control 2 thermostat temperature",
+    "TOP131": "Bivalent start temperature",
+    "TOP140": "DHW smart mode",
+    "TOP147": "Heater capacity",
+    "TOP158": "DHW alternation room maximum time",
+    "TOP162": "External heat/cool switch state",
+    "TOP169": "Heating request temperature with buffer",
+    "TOP171": "Heating on outdoor temperature",
+    "TOP174": "Heating efficiency stage 1 time",
+    "TOP175": "Heating efficiency stage 2 time",
+    "TOP176": "Heating efficiency stage 3 time",
+    # binary sensors
+    "TOP58": "DHW heater enabled",
+    "TOP59": "Heater room enabled",
+    "TOP60": "Heater internal state",
+    "TOP61": "Heater external state",
+    "TOP68": "Heater force state",
+    "TOP100": "DHW installed",
+    "TOP109": "Anti freeze mode",
+    "TOP110": "Optional PCB enabled",
+    "TOP167": "Heater backup enabled",
+    "OPT4": "Pool water pump action request",
+    "OPT5": "Solar water pump action request",
+    # numbers
+    "SET11": "DHW target temperature",
+    "SET15": "Pump maximum duty",
+    "SET18": "Heating delta",
+    "SET19": "Cooling delta",
+    "SET27": "Buffer delta",
+    "SET29": "Heating off outdoor temperature",
+    "SET46": "Heater on outdoor temperature",
+    "SetDemandControl": "Demand control limit (optional PCB)",
+    "SET36": "Bivalent start temperature",
+    "SET37": "Bivalent advanced start temperature",
+    "SET38": "Bivalent advanced stop temperature",
+    "SET49": "DHW sterilization temperature",
+    "SET50": "DHW sterilization maximum time",
+    "SET51": "Auto mode heat to cool outdoor temperature",
+    "SET52": "Auto mode cool to heat outdoor temperature",
+    "SET53": "DHW alternation room maximum time",
+    "SET61": "Heating on outdoor temperature",
+    "SET64": "Heating efficiency stage 1 time",
+    "SET65": "Heating efficiency stage 2 time",
+    "SET66": "Heating efficiency stage 3 time",
+    "SET80": "Heating holiday shift temperature",
+    # selects
+    "SET9": "Operating mode",
+    "SET17": "Zones active",
+    "SET40": "DHW smart mode",
+    "SET42": "Pump flow rate mode",
+    "SET44": "DHW heater release",
+    "SET45": "Heater room release",
+    "SET76": "Heater capacity",
+    "SetSmartGridMode": "SG ready signal (optional PCB)",
+    # switches
+    "SET1": "Main power",
+    "SET10": "DHW force",
+    "SET13": "DHW sterilization force",
+    "SET47": "Heater force",
+    "SET25": "External outdoor sensor",
+    "SET28": "Buffer tank installed",
+    "SET30": "External control",
+    "SET33": "External heat/cool control",
+    "SetCompressorState": "External compressor state (optional PCB)",
+    "SET86": "DHW tank installed",
 }
 
+# readbacks of settings, shown under "Diagnostic" instead of "Sensors"
+DIAGNOSTIC_READBACKS = set(
+    "TOP23 TOP24 TOP25 TOP45 TOP70 TOP71 TOP76 TOP78 TOP79 TOP80 TOP81 TOP92 TOP101 TOP102 TOP103 "
+    "TOP104 TOP105 TOP106 TOP107 TOP111 TOP112 TOP113 TOP131 TOP136 TOP137 TOP138 TOP139 TOP140 TOP141 "
+    "TOP145 TOP146 TOP147 TOP148 TOP149 TOP153 TOP154 TOP155 TOP156 TOP157 TOP158 TOP159 TOP171 TOP172 "
+    "TOP173 TOP174 TOP175 TOP176 TOP177 TOP178 TOP180 TOP182 TOP183 TOP184 TOP185 TOP186 TOP187 TOP188 "
+    "TOP189 TOP190 TOP191 TOP192 TOP193 TOP195 TOP196 "
+    "TOP100 TOP109 TOP110 TOP132 TOP133 TOP150 TOP151 TOP167 TOP168 TOP170 TOP179 TOP181 TOP194".split()
+)
 
-def _on_sub_devices(build: Callable) -> Callable:
-    """Move the descriptions listed in SUB_DEVICE_OF_TOPIC to their sub-device."""
+
+def _display_name(topic_id: Optional[str], name) -> Any:
+    if not isinstance(name, str):
+        return name
+    if topic_id in ENTITY_NAMES:
+        return ENTITY_NAMES[topic_id]
+    name = name.removeprefix("Aquarea ")
+    return name[:1].upper() + name[1:]
+
+
+def _arranged(build: Callable) -> Callable:
+    """Apply display names, sub-devices and diagnostic categories to built descriptions."""
 
     @wraps(build)
     def wrapper(*args, **kwargs):
         result = []
         for description in build(*args, **kwargs):
-            device = SUB_DEVICE_OF_TOPIC.get(getattr(description, "heishamon_topic_id", None))
+            topic_id = getattr(description, "heishamon_topic_id", None)
+            changes = {}
+            if getattr(description, "device", None) != DeviceType.HEISHAMON:
+                name = _display_name(topic_id, description.name)
+                if name != description.name:
+                    changes["name"] = name
+            device = SUB_DEVICE_OF_TOPIC.get(topic_id)
             if device is not None and getattr(description, "device", None) == DeviceType.HEATPUMP:
-                description = replace(description, device=device)
-            result.append(description)
+                changes["device"] = device
+            if topic_id in DIAGNOSTIC_READBACKS and description.entity_category is None:
+                changes["entity_category"] = EntityCategory.DIAGNOSTIC
+            result.append(replace(description, **changes) if changes else description)
         return result
 
     return wrapper
 
 
-build_sensors = _on_sub_devices(build_sensors)
-build_binary_sensors = _on_sub_devices(build_binary_sensors)
-build_numbers = _on_sub_devices(build_numbers)
-build_selects = _on_sub_devices(build_selects)
-build_switches = _on_sub_devices(build_switches)
+build_sensors = _arranged(build_sensors)
+build_binary_sensors = _arranged(build_binary_sensors)
+build_numbers = _arranged(build_numbers)
+build_selects = _arranged(build_selects)
+build_switches = _arranged(build_switches)

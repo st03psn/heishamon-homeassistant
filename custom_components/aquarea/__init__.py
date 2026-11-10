@@ -8,9 +8,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from . import definitions
 from homeassistant.helpers import entity_registry as er
 
+from . import definitions
 from .const import DOMAIN, OBSOLETE_SUB_DEVICES, SUB_DEVICES, DeviceType, Feature
 from .features import FeatureTracker, ManagedEntity, managed_entities
 
@@ -63,7 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     sub_device_ids: dict[DeviceType, str] = {}
     for device_type in SUB_DEVICES:
         sub_identifier = _sub_device_identifier(mqtt_topic, device_type)
-        existing = device_registry.async_get_device(identifiers={sub_identifier})
+        existing = _find_device(hass, entry, sub_identifier)
         sub_device = device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             identifiers={sub_identifier},
@@ -142,6 +142,20 @@ def _sub_device_identifier_for(mqtt_topic: str, suffix: str) -> tuple[str, str]:
     return (DOMAIN, f"{heatpump_identifier}-{suffix}")
 
 
+def _find_device(
+    hass: HomeAssistant, entry: ConfigEntry, identifier: tuple[str, str]
+) -> dr.DeviceEntry | None:
+    """Return the device of this entry with the given identifier.
+
+    device_registry.async_get_device is deprecated since identifiers are no
+    longer unique across config entries; look among this entry's devices.
+    """
+    for device in dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id):
+        if identifier in device.identifiers:
+            return device
+    return None
+
+
 def _remove_obsolete_sub_devices(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -156,9 +170,7 @@ def _remove_obsolete_sub_devices(
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
     for suffix in OBSOLETE_SUB_DEVICES:
-        device = device_registry.async_get_device(
-            identifiers={_sub_device_identifier_for(mqtt_topic, suffix)}
-        )
+        device = _find_device(hass, entry, _sub_device_identifier_for(mqtt_topic, suffix))
         if device is None:
             continue
         for entity_entry in er.async_entries_for_device(

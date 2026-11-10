@@ -126,7 +126,7 @@ class HeishaMonFaultSensor(BinarySensorEntity):
     """On while the heat pump reports a fault (TOP44), with a Repairs issue."""
 
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
-    _attr_name = "Aquarea Fault"
+    _attr_name = "Fault"
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry_entry_id = config_entry.entry_id
