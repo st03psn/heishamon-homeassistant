@@ -49,5 +49,11 @@
     "installer": {
       "name": "Aquarea Installateur-Einstellungen"
     }
+  },
+  "issues": {
+    "heat_pump_fault": {
+      "title": "Störung der Wärmepumpe {code}",
+      "description": "Die Wärmepumpe meldet die Störung **{code}**: {description}.\n\nDie Wärmepumpe kann stehen bleiben, bis die Störung zurückgesetzt ist. Erst die Ursache beheben, dann bei der Wärmepumpe den Knopf „Reset fault code“ drücken. Diese Meldung verschwindet, sobald die Wärmepumpe keine Störung mehr meldet."
+    }
   }
 }

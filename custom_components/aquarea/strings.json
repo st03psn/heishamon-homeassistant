@@ -49,5 +49,11 @@
     "installer": {
       "name": "Aquarea Installer settings"
     }
+  },
+  "issues": {
+    "heat_pump_fault": {
+      "title": "Heat pump fault {code}",
+      "description": "The heat pump reports fault **{code}**: {description}.\n\nThe heat pump may stay stopped until the fault is reset. Remove the cause first, then press the button \"Reset fault code\" of the heat pump. This message disappears when the heat pump reports no fault anymore."
+    }
   }
 }
