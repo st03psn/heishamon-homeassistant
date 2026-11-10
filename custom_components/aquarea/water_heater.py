@@ -434,4 +434,4 @@ class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
 
     @property
     def device_info(self):
-        return build_device_info(self.hass, DeviceType.DHW, self.discovery_prefix, self.config_entry_entry_id)
+        return build_device_info(self.hass, DeviceType.HEATPUMP, self.discovery_prefix, self.config_entry_entry_id)

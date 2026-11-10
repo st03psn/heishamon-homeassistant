@@ -31,9 +31,9 @@ Entities disabled by hand are never enabled, and an entity enabled again by hand
 
 The binary sensor `Aquarea Fault` is on while the heat pump reports a fault code (TOP44); its attributes hold the code and its meaning. A Repairs issue (Settings > System > Repairs) is shown at the same time and disappears when the fault is gone. Code meanings come from the error code tables of the H, J, K, L and M series service manuals.
 
-### Sub-devices
+### Settings device
 
-Entities are grouped on sub-devices of the heat pump: DHW, cooling, bivalent, solar/buffer/pool, external control (SG ready, demand control) and installer settings. New sub-devices start in the area of the heat pump. Entity IDs do not change; automations using a device trigger on the heat pump do not see the moved entities anymore.
+Installer settings and their readbacks are shown on a sub-device of the heat pump, "Aquarea Settings" (German: "Aquarea Einstellungen"), placed in the area of the heat pump when created. Operation, measurements and everyday controls stay on the heat pump. Entity IDs do not change; automations using a device trigger on the heat pump do not see the moved entities anymore.
 
 ### Installer menu settings
 

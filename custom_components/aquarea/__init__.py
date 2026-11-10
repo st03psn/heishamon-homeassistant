@@ -9,7 +9,9 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from . import definitions
-from .const import DOMAIN, SUB_DEVICES, DeviceType, Feature
+from homeassistant.helpers import entity_registry as er
+
+from .const import DOMAIN, OBSOLETE_SUB_DEVICES, SUB_DEVICES, DeviceType, Feature
 from .features import FeatureTracker, ManagedEntity, managed_entities
 
 PLATFORMS = [
@@ -58,6 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name="Aquarea HeatPump",
         manufacturer="Aquarea",
     )
+    sub_device_ids: dict[DeviceType, str] = {}
     for device_type in SUB_DEVICES:
         sub_identifier = _sub_device_identifier(mqtt_topic, device_type)
         existing = device_registry.async_get_device(identifiers={sub_identifier})
@@ -66,16 +69,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             identifiers={sub_identifier},
             translation_key=SUB_DEVICES[device_type],
             manufacturer="Aquarea",
-            via_device=identifiers[DeviceType.HEATPUMP],
+            via_device_id=heatpump_device.id,
         )
+        sub_device_ids[device_type] = sub_device.id
         if existing is None and heatpump_device.area_id is not None:
             # new sub-devices start in the area of the heat pump
             device_registry.async_update_device(
                 sub_device.id, area_id=heatpump_device.area_id
             )
+    _remove_obsolete_sub_devices(hass, entry, mqtt_topic, heatpump_device.id, sub_device_ids)
 
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {"heishamon_device_id": heishamon_device.id}
+    hass.data[DOMAIN][entry.entry_id] = {
+        "heishamon_device_id": heishamon_device.id,
+        "heatpump_device_id": heatpump_device.id,
+    }
 
     tracker = FeatureTracker(
         hass,
@@ -126,20 +134,58 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 def _sub_device_identifier(mqtt_topic: str, device_type: DeviceType) -> tuple[str, str]:
+    return _sub_device_identifier_for(mqtt_topic, SUB_DEVICES[device_type])
+
+
+def _sub_device_identifier_for(mqtt_topic: str, suffix: str) -> tuple[str, str]:
     heatpump_identifier = _compute_identifiers(mqtt_topic)[DeviceType.HEATPUMP][1]
-    return (DOMAIN, f"{heatpump_identifier}-{SUB_DEVICES[device_type]}")
+    return (DOMAIN, f"{heatpump_identifier}-{suffix}")
+
+
+def _remove_obsolete_sub_devices(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    mqtt_topic: str,
+    heatpump_device_id: str,
+    sub_device_ids: dict[DeviceType, str],
+) -> None:
+    """Move the entities of sub-devices from earlier versions, then remove those devices.
+
+    Entities are moved first: removing a device would remove its entities.
+    """
+    device_registry = dr.async_get(hass)
+    entity_registry = er.async_get(hass)
+    for suffix in OBSOLETE_SUB_DEVICES:
+        device = device_registry.async_get_device(
+            identifiers={_sub_device_identifier_for(mqtt_topic, suffix)}
+        )
+        if device is None:
+            continue
+        for entity_entry in er.async_entries_for_device(
+            entity_registry, device.id, include_disabled_entities=True
+        ):
+            topic_id = entity_entry.unique_id.removeprefix(f"{entry.entry_id}-")
+            target = definitions.SUB_DEVICE_OF_TOPIC.get(topic_id)
+            entity_registry.async_update_entity(
+                entity_entry.entity_id,
+                device_id=sub_device_ids.get(target, heatpump_device_id),
+            )
+        device_registry.async_remove_device(device.id)
 
 
 def build_device_info(hass: HomeAssistant, device_type: DeviceType, mqtt_topic: str, config_entry_id: str) -> DeviceInfo:
     """Return device info for the given device type."""
     identifiers = _compute_identifiers(mqtt_topic)
     if device_type in SUB_DEVICES:
-        return DeviceInfo(
-            identifiers={_sub_device_identifier(mqtt_topic, device_type)},
-            translation_key=SUB_DEVICES[device_type],
-            manufacturer="Aquarea",
-            via_device=identifiers[DeviceType.HEATPUMP],
-        )
+        device_info_fields = {
+            "identifiers": {_sub_device_identifier(mqtt_topic, device_type)},
+            "translation_key": SUB_DEVICES[device_type],
+            "manufacturer": "Aquarea",
+        }
+        via_device_id = hass.data.get(DOMAIN, {}).get(config_entry_id, {}).get("heatpump_device_id")
+        if via_device_id is not None:
+            device_info_fields["via_device_id"] = via_device_id
+        return DeviceInfo(**device_info_fields)
     if device_type == DeviceType.HEATPUMP:
         device_info_fields = {
             "identifiers": {identifiers[DeviceType.HEATPUMP]},

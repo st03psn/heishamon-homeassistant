@@ -31,23 +31,8 @@
     }
   },
   "device": {
-    "dhw": {
-      "name": "Aquarea Warmwasser"
-    },
-    "cooling": {
-      "name": "Aquarea Kühlung"
-    },
-    "bivalent": {
-      "name": "Aquarea Bivalent"
-    },
-    "solar_buffer": {
-      "name": "Aquarea Solar, Puffer und Pool"
-    },
-    "external_control": {
-      "name": "Aquarea Externe Steuerung (SG ready, Demand Control)"
-    },
     "installer": {
-      "name": "Aquarea Installateur-Einstellungen"
+      "name": "Aquarea Einstellungen"
     }
   },
   "issues": {
