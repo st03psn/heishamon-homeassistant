@@ -263,3 +263,10 @@ async def test_entity_enabled_again_by_user_is_kept(hass, no_side_effects):
     tracker.async_evaluate()
     assert _disabled_by(hass, number) is None
     assert tracker._user_kept == {number.unique_id}
+
+
+def test_bivalent_advanced_temperature_commands():
+    """The firmware names these commands SetBivalentAPStartTemp / SetBivalentAPStopTemp."""
+    numbers = {n.heishamon_topic_id: n for n in build_numbers(PREFIX)}
+    assert numbers["SET37"].command_topic == f"{PREFIX}commands/SetBivalentAPStartTemp"
+    assert numbers["SET38"].command_topic == f"{PREFIX}commands/SetBivalentAPStopTemp"

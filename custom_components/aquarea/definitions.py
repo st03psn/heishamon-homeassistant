@@ -1032,7 +1032,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             heishamon_topic_id="SET37",  # corresponds to TOP134
             requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Start_Temp",
-            command_topic=f"{mqtt_prefix}commands/SetBivalentAStartTemp",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentAPStartTemp",
             name="Aquarea Bivalent Advanced Start Temp",
             entity_category=EntityCategory.CONFIG,
             device_class=NumberDeviceClass.TEMPERATURE,
@@ -1049,7 +1049,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             heishamon_topic_id="SET38",  # corresponds to TOP135
             requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Stop_Temp",
-            command_topic=f"{mqtt_prefix}commands/SetBivalentAStopTemp",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentAPStopTemp",
             name="Aquarea Bivalent Advanced Stop Temp",
             entity_category=EntityCategory.CONFIG,
             device_class=NumberDeviceClass.TEMPERATURE,
