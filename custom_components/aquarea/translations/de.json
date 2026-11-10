@@ -1,0 +1,39 @@
+{
+  "config": {
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "unsupported_manual_setup": "Configuration is only supported via auto-discovery. Check HeishaMon is connected to your MQTT server and sending messages. Also check that Home Assistant is connected to the MQTT server. The integration will then be discovered automatically."
+    },
+    "step": {
+      "confirm": {
+        "description": "All configured!"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Entitäten und Anlage",
+        "description": "Die Wärmepumpe meldet, welche optionalen Anlagenteile vorhanden sind (Warmwasserspeicher, Pufferspeicher, Solar, bivalent, SG ready, optionale Platine, Kühlung). Entitäten dieser Anlagenteile sind standardmäßig deaktiviert.",
+        "data": {
+          "entity_management": "Entitäten optionaler Anlagenteile"
+        }
+      }
+    }
+  },
+  "selector": {
+    "entity_management": {
+      "options": {
+        "enable_only": "Aktivieren, sobald das Anlagenteil als vorhanden gemeldet wird",
+        "unavailable": "Zusätzlich als nicht verfügbar anzeigen, solange das Anlagenteil fehlt",
+        "disable": "Zusätzlich deaktivieren, solange das Anlagenteil fehlt"
+      }
+    }
+  },
+  "issues": {
+    "heat_pump_fault": {
+      "title": "Störung der Wärmepumpe {code}",
+      "description": "Die Wärmepumpe meldet die Störung **{code}**: {description}.\n\nDie Wärmepumpe kann stehen bleiben, bis die Störung zurückgesetzt ist. Erst die Ursache beheben, dann bei der Wärmepumpe den Knopf „Reset fault code“ drücken. Diese Meldung verschwindet, sobald die Wärmepumpe keine Störung mehr meldet."
+    }
+  }
+}

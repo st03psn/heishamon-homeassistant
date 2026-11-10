@@ -30,6 +30,8 @@ except ImportError:
 
 from .definitions import OperatingMode
 from . import build_device_info
+from .const import Feature
+from .features import FeatureGatedEntity
 from .const import DeviceType
 from .retry_mixin import CommandRetryMixin
 
@@ -58,7 +60,7 @@ async def async_setup_entry(
 STATE_SUPERECO = "Super Eco"
 
 
-class HeishaMonDHW(CommandRetryMixin, WaterHeaterEntity):
+class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     _attr_native_current_temperature: float | None = None
@@ -224,8 +226,12 @@ class HeishaMonDHW(CommandRetryMixin, WaterHeaterEntity):
                 self._heat_delta + self._attr_native_target_temperature
             )
 
+    def _feature_requires(self) -> tuple[Feature, ...]:
+        return (Feature.DHW,)
+
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events."""
+        self._setup_feature_gating()
 
         @callback
         def current_temperature_message_received(message):

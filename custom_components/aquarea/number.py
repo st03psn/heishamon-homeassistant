@@ -12,6 +12,7 @@ from homeassistant.util import slugify
 
 from .definitions import build_numbers, HeishaMonNumberEntityDescription
 from . import build_device_info
+from .features import FeatureGatedEntity
 from .retry_mixin import CommandRetryMixin
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ async def async_setup_entry(
     )
 
 
-class HeishaMonMQTTNumber(CommandRetryMixin, NumberEntity):
+class HeishaMonMQTTNumber(FeatureGatedEntity, CommandRetryMixin, NumberEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     entity_description: HeishaMonNumberEntityDescription
@@ -98,6 +99,7 @@ class HeishaMonMQTTNumber(CommandRetryMixin, NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events."""
+        self._setup_feature_gating()
 
         if self.entity_description.initial_value is not None:
             self._attr_native_value = self.entity_description.initial_value

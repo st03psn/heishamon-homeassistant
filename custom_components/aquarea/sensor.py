@@ -34,6 +34,7 @@ from .definitions import (
     bit_to_bool,
 )
 from . import build_device_info
+from .features import FeatureGatedEntity
 
 
 # async_setup_platform should be defined if one wants to support config via configuration.yaml
@@ -464,7 +465,7 @@ class DallasListSensor(SensorEntity):
         return build_device_info(self.hass, DeviceType.HEISHAMON, self.discovery_prefix, self.config_entry_entry_id)
 
 
-class HeishaMonSensor(SensorEntity):
+class HeishaMonSensor(FeatureGatedEntity, SensorEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     entity_description: HeishaMonSensorEntityDescription
@@ -493,6 +494,7 @@ class HeishaMonSensor(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events"""
+        self._setup_feature_gating()
         await super().async_added_to_hass()
 
         @callback

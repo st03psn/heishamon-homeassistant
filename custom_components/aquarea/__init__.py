@@ -8,7 +8,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from .const import DOMAIN, DeviceType
+from . import definitions
+from .const import DOMAIN, DeviceType, Feature
+from .features import FeatureTracker, ManagedEntity, managed_entities
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -60,8 +62,46 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {"heishamon_device_id": heishamon_device.id}
 
+    tracker = FeatureTracker(
+        hass,
+        entry,
+        managed_entities(
+            entry.entry_id,
+            mqtt_topic,
+            {
+                Platform.SENSOR: definitions.build_sensors(mqtt_topic),
+                Platform.BINARY_SENSOR: definitions.build_binary_sensors(mqtt_topic),
+                Platform.SWITCH: definitions.build_switches(mqtt_topic),
+                Platform.SELECT: definitions.build_selects(mqtt_topic),
+                Platform.NUMBER: definitions.build_numbers(mqtt_topic),
+            },
+        )
+        + [
+            ManagedEntity(
+                platform=Platform.WATER_HEATER,
+                unique_id=f"{entry.entry_id}.water_heater",
+                requires=(Feature.DHW,),
+                topics=("main/DHW_Installed",),
+            )
+        ],
+    )
+    hass.data[DOMAIN][entry.entry_id]["features"] = tracker
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await tracker.async_start()
+    entry.async_on_unload(tracker.async_stop)
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply new options."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove what the integration stored for this entry."""
+    await FeatureTracker(hass, entry, []).async_remove_storage()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
