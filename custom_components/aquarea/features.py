@@ -47,8 +47,11 @@ FEATURE_PARENTS: dict[Feature, Feature] = {
 
 # wait for the burst of retained messages before touching the registry
 SETTLE_DELAY = 10.0
-# a feature must be reported as missing for that long before entities are disabled
-DISABLE_DELAY = 600.0
+# a feature must be reported as missing for that long before entities are disabled.
+# The heat pump hides the child settings at once when a part is switched off, so
+# entities follow right away; the settle delay above already skips the burst of
+# retained messages after a start.
+DISABLE_DELAY = 0.0
 
 STORAGE_VERSION = 1
 

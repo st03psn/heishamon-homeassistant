@@ -26,7 +26,7 @@
       "options": {
         "enable_only": "Enable them once the part is reported as installed",
         "unavailable": "Also show them as unavailable while the part is not installed",
-        "disable": "Also disable them while the part is not installed (after 10 minutes)"
+        "disable": "Also disable them while the part is not installed"
       }
     }
   },

@@ -26,7 +26,7 @@
       "options": {
         "enable_only": "Aktivieren, sobald das Anlagenteil als vorhanden gemeldet wird",
         "unavailable": "Zusätzlich als nicht verfügbar anzeigen, solange das Anlagenteil fehlt",
-        "disable": "Zusätzlich deaktivieren, solange das Anlagenteil fehlt (nach 10 Minuten)"
+        "disable": "Zusätzlich deaktivieren, solange das Anlagenteil fehlt"
       }
     }
   },

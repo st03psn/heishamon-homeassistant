@@ -216,21 +216,15 @@ async def test_enable_only_never_disables(hass, no_side_effects):
     assert _disabled_by(hass, number) is None
 
 
-async def test_disable_after_delay_and_enable_again(hass, no_side_effects):
+async def test_disable_and_enable_again(hass, no_side_effects):
     entry, tracker = _tracker(hass, MODE_DISABLE, [DHW_NUMBER])
     number = _register(hass, entry, "number", "SET63", None)
     for topic, payload in [("main/DHW_Booster_Delay", "20"), ("main/Static_Pressure", "0")]:
         _publish(tracker, topic, payload)
 
     _publish(tracker, "main/DHW_Installed", "0")
-    no_side_effects.schedule.reset_mock()
     tracker.async_evaluate()
-    assert _disabled_by(hass, number) is None  # too early
-    no_side_effects.schedule.assert_called_once()  # checked again later
-
-    tracker._missing_since[Feature.DHW] -= features.DISABLE_DELAY + 1
-    tracker.async_evaluate()
-    assert _disabled_by(hass, number) == INTEGRATION
+    assert _disabled_by(hass, number) == INTEGRATION  # no delay: the heat pump hides them at once
     assert tracker._auto_disabled == {number.unique_id}
 
     _publish(tracker, "main/DHW_Installed", "1")

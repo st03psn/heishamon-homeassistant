@@ -23,7 +23,7 @@ Entities for optional parts of an installation (DHW tank, buffer tank, solar, bi
 |---|---|---|
 | Enable (default) | its entities are enabled | nothing |
 | Unavailable | its entities are enabled | its entities are shown as unavailable |
-| Disable | its entities are enabled | its entities are disabled after 10 minutes |
+| Disable | its entities are enabled | its entities are disabled |
 
 Entities disabled by hand are never enabled, and an entity enabled again by hand while its part is missing is left alone. Entities are only enabled once HeishaMon has published their topic, so entities unknown to the installed firmware stay disabled. Entities without a matching part (sensor offsets, efficiency stages, anti freeze, defrost signal, ...) are enabled by hand.
 
