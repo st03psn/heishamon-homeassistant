@@ -4069,19 +4069,23 @@ def build_buttons(
 # entities moved to a sub-device of the heat pump (none at the moment)
 SUB_DEVICE_OF_TOPIC: dict[str, DeviceType] = {}
 
+# "Emulated PCB ...": values HeishaMon sends to or receives from the heat pump
+# in place of an optional PCB (only with the optional PCB emulation of HeishaMon
+# switched on, not with a real optional PCB).
 # Display names, so that the entities of one topic sort next to each other in
 # the device page (Home Assistant sorts them by name). The prefix "Aquarea " is
 # removed from all names: Home Assistant shows the device name in front.
 ENTITY_NAMES: dict[str, str] = {
+    "OPT6": "Emulated PCB alarm",
     "SET32": "External compressor control",
     "SET8": "Zone 2 cool shift",
     "SET7": "Zone 2 heat shift",
     "SET6": "Zone 1 cool shift",
     "SET5": "Zone 1 heat shift",
-    "OPT3": "Zone 2 mixing valve",
-    "OPT1": "Zone 1 mixing valve",
-    "OPT2": "Zone 2 pump request",
-    "OPT0": "Zone 1 pump request",
+    "OPT3": "Emulated PCB Z2 mixing valve",
+    "OPT1": "Emulated PCB Z1 mixing valve",
+    "OPT2": "Emulated PCB Z2 pump",
+    "OPT0": "Emulated PCB Z1 pump",
     "TOP152": "Dry concrete target",
     "SET73": "Bivalent adv. stop delay",
     "SET72": "Bivalent adv. start delay",
@@ -4164,8 +4168,8 @@ ENTITY_NAMES: dict[str, str] = {
     "TOP109": "Anti freeze mode",
     "TOP110": "Optional PCB enabled",
     "TOP167": "Heater backup enabled",
-    "OPT4": "Pool pump request",
-    "OPT5": "Solar pump request",
+    "OPT4": "Emulated PCB pool pump",
+    "OPT5": "Emulated PCB solar pump",
     # numbers
     "SET11": "DHW target temperature",
     "SET15": "Pump maximum duty",
@@ -4174,7 +4178,7 @@ ENTITY_NAMES: dict[str, str] = {
     "SET27": "Buffer delta",
     "SET29": "Heating off outdoor temperature",
     "SET46": "Heater on outdoor temperature",
-    "SetDemandControl": "Opt. PCB demand control",
+    "SetDemandControl": "Emulated PCB demand control",
     "SET36": "Bivalent start temp",
     "SET37": "Bivalent adv. start temp",
     "SET38": "Bivalent adv. stop temp",
@@ -4196,7 +4200,7 @@ ENTITY_NAMES: dict[str, str] = {
     "SET44": "DHW heater release",
     "SET45": "Heater room release",
     "SET76": "Heater capacity",
-    "SetSmartGridMode": "Opt. PCB SG ready signal",
+    "SetSmartGridMode": "Emulated PCB SG ready signal",
     # switches
     "SET1": "Main power",
     "SET10": "DHW force",
@@ -4206,7 +4210,7 @@ ENTITY_NAMES: dict[str, str] = {
     "SET28": "Buffer tank installed",
     "SET30": "External control",
     "SET33": "External heat/cool control",
-    "SetCompressorState": "Opt. PCB compressor",
+    "SetCompressorState": "Emulated PCB compressor",
     "SET86": "DHW tank installed",
 }
 

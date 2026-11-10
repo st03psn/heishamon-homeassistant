@@ -35,6 +35,10 @@ The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44)
 
 Entity names no longer start with "Aquarea" (Home Assistant already shows the device name), and they start with their topic (DHW, Heater, Heating, Cooling, Bivalent, Solar, Buffer, Pool, SG ready, Zone 1/2, Sensor offset, External ...), so that related entities sort next to each other on the device page. Readbacks of settings are shown under "Diagnostic". Entity IDs do not change. Sub-devices created by earlier versions of this fork are removed; their entities move back to the heat pump first.
 
+### Emulated optional PCB
+
+HeishaMon can stand in for the optional PCB of the heat pump ("optional PCB emulation" in the HeishaMon settings). The entities named "Emulated PCB ..." belong to this emulation: the SG ready signal, the demand control limit and the compressor contact that HeishaMon sends in place of the PCB, and the pump, mixing valve and alarm requests the heat pump sends to it. They only work with the emulation switched on, not with a real optional PCB. The values sent by HeishaMon are not reported back by the heat pump, so these entities show "unknown" until a value has been sent. The installer settings "SG ready mode" and "Demand control" (whether the heat pump uses these inputs at all) are separate entities.
+
 ### Installer menu settings
 
 Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. Those that do not belong to an optional part (heater capacity, sensor offsets, efficiency stages, heating on/off, DHW tank switch, ...) are enabled automatically once HeishaMon publishes their topic, so they stay hidden with firmwares that do not provide them. TOP170 to TOP196 and SET56 to SET104 need a HeishaMon firmware providing them; they were tested on M series only; may work on other series, not tested there.
