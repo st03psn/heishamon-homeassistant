@@ -34,7 +34,8 @@ def test_names_and_categories():
     by_id = {d.heishamon_topic_id: d for d in descriptions if getattr(d, "heishamon_topic_id", None)}
     assert by_id["TOP10"].name == "DHW tank temperature"
     assert by_id["SET67"].name == "Sensor offset remote thermistor 1"
-    assert by_id["TOP29"].name == "Zone 1 heating curve target high"
+    assert by_id["TOP29"].name == "Zone 1 heat curve target high"
+    assert by_id["SET39"].name == "Heating control"
     assert by_id["TOP177"].entity_category == EntityCategory.DIAGNOSTIC
     assert by_id["TOP5"].entity_category is None
 

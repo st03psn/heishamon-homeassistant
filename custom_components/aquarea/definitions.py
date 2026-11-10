@@ -3,6 +3,7 @@
 from __future__ import annotations
 from functools import partial, wraps
 import json
+import re
 from enum import Flag, auto
 
 from collections.abc import Callable
@@ -1667,7 +1668,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
                             entity_category=EntityCategory.CONFIG,
                             native_min_value=ranges[action][loc][0],
                             native_max_value=ranges[action][loc][1],
-                            name=f"Aquarea Zone {zone_id} {action.lower()}ing curve {loc.lower()} {point.lower()}",
+                            name=f"Aquarea Zone {zone_id} {action.lower()} curve {loc.lower()} {point.lower()}",
                             device_class=NumberDeviceClass.TEMPERATURE,
                             native_unit_of_measurement="°C",
                             # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
@@ -4068,11 +4069,41 @@ SUB_DEVICE_OF_TOPIC: dict[str, DeviceType] = {}
 # the device page (Home Assistant sorts them by name). The prefix "Aquarea " is
 # removed from all names: Home Assistant shows the device name in front.
 ENTITY_NAMES: dict[str, str] = {
+    "SET32": "External compressor control",
+    "SET8": "Zone 2 cool shift",
+    "SET7": "Zone 2 heat shift",
+    "SET6": "Zone 1 cool shift",
+    "SET5": "Zone 1 heat shift",
+    "OPT3": "Zone 2 mixing valve",
+    "OPT1": "Zone 1 mixing valve",
+    "OPT2": "Zone 2 pump request",
+    "OPT0": "Zone 1 pump request",
+    "TOP152": "Dry concrete target",
+    "SET73": "Bivalent adv. stop delay",
+    "SET72": "Bivalent adv. start delay",
+    "TOP138": "Bivalent adv. DHW delay",
+    "TOP137": "Bivalent adv. stop delay",
+    "TOP136": "Bivalent adv. start delay",
+    "SET88": "Solar max temp",
+    "TOP105": "Solar max temp",
+    "SET79": "Solar frost protection",
+    "TOP104": "Solar frost protection",
+    "SET67": "Sensor offset remote Th1",
+    "TOP177": "Sensor offset remote Th1",
+    "SET83": "Cooling water mode",
+    "SET82": "Heating water mode",
+    "TOP43": "Zone 2 water target",
+    "TOP42": "Zone 1 water target",
+    "TOP37": "Zone 2 water outlet",
+    "TOP36": "Zone 1 water outlet",
+    "TOP12": "Compressor starts",
+    "TOP11": "Compressor hours",
+    "TOP33": "Remote control temp",
     # sensors
     "TOP1": "Pump flow",
     "TOP5": "Water inlet temperature",
     "TOP6": "Water outlet temperature",
-    "TOP7": "Water outlet target temperature",
+    "TOP7": "Water outlet target",
     "TOP10": "DHW tank temperature",
     "TOP14": "Outdoor temperature",
     "TOP20": "Valve 3-way",
@@ -4087,7 +4118,7 @@ ENTITY_NAMES: dict[str, str] = {
     "TOP15": "Heat power produced",
     "TOP16": "Heat power consumed",
     "TOP44": "Error code",
-    "TOP45": "Heating holiday shift temperature",
+    "TOP45": "Heating holiday shift",
     "TOP46": "Buffer temperature",
     "TOP47": "Solar temperature",
     "TOP48": "Pool temperature",
@@ -4097,28 +4128,28 @@ ENTITY_NAMES: dict[str, str] = {
     "TOP66": "Pressure low",
     "TOP70": "DHW sterilization temperature",
     "TOP71": "DHW sterilization maximum time",
-    "TOP76": "Heating water temperature mode",
+    "TOP76": "Heating water mode",
     "TOP78": "Heater on outdoor temperature",
-    "TOP79": "Auto mode heat to cool outdoor temperature",
-    "TOP80": "Auto mode cool to heat outdoor temperature",
-    "TOP81": "Cooling water temperature mode",
-    "TOP90": "Heater operating time room",
-    "TOP91": "Heater operating time DHW",
+    "TOP79": "Auto to cool above",
+    "TOP80": "Auto to heat below",
+    "TOP81": "Cooling water mode",
+    "TOP90": "Heater hours room",
+    "TOP91": "Heater hours DHW",
     "TOP92": "Heat pump model",
     "TOP106": "Pump flow rate mode",
     "TOP113": "Buffer delta",
     "TOP116": "Water inlet 2 temperature",
-    "TOP118": "Remote control 2 thermostat temperature",
-    "TOP131": "Bivalent start temperature",
+    "TOP118": "Remote control 2 temp",
+    "TOP131": "Bivalent start temp",
     "TOP140": "DHW smart mode",
     "TOP147": "Heater capacity",
-    "TOP158": "DHW alternation room maximum time",
-    "TOP162": "External heat/cool switch state",
-    "TOP169": "Heating request temperature with buffer",
+    "TOP158": "DHW alternation room max",
+    "TOP162": "External heat/cool switch",
+    "TOP169": "Heating target with buffer",
     "TOP171": "Heating on outdoor temperature",
-    "TOP174": "Heating efficiency stage 1 time",
-    "TOP175": "Heating efficiency stage 2 time",
-    "TOP176": "Heating efficiency stage 3 time",
+    "TOP174": "Heating efficiency stage 1",
+    "TOP175": "Heating efficiency stage 2",
+    "TOP176": "Heating efficiency stage 3",
     # binary sensors
     "TOP58": "DHW heater enabled",
     "TOP59": "Heater room enabled",
@@ -4129,8 +4160,8 @@ ENTITY_NAMES: dict[str, str] = {
     "TOP109": "Anti freeze mode",
     "TOP110": "Optional PCB enabled",
     "TOP167": "Heater backup enabled",
-    "OPT4": "Pool water pump action request",
-    "OPT5": "Solar water pump action request",
+    "OPT4": "Pool pump request",
+    "OPT5": "Solar pump request",
     # numbers
     "SET11": "DHW target temperature",
     "SET15": "Pump maximum duty",
@@ -4139,20 +4170,20 @@ ENTITY_NAMES: dict[str, str] = {
     "SET27": "Buffer delta",
     "SET29": "Heating off outdoor temperature",
     "SET46": "Heater on outdoor temperature",
-    "SetDemandControl": "Demand control limit (optional PCB)",
-    "SET36": "Bivalent start temperature",
-    "SET37": "Bivalent advanced start temperature",
-    "SET38": "Bivalent advanced stop temperature",
+    "SetDemandControl": "Opt. PCB demand control",
+    "SET36": "Bivalent start temp",
+    "SET37": "Bivalent adv. start temp",
+    "SET38": "Bivalent adv. stop temp",
     "SET49": "DHW sterilization temperature",
     "SET50": "DHW sterilization maximum time",
-    "SET51": "Auto mode heat to cool outdoor temperature",
-    "SET52": "Auto mode cool to heat outdoor temperature",
-    "SET53": "DHW alternation room maximum time",
+    "SET51": "Auto to cool above",
+    "SET52": "Auto to heat below",
+    "SET53": "DHW alternation room max",
     "SET61": "Heating on outdoor temperature",
-    "SET64": "Heating efficiency stage 1 time",
-    "SET65": "Heating efficiency stage 2 time",
-    "SET66": "Heating efficiency stage 3 time",
-    "SET80": "Heating holiday shift temperature",
+    "SET64": "Heating efficiency stage 1",
+    "SET65": "Heating efficiency stage 2",
+    "SET66": "Heating efficiency stage 3",
+    "SET80": "Heating holiday shift",
     # selects
     "SET9": "Operating mode",
     "SET17": "Zones active",
@@ -4161,7 +4192,7 @@ ENTITY_NAMES: dict[str, str] = {
     "SET44": "DHW heater release",
     "SET45": "Heater room release",
     "SET76": "Heater capacity",
-    "SetSmartGridMode": "SG ready signal (optional PCB)",
+    "SetSmartGridMode": "Opt. PCB SG ready signal",
     # switches
     "SET1": "Main power",
     "SET10": "DHW force",
@@ -4171,7 +4202,7 @@ ENTITY_NAMES: dict[str, str] = {
     "SET28": "Buffer tank installed",
     "SET30": "External control",
     "SET33": "External heat/cool control",
-    "SetCompressorState": "External compressor state (optional PCB)",
+    "SetCompressorState": "Opt. PCB compressor",
     "SET86": "DHW tank installed",
 }
 
@@ -4186,12 +4217,22 @@ DIAGNOSTIC_READBACKS = set(
 )
 
 
+# applied to all names: shorter words, consistent case
+_SHORTER_WORDS = [
+    (re.compile(r"\btemperature\b", re.IGNORECASE), "temp"),
+    (re.compile(r"\bmaximum\b", re.IGNORECASE), "max"),
+    # sentence case: capitalized words after the first one are written in lower case,
+    # abbreviations (DHW, SG, PCB, HEX, Th1, ...) are kept
+    (re.compile(r"(?<=\s)([A-Z][a-z]+)\b"), lambda m: m.group(1).lower()),
+]
+
+
 def _display_name(topic_id: Optional[str], name) -> Any:
     if not isinstance(name, str):
         return name
-    if topic_id in ENTITY_NAMES:
-        return ENTITY_NAMES[topic_id]
-    name = name.removeprefix("Aquarea ")
+    name = ENTITY_NAMES.get(topic_id) or name.removeprefix("Aquarea ")
+    for pattern, replacement in _SHORTER_WORDS:
+        name = pattern.sub(replacement, name)
     return name[:1].upper() + name[1:]
 
 
