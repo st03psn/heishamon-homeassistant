@@ -17,3 +17,5 @@ secrets.yaml
 .devenv*
 devenv.local.nix
 devenv.lock
+
+__pycache__/
