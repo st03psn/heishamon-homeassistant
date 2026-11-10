@@ -50,3 +50,22 @@ async def test_fault_sensor_and_issue(hass, mqtt_mock):
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_no_readonly_copy_for_topics_with_binary_sensor(hass, mqtt_mock):
+    from homeassistant.helpers import entity_registry as er
+
+    entry = MockConfigEntry(domain=DOMAIN, data={"discovery_prefix": PREFIX}, version=2)
+    entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    old_copy = registry.async_get_or_create(
+        "binary_sensor", DOMAIN, f"{entry.entry_id}-SET60",
+        suggested_object_id="panasonic_heat_pump_main_static_pressure_2",
+    )
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert registry.async_get(old_copy.entity_id) is None  # SET60 has TOP170
+    assert registry.async_get_entity_id("binary_sensor", DOMAIN, f"{entry.entry_id}-TOP170")
+    assert registry.async_get_entity_id("binary_sensor", DOMAIN, f"{entry.entry_id}-SET28")  # no TOP99 sensor
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

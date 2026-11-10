@@ -11,6 +11,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
@@ -31,7 +32,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    _: HomeAssistant,
+    hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
@@ -42,14 +43,28 @@ async def async_setup_entry(
     _LOGGER.debug(
         f"Starting bootstrap of binary sensors with prefix '{discovery_prefix}'"
     )
+    binary_sensors = build_binary_sensors(discovery_prefix)
     async_add_entities(
         HeishaMonBinarySensor(description, config_entry)
-        for description in build_binary_sensors(discovery_prefix)
+        for description in binary_sensors
     )
     # those entities are added for people who want to have "safe" entities visible in their dashboard
     # instead of exposing entities whose state can be modified by mistake. See #151
+    # A switch whose topic already has a binary sensor gets no read-only copy: the
+    # copy would show the same value twice (and get an entity ID ending in _2).
+    shown_topics = {description.key for description in binary_sensors}
+    entity_registry = er.async_get(hass)
     readonly_switches = []
     for switch_description in build_switches(discovery_prefix):
+        if switch_description.key in shown_topics:
+            duplicate = entity_registry.async_get_entity_id(
+                "binary_sensor",
+                DOMAIN,
+                f"{config_entry.entry_id}-{switch_description.heishamon_topic_id}",
+            )
+            if duplicate is not None:
+                entity_registry.async_remove(duplicate)
+            continue
         category = switch_description.entity_category
         if category == EntityCategory.CONFIG:
             category = EntityCategory.DIAGNOSTIC
