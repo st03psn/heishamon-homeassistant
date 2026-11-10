@@ -3,10 +3,11 @@
 from __future__ import annotations
 from functools import partial, wraps
 import json
+import re
 from enum import Flag, auto
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Optional, TypeVar, Any
 import logging
 
@@ -857,7 +858,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
                             entity_category=EntityCategory.CONFIG,
                             native_min_value=ranges[action][loc][0],
                             native_max_value=ranges[action][loc][1],
-                            name=f"Aquarea Zone {zone_id} {loc} water temperature at {point.lower()}est {dual_location(loc).lower()} temperature on {action.lower()}ing curve",
+                            name=f"Aquarea Zone {zone_id} {action.lower()} curve {loc.lower()} {point.lower()}",
                             device_class=NumberDeviceClass.TEMPERATURE,
                             native_unit_of_measurement="°C",
                             # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
@@ -2507,3 +2508,153 @@ def build_buttons(
             entity_category=EntityCategory.DIAGNOSTIC,
         ),
     ]
+
+
+# Display names: shorter, in sentence case, and starting with their topic (DHW,
+# Heater, Heating, Cooling, Bivalent, Solar, Buffer, Zone 1/2, External ...), so
+# that related entities sort next to each other on the device page. The prefix
+# "Aquarea " is dropped: Home Assistant shows the device name in front.
+# Entity IDs do not depend on these names.
+ENTITY_NAMES: dict[str, str] = {
+    "OPT0": "Zone 1 pump request",
+    "OPT1": "Zone 1 mixing valve",
+    "OPT2": "Zone 2 pump request",
+    "OPT3": "Zone 2 mixing valve",
+    "OPT4": "Pool pump request",
+    "OPT5": "Solar pump request",
+    "SET1": "Main power",
+    "SET10": "DHW force",
+    "SET11": "DHW target temperature",
+    "SET13": "DHW sterilization force",
+    "SET15": "Pump maximum duty",
+    "SET17": "Zones active",
+    "SET18": "Heating delta",
+    "SET19": "Cooling delta",
+    "SET25": "External outdoor sensor",
+    "SET27": "Buffer delta",
+    "SET28": "Buffer tank installed",
+    "SET29": "Heating off outdoor temperature",
+    "SET30": "External control",
+    "SET32": "External compressor control",
+    "SET33": "External heat/cool control",
+    "SET36": "Bivalent start temp",
+    "SET37": "Bivalent adv. start temp",
+    "SET38": "Bivalent adv. stop temp",
+    "SET40": "DHW smart mode",
+    "SET42": "Pump flow rate mode",
+    "SET44": "DHW heater release",
+    "SET45": "Heater room release",
+    "SET46": "Heater on outdoor temperature",
+    "SET47": "Heater force",
+    "SET5": "Zone 1 heat shift",
+    "SET6": "Zone 1 cool shift",
+    "SET7": "Zone 2 heat shift",
+    "SET8": "Zone 2 cool shift",
+    "SET9": "Operating mode",
+    "SetCompressorState": "Opt. PCB compressor",
+    "SetDemandControl": "Opt. PCB demand control",
+    "SetSmartGridMode": "Opt. PCB SG ready signal",
+    "TOP1": "Pump flow",
+    "TOP10": "DHW tank temperature",
+    "TOP100": "DHW installed",
+    "TOP104": "Solar frost protection",
+    "TOP105": "Solar max temp",
+    "TOP106": "Pump flow rate mode",
+    "TOP109": "Anti freeze mode",
+    "TOP11": "Compressor hours",
+    "TOP110": "Optional PCB enabled",
+    "TOP113": "Buffer delta",
+    "TOP116": "Water inlet 2 temperature",
+    "TOP118": "Remote control 2 temp",
+    "TOP12": "Compressor starts",
+    "TOP125": "Valve 2-way",
+    "TOP131": "Bivalent start temp",
+    "TOP136": "Bivalent adv. start delay",
+    "TOP137": "Bivalent adv. stop delay",
+    "TOP138": "Bivalent adv. DHW delay",
+    "TOP14": "Outdoor temperature",
+    "TOP140": "DHW smart mode",
+    "TOP15": "Heat power produced",
+    "TOP16": "Heat power consumed",
+    "TOP20": "Valve 3-way",
+    "TOP23": "Heating delta",
+    "TOP24": "Cooling delta",
+    "TOP25": "DHW holiday shift temperature",
+    "TOP33": "Remote control temp",
+    "TOP36": "Zone 1 water outlet",
+    "TOP37": "Zone 2 water outlet",
+    "TOP38": "Cooling power produced",
+    "TOP39": "Cooling power consumed",
+    "TOP40": "DHW power produced",
+    "TOP41": "DHW power consumed",
+    "TOP42": "Zone 1 water target",
+    "TOP43": "Zone 2 water target",
+    "TOP44": "Error code",
+    "TOP45": "Heating holiday shift",
+    "TOP46": "Buffer temperature",
+    "TOP47": "Solar temperature",
+    "TOP48": "Pool temperature",
+    "TOP5": "Water inlet temperature",
+    "TOP56": "Zone 1 temperature",
+    "TOP57": "Zone 2 temperature",
+    "TOP58": "DHW heater enabled",
+    "TOP59": "Heater room enabled",
+    "TOP6": "Water outlet temperature",
+    "TOP60": "Heater internal state",
+    "TOP61": "Heater external state",
+    "TOP64": "Pressure high",
+    "TOP66": "Pressure low",
+    "TOP68": "Heater force state",
+    "TOP7": "Water outlet target",
+    "TOP70": "DHW sterilization temperature",
+    "TOP71": "DHW sterilization maximum time",
+    "TOP76": "Heating water mode",
+    "TOP78": "Heater on outdoor temperature",
+    "TOP79": "Auto to cool above",
+    "TOP80": "Auto to heat below",
+    "TOP81": "Cooling water mode",
+    "TOP90": "Heater hours room",
+    "TOP91": "Heater hours DHW",
+    "TOP92": "Heat pump model",
+}
+
+
+# applied to all names: shorter words, consistent case
+_SHORTER_WORDS = [
+    (re.compile(r"\btemperature\b", re.IGNORECASE), "temp"),
+    (re.compile(r"\bmaximum\b", re.IGNORECASE), "max"),
+    # sentence case: capitalized words after the first one are written in lower case,
+    # abbreviations (DHW, SG, PCB, HEX, Th1, ...) are kept
+    (re.compile(r"(?<=\s)([A-Z][a-z]+)\b"), lambda m: m.group(1).lower()),
+]
+
+
+def _display_name(topic_id: Optional[str], name) -> Any:
+    if not isinstance(name, str):
+        return name
+    name = ENTITY_NAMES.get(topic_id) or name.removeprefix("Aquarea ")
+    for pattern, replacement in _SHORTER_WORDS:
+        name = pattern.sub(replacement, name)
+    return name[:1].upper() + name[1:]
+
+
+def _with_display_names(build: Callable) -> Callable:
+    @wraps(build)
+    def wrapper(*args, **kwargs):
+        result = []
+        for description in build(*args, **kwargs):
+            if getattr(description, "device", None) != DeviceType.HEISHAMON:
+                name = _display_name(getattr(description, "heishamon_topic_id", None), description.name)
+                if name != description.name:
+                    description = replace(description, name=name)
+            result.append(description)
+        return result
+
+    return wrapper
+
+
+build_sensors = _with_display_names(build_sensors)
+build_binary_sensors = _with_display_names(build_binary_sensors)
+build_numbers = _with_display_names(build_numbers)
+build_selects = _with_display_names(build_selects)
+build_switches = _with_display_names(build_switches)

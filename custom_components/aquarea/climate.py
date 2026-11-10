@@ -69,25 +69,25 @@ async def async_setup_entry(
     """Set up HeishaMon climates from config entry."""
     description_zone1_heating = ZoneClimateEntityDescription(
         key=f"{discovery_prefix}main/Z1_Temp",
-        name="Aquarea Zone 1 climate",
+        name="Zone 1 heating",
         zone_id=1,
     )
     zone1_climate_heating = HeishaMonZoneClimate(hass, description_zone1_heating, config_entry, True)
     # this entity is supposed to be temporary until we can implement a unified climate component without bug
     description_zone1_cooling = ZoneClimateEntityDescription(
         key=f"{discovery_prefix}main/Z1_Temp_Cooling",
-        name="Aquarea Zone 1 climate Cooling",
+        name="Zone 1 cooling",
         zone_id=1,
     )
     zone1_climate_cooling = HeishaMonZoneClimate(hass, description_zone1_cooling, config_entry, False)
     description_zone2_heating = ZoneClimateEntityDescription(
-        name="Aquarea Zone 2 climate",
+        name="Zone 2 heating",
         key=f"{discovery_prefix}main/Z2_Temp",
         zone_id=2,
     )
     # this entity is supposed to be temporary until we can implement a unified climate component without bug
     description_zone2_cooling = ZoneClimateEntityDescription(
-        name="Aquarea Zone 2 climate Cooling",
+        name="Zone 2 cooling",
         key=f"{discovery_prefix}main/Z2_Temp_Cooling",
         zone_id=2,
     )
