@@ -15,6 +15,30 @@ Just make sure you have an MQTT integration configured. Heishamon mqtt messages 
 
 ℹ️ By default, all sensors related to less common setups (cooling, buffer, solar or pool) are disabled by default. They can easily enabled when looking at the "Aquarea HeatPump Indoor Unit" device under "entities not shown".
 
+### Entities of optional parts
+
+Entities for optional parts of an installation (DHW tank, buffer tank, solar, bivalent, SG ready, optional PCB, cooling) are disabled by default. The heat pump reports which parts are installed, and the integration follows it. The behaviour is chosen in the options of the integration (Settings > Devices & services > HeishaMon > Configure):
+
+| Option | Part reported as installed | Part reported as not installed |
+|---|---|---|
+| Enable (default) | its entities are enabled | nothing |
+| Unavailable | its entities are enabled | its entities are shown as unavailable |
+| Disable | its entities are enabled | its entities are disabled after 10 minutes |
+
+Entities disabled by hand are never enabled, and an entity enabled again by hand while its part is missing is left alone. Entities are only enabled once HeishaMon has published their topic, so entities unknown to the installed firmware stay disabled. Entities without a matching part (sensor offsets, efficiency stages, anti freeze, defrost signal, ...) are enabled by hand.
+
+### Installer menu settings
+
+Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. TOP170 to TOP196 and SET56 to SET104 need a HeishaMon firmware providing them; they were tested on M series only; may work on other series, not tested there.
+
+These commands change installer settings. Some of them have side effects in the heat pump:
+
+- Buffer tank set to yes without a buffer sensor raises error H43, which stays until it is reset.
+- Defrost signal and bivalent control share one terminal: enabling one disables the other.
+- The water temperature mode (compensation curve / direct) changes the heating and cooling curve values.
+- The heat pump does not check a setting against the part it belongs to (for instance DHW settings without a DHW tank).
+- Internal heater capacity offers 3, 6 and 9 kW whatever the installed heater.
+
 ## Alternatives
 
 If you own Panasonic CZ-TAW1 module and have access to Panasonic smart cloud: use [https://github.com/cjaliaga/home-assistant-aquarea](https://github.com/wpatrik14/home-assistant-aquarea) or https://github.com/ronhks/panasonic-aquarea-smart-cloud-mqtt.

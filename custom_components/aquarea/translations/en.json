@@ -9,5 +9,25 @@
         "description": "All configured!"
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Entities and installation",
+        "description": "The heat pump reports which optional parts are installed (DHW tank, buffer tank, solar, bivalent, SG ready, optional PCB, cooling). Entities belonging to such a part are disabled by default.",
+        "data": {
+          "entity_management": "Entities of optional parts"
+        }
+      }
+    }
+  },
+  "selector": {
+    "entity_management": {
+      "options": {
+        "enable_only": "Enable them once the part is reported as installed",
+        "unavailable": "Also show them as unavailable while the part is not installed",
+        "disable": "Also disable them while the part is not installed (after 10 minutes)"
+      }
+    }
   }
 }

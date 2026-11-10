@@ -12,6 +12,7 @@ from homeassistant.util import slugify
 
 from .definitions import build_switches, HeishaMonSwitchEntityDescription
 from . import build_device_info
+from .features import FeatureGatedEntity
 from .retry_mixin import CommandRetryMixin
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ async def async_setup_entry(
     )
 
 
-class HeishaMonMQTTSwitch(CommandRetryMixin, SwitchEntity):
+class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
     """Representation of a HeishaMon switch that is updated via MQTT."""
 
     entity_description: HeishaMonSwitchEntityDescription
@@ -104,6 +105,7 @@ class HeishaMonMQTTSwitch(CommandRetryMixin, SwitchEntity):
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events."""
+        self._setup_feature_gating()
 
         @callback
         def message_received(message):

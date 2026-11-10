@@ -32,7 +32,7 @@ from homeassistant.components.binary_sensor import (
 )
 
 from .models import HEATPUMP_MODELS, HEATPUMP_MODELS_39
-from .const import DeviceType
+from .const import DeviceType, Feature
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -323,6 +323,14 @@ class HeishaMonEntityDescription:
     # a method called when receiving a new value. With a lot of context. Used to update device info for instance
     on_receive: Callable | None = None
 
+    # installation features this entity belongs to. Such an entity is enabled once
+    # the heat pump reports all of them, see features.py
+    requires: tuple[Feature, ...] = ()
+
+    # topic (without prefix) only published by firmwares knowing this entity,
+    # when its own topic is older than the entity
+    firmware_marker: str | None = None
+
 
 @frozendataclass
 class HeishaMonSensorEntityDescription(
@@ -515,6 +523,244 @@ def guess_shift_or_direct_and_clamp_min_max_values(
         )
 
 
+PARITY_DHW_CAPACITY_MODE = {
+    "0": "Standard",
+    "1": "Variable",
+}
+
+
+def read_parity_dhw_capacity_mode(value: str) -> Optional[str]:
+    return PARITY_DHW_CAPACITY_MODE.get(value, None)
+
+
+def parity_dhw_capacity_mode_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_DHW_CAPACITY_MODE, value)
+
+
+PARITY_ZONE_CONFIGURATION = {
+    "21": "One zone, zone 1 room",
+    "25": "One zone, zone 1 pool",
+    "22": "Two zones, zone 2 room",
+    "38": "Two zones, zone 2 pool",
+}
+
+
+def read_parity_zone_configuration(value: str) -> Optional[str]:
+    return PARITY_ZONE_CONFIGURATION.get(value, None)
+
+
+def parity_zone_configuration_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_ZONE_CONFIGURATION, value)
+
+
+PARITY_DHW_HEATER_TYPE = {
+    "0": "Internal",
+    "1": "External",
+}
+
+
+def read_parity_dhw_heater_type(value: str) -> Optional[str]:
+    return PARITY_DHW_HEATER_TYPE.get(value, None)
+
+
+def parity_dhw_heater_type_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_DHW_HEATER_TYPE, value)
+
+
+PARITY_SG_READY_CONTROL = {
+    "0": "Disabled",
+    "1": "Capacity",
+    "2": "Power consumption",
+}
+
+
+def read_parity_sg_ready_control(value: str) -> Optional[str]:
+    return PARITY_SG_READY_CONTROL.get(value, None)
+
+
+def parity_sg_ready_control_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_SG_READY_CONTROL, value)
+
+
+PARITY_HEAT_COOL_SWITCH = {
+    "0": "Heat",
+    "1": "Cool",
+}
+
+
+def read_parity_heat_cool_switch(value: str) -> Optional[str]:
+    return PARITY_HEAT_COOL_SWITCH.get(value, None)
+
+
+def parity_heat_cool_switch_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_HEAT_COOL_SWITCH, value)
+
+
+PARITY_EXTERNAL_SWITCH = {
+    "0": "Closed",
+    "1": "Open",
+}
+
+
+def read_parity_external_switch(value: str) -> Optional[str]:
+    return PARITY_EXTERNAL_SWITCH.get(value, None)
+
+
+def parity_external_switch_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_EXTERNAL_SWITCH, value)
+
+
+PARITY_BIVALENT_OPERATING_MODE = {
+    "0": "Auto",
+    "1": "SG ready",
+    "2": "Intelligent",
+}
+
+
+def read_parity_bivalent_operating_mode(value: str) -> Optional[str]:
+    return PARITY_BIVALENT_OPERATING_MODE.get(value, None)
+
+
+def parity_bivalent_operating_mode_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_BIVALENT_OPERATING_MODE, value)
+
+
+PARITY_EXTRA_PUMP_USE = {
+    "0": "Not used",
+    "1": "Heating",
+    "2": "DHW",
+}
+
+
+def read_parity_extra_pump_use(value: str) -> Optional[str]:
+    return PARITY_EXTRA_PUMP_USE.get(value, None)
+
+
+def parity_extra_pump_use_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_EXTRA_PUMP_USE, value)
+
+
+PARITY_EXTRA_PUMP_MODE = {
+    "0": "Comfort",
+    "1": "Efficiency",
+}
+
+
+def read_parity_extra_pump_mode(value: str) -> Optional[str]:
+    return PARITY_EXTRA_PUMP_MODE.get(value, None)
+
+
+def parity_extra_pump_mode_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_EXTRA_PUMP_MODE, value)
+
+
+PARITY_INTERNAL_HEATER_CAPACITY = {
+    "3": "3 kW",
+    "6": "6 kW",
+    "9": "9 kW",
+}
+
+
+def read_parity_internal_heater_capacity(value: str) -> Optional[str]:
+    return PARITY_INTERNAL_HEATER_CAPACITY.get(value, None)
+
+
+def parity_internal_heater_capacity_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_INTERNAL_HEATER_CAPACITY, value)
+
+
+PARITY_ZONE_TYPE = {
+    "21": "Room",
+    "25": "Pool",
+}
+
+
+def read_parity_zone_type(value: str) -> Optional[str]:
+    return PARITY_ZONE_TYPE.get(value, None)
+
+
+def parity_zone_type_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_ZONE_TYPE, value)
+
+
+PARITY_WATER_TEMPERATURE_MODE = {
+    "0": "Compensation curve",
+    "1": "Direct",
+}
+
+
+def read_parity_water_temperature_mode(value: str) -> Optional[str]:
+    return PARITY_WATER_TEMPERATURE_MODE.get(value, None)
+
+
+def parity_water_temperature_mode_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_WATER_TEMPERATURE_MODE, value)
+
+
+PARITY_LIQUID_TYPE = {
+    "0": "Water",
+    "1": "Glycol",
+}
+
+
+def read_parity_liquid_type(value: str) -> Optional[str]:
+    return PARITY_LIQUID_TYPE.get(value, None)
+
+
+def parity_liquid_type_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_LIQUID_TYPE, value)
+
+
+PARITY_SOLAR_MODE = {
+    "0": "Disabled",
+    "1": "Buffer",
+    "2": "DHW",
+}
+
+
+def read_parity_solar_mode(value: str) -> Optional[str]:
+    return PARITY_SOLAR_MODE.get(value, None)
+
+
+def parity_solar_mode_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_SOLAR_MODE, value)
+
+
+PARITY_ZONE_SENSOR_TYPE = {
+    "0": "Water Temperature",
+    "1": "External Thermostat",
+    "2": "Internal Thermostat",
+    "3": "Thermistor",
+}
+
+
+def read_parity_zone_sensor_type(value: str) -> Optional[str]:
+    return PARITY_ZONE_SENSOR_TYPE.get(value, None)
+
+
+def parity_zone_sensor_type_to_mqtt(value: str) -> Optional[str]:
+    return lookup_by_value(PARITY_ZONE_SENSOR_TYPE, value)
+
+
+def zone_type_to_mqtt(value: str) -> Optional[str]:
+    """SetZoneType takes 0 (room) or 1 (pool), Zone_Configuration reports 21 or 25."""
+    return {"Room": "0", "Pool": "1"}.get(value, None)
+
+
+def read_optional_int(value: str) -> Optional[int]:
+    """Read an integer topic reporting -1 when the heat pump has no value."""
+    number = int(float(value))
+    return None if number == -1 else number
+
+
+def one_decimal_to_mqtt(value: float) -> str:
+    return f"{float(value):.1f}"
+
+
+def integer_to_mqtt(value: float) -> str:
+    return str(int(round(float(value))))
+
+
 def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
     numbers = [
         HeishaMonNumberEntityDescription(
@@ -538,6 +784,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET6",  # also TOP28
+            requires=(Feature.COOLING,),
             key=f"{mqtt_prefix}main/Z1_Cool_Request_Temp",
             command_topic=f"{mqtt_prefix}commands/SetZ1CoolRequestTemperature",
             # it can be relative (-5 -> +5, or absolute [20, ..[)
@@ -597,6 +844,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET11",  # TOP9
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Target_Temp",
             command_topic=f"{mqtt_prefix}commands/SetDHWTemp",
             name="DHW Target Temperature",
@@ -635,6 +883,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET19",  # also corresponds to TOP24
+            requires=(Feature.COOLING,),
             key=f"{mqtt_prefix}main/Cool_Delta",
             command_topic=f"{mqtt_prefix}commands/SetFloorCoolDelta",
             name="Aquarea Room Cooling delta",
@@ -649,6 +898,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET20",  # also corresponds to TOP22
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Heat_Delta",
             command_topic=f"{mqtt_prefix}commands/SetDHWHeatDelta",
             name="Aquarea DHW heating delta",
@@ -704,6 +954,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET27",  # also corresponds to TOP113
+            requires=(Feature.BUFFER,),
             key=f"{mqtt_prefix}main/Buffer_Tank_Delta",
             command_topic=f"{mqtt_prefix}commands/SetBufferDelta",
             name="Aquarea Buffer tank delta",
@@ -761,6 +1012,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET36",  # corresponds to TOP131
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Start_Temp",
             command_topic=f"{mqtt_prefix}commands/SetBivalentStartTemp",
             retain=True,
@@ -778,6 +1030,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET37",  # corresponds to TOP134
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Start_Temp",
             command_topic=f"{mqtt_prefix}commands/SetBivalentAStartTemp",
             name="Aquarea Bivalent Advanced Start Temp",
@@ -794,6 +1047,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET38",  # corresponds to TOP135
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Stop_Temp",
             command_topic=f"{mqtt_prefix}commands/SetBivalentAStopTemp",
             name="Aquarea Bivalent Advanced Stop Temp",
@@ -807,6 +1061,562 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             state_to_mqtt=int,
             entity_registry_enabled_default=True,
             initial_value=0,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET49",
+            key=f"{mqtt_prefix}main/Sterilization_Temp",
+            command_topic=f"{mqtt_prefix}commands/SetSterilizationTemp",
+            name="Aquarea Sterilization temperature",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=55,
+            native_max_value=75,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.DHW,),
+            firmware_marker="main/DHW_Heatup_Max_Time",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET50",
+            key=f"{mqtt_prefix}main/Sterilization_Max_Time",
+            command_topic=f"{mqtt_prefix}commands/SetSterilizationMaxTime",
+            name="Aquarea Sterilization maximum time",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=5,
+            native_max_value=60,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.DHW,),
+            firmware_marker="main/DHW_Heatup_Max_Time",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET51",
+            key=f"{mqtt_prefix}main/Heat_To_Cool_Temp",
+            command_topic=f"{mqtt_prefix}commands/SetHeatToCoolTemp",
+            name="Aquarea Outdoor temperature heat to cool",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=-127,
+            native_max_value=127,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.COOLING,),
+            firmware_marker="main/DHW_Heatup_Max_Time",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET52",
+            key=f"{mqtt_prefix}main/Cool_To_Heat_Temp",
+            command_topic=f"{mqtt_prefix}commands/SetCoolToHeatTemp",
+            name="Aquarea Outdoor temperature cool to heat",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=-127,
+            native_max_value=127,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.COOLING,),
+            firmware_marker="main/DHW_Heatup_Max_Time",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET53",
+            key=f"{mqtt_prefix}main/Room_Operation_Max_Time",
+            command_topic=f"{mqtt_prefix}commands/SetRoomOperationMaxTime",
+            name="Aquarea Room operation maximum time",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=30,
+            native_max_value=7620,
+            native_step=30,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET54",
+            key=f"{mqtt_prefix}main/DHW_Heatup_Max_Time",
+            command_topic=f"{mqtt_prefix}commands/SetDHWHeatupMaxTime",
+            name="Aquarea DHW heat-up maximum time",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=1,
+            native_max_value=254,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET57",
+            key=f"{mqtt_prefix}main/Pool_Delta",
+            command_topic=f"{mqtt_prefix}commands/SetPoolDelta",
+            name="Aquarea Pool delta",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=0,
+            native_max_value=10,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET61",
+            key=f"{mqtt_prefix}main/Heating_On_Outdoor_Temp",
+            command_topic=f"{mqtt_prefix}commands/SetHeatingOnOutdoorTemp",
+            name="Aquarea Outdoor temperature heating on",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=5,
+            native_max_value=34,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET62",
+            key=f"{mqtt_prefix}main/Heating_On_Delay",
+            command_topic=f"{mqtt_prefix}commands/SetHeatingOnDelay",
+            name="Aquarea Heating on delay",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=30,
+            native_max_value=1440,
+            native_step=30,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET63",
+            key=f"{mqtt_prefix}main/DHW_Booster_Delay",
+            command_topic=f"{mqtt_prefix}commands/SetDHWBoosterDelay",
+            name="Aquarea DHW booster heater delay",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=20,
+            native_max_value=180,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.DHW,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET64",
+            key=f"{mqtt_prefix}main/Efficiency_Stage1_Time",
+            command_topic=f"{mqtt_prefix}commands/SetEfficiencyStage1Time",
+            name="Aquarea Efficiency stage 1 time",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=0,
+            native_max_value=60,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET65",
+            key=f"{mqtt_prefix}main/Efficiency_Stage2_Time",
+            command_topic=f"{mqtt_prefix}commands/SetEfficiencyStage2Time",
+            name="Aquarea Efficiency stage 2 time",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=0,
+            native_max_value=60,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET66",
+            key=f"{mqtt_prefix}main/Efficiency_Stage3_Time",
+            command_topic=f"{mqtt_prefix}commands/SetEfficiencyStage3Time",
+            name="Aquarea Efficiency stage 3 time",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=0,
+            native_max_value=30,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET67",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Remote_Th1",
+            command_topic=f"{mqtt_prefix}commands/SetSensorOffsetRemoteTh1",
+            name="Aquarea Sensor offset remote thermistor 1",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=-3,
+            native_max_value=3,
+            native_step=0.5,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET68",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Outdoor",
+            command_topic=f"{mqtt_prefix}commands/SetSensorOffsetOutdoor",
+            name="Aquarea Sensor offset outdoor",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=-3,
+            native_max_value=3,
+            native_step=0.5,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET72",
+            key=f"{mqtt_prefix}main/Bivalent_Advanced_Start_Delay",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentAPStartDelay",
+            name="Aquarea Bivalent advanced start delay",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=5,
+            native_max_value=250,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.BIVALENT,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET73",
+            key=f"{mqtt_prefix}main/Bivalent_Advanced_Stop_Delay",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentAPStopDelay",
+            name="Aquarea Bivalent advanced stop delay",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.DURATION,
+            native_unit_of_measurement="min",
+            native_min_value=5,
+            native_max_value=250,
+            native_step=5,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.BIVALENT,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET77",
+            key=f"{mqtt_prefix}main/Solar_On_Delta",
+            command_topic=f"{mqtt_prefix}commands/SetSolarOnDelta",
+            name="Aquarea Solar delta on",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=5,
+            native_max_value=15,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.SOLAR,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET78",
+            key=f"{mqtt_prefix}main/Solar_Off_Delta",
+            command_topic=f"{mqtt_prefix}commands/SetSolarOffDelta",
+            name="Aquarea Solar delta off",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=2,
+            native_max_value=10,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.SOLAR,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET79",
+            key=f"{mqtt_prefix}main/Solar_Frost_Protection",
+            command_topic=f"{mqtt_prefix}commands/SetSolarFrostProtection",
+            name="Aquarea Solar frost protection temperature",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=-20,
+            native_max_value=10,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.SOLAR,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET80",
+            key=f"{mqtt_prefix}main/Room_Holiday_Shift_Temp",
+            command_topic=f"{mqtt_prefix}commands/SetRoomHolidayShiftTemp",
+            name="Aquarea Room heating holiday shift temperature",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=-15,
+            native_max_value=15,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET88",
+            key=f"{mqtt_prefix}main/Solar_High_Limit",
+            command_topic=f"{mqtt_prefix}commands/SetSolarHighLimit",
+            name="Aquarea Solar max temperature limit",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=70,
+            native_max_value=90,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.SOLAR,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET90",
+            key=f"{mqtt_prefix}main/SG_Ready_1_DHW_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyDHWPower1",
+            name="Aquarea SG ready 1 DHW power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY, Feature.DHW,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET91",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Heat_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyHeatPower1",
+            name="Aquarea SG ready 1 heating power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET92",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Cool_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyCoolPower1",
+            name="Aquarea SG ready 1 cooling power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET93",
+            key=f"{mqtt_prefix}main/SG_Ready_2_DHW_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyDHWPower2",
+            name="Aquarea SG ready 2 DHW power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY, Feature.DHW,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET94",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Heat_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyHeatPower2",
+            name="Aquarea SG ready 2 heating power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET95",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Cool_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyCoolPower2",
+            name="Aquarea SG ready 2 cooling power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET96",
+            key=f"{mqtt_prefix}main/SG_Ready_Stop_Power",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyStopPower",
+            name="Aquarea SG ready stop power",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.POWER,
+            native_unit_of_measurement="kW",
+            native_min_value=0.5,
+            native_max_value=10,
+            native_step=0.1,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.SG_READY,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET97",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Cool_Capacity",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyCoolCapacity1",
+            name="Aquarea SG ready 1 cooling offset",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=-15,
+            native_max_value=0,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET98",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Cool_Capacity",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyCoolCapacity2",
+            name="Aquarea SG ready 2 cooling offset",
+            entity_category=EntityCategory.CONFIG,
+            device_class=NumberDeviceClass.TEMPERATURE,
+            native_unit_of_measurement="°C",
+            native_min_value=-15,
+            native_max_value=0,
+            native_step=1,
+            state=float,
+            state_to_mqtt=integer_to_mqtt,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET99",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Return",
+            command_topic=f"{mqtt_prefix}commands/SetSensorOffsetReturn",
+            name="Aquarea Sensor offset return",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=-3,
+            native_max_value=3,
+            native_step=0.5,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET103",
+            key=f"{mqtt_prefix}main/Sensor_Offset_DHW_Tank",
+            command_topic=f"{mqtt_prefix}commands/SetSensorOffsetDhwTank",
+            name="Aquarea Sensor offset DHW tank",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=-3,
+            native_max_value=3,
+            native_step=0.5,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            requires=(Feature.DHW,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonNumberEntityDescription(
+            heishamon_topic_id="SET104",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Flow",
+            command_topic=f"{mqtt_prefix}commands/SetSensorOffsetFlow",
+            name="Aquarea Sensor offset flow",
+            entity_category=EntityCategory.CONFIG,
+            native_unit_of_measurement="K",
+            native_min_value=-3,
+            native_max_value=3,
+            native_step=0.5,
+            state=float,
+            state_to_mqtt=one_decimal_to_mqtt,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
         ),
     ]
     topic_ids = {
@@ -931,6 +1741,7 @@ def build_selects(mqtt_prefix: str) -> list[HeishaMonSelectEntityDescription]:
         ),
         HeishaMonSelectEntityDescription(
             heishamon_topic_id="SET35",  # also TOP130
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Mode",
             command_topic=f"{mqtt_prefix}commands/SetBivalentMode",
             name="Aquarea Bivalent Mode",
@@ -950,6 +1761,7 @@ def build_selects(mqtt_prefix: str) -> list[HeishaMonSelectEntityDescription]:
         ),
         HeishaMonSelectEntityDescription(
             heishamon_topic_id="SET40",  # corresponds to TOP140
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/Smart_DHW",
             command_topic=f"{mqtt_prefix}commands/SetSmartDHW",
             name="Aquarea Smart DHW",
@@ -1004,6 +1816,7 @@ def build_selects(mqtt_prefix: str) -> list[HeishaMonSelectEntityDescription]:
         ),
         HeishaMonSelectEntityDescription(
             heishamon_topic_id="SET44", # corresponds to TOP58
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Heater_State",
             command_topic=f"{mqtt_prefix}commands/SetDHWHeaterState",
             name="Aquarea DHW Heater State",
@@ -1023,6 +1836,156 @@ def build_selects(mqtt_prefix: str) -> list[HeishaMonSelectEntityDescription]:
             state=read_heater_state,
             state_to_mqtt=heater_state_to_mqtt,
             options=list(HEATER_STATE.values()),
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET70",
+            key=f"{mqtt_prefix}main/Bivalent_Operating_Mode",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentOperatingMode",
+            name="Aquarea Bivalent operating mode",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_bivalent_operating_mode,
+            state_to_mqtt=parity_bivalent_operating_mode_to_mqtt,
+            options=list(PARITY_BIVALENT_OPERATING_MODE.values()),
+            requires=(Feature.BIVALENT,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET74",
+            key=f"{mqtt_prefix}main/Extra_Pump_Use",
+            command_topic=f"{mqtt_prefix}commands/SetExtraPump",
+            name="Aquarea Extra pump use",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_extra_pump_use,
+            state_to_mqtt=parity_extra_pump_use_to_mqtt,
+            options=list(PARITY_EXTRA_PUMP_USE.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET75",
+            key=f"{mqtt_prefix}main/Extra_Pump_Mode",
+            command_topic=f"{mqtt_prefix}commands/SetExtraPumpMode",
+            name="Aquarea Extra pump mode",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_extra_pump_mode,
+            state_to_mqtt=parity_extra_pump_mode_to_mqtt,
+            options=list(PARITY_EXTRA_PUMP_MODE.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET76",
+            key=f"{mqtt_prefix}main/Internal_Heater_Capacity",
+            command_topic=f"{mqtt_prefix}commands/SetInternalHeaterCapacity",
+            name="Aquarea Internal heater capacity",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_internal_heater_capacity,
+            state_to_mqtt=parity_internal_heater_capacity_to_mqtt,
+            options=list(PARITY_INTERNAL_HEATER_CAPACITY.values()),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET81",
+            key=f"{mqtt_prefix}main/Zone_Configuration",
+            command_topic=f"{mqtt_prefix}commands/SetZoneType",
+            name="Aquarea Zone 1 type",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_zone_type,
+            state_to_mqtt=zone_type_to_mqtt,
+            options=list(PARITY_ZONE_TYPE.values()),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET82",
+            key=f"{mqtt_prefix}main/Heating_Mode",
+            command_topic=f"{mqtt_prefix}commands/SetHeatingWaterMode",
+            name="Aquarea Heating water temperature mode",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_water_temperature_mode,
+            state_to_mqtt=parity_water_temperature_mode_to_mqtt,
+            options=list(PARITY_WATER_TEMPERATURE_MODE.values()),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET83",
+            key=f"{mqtt_prefix}main/Cooling_Mode",
+            command_topic=f"{mqtt_prefix}commands/SetCoolingWaterMode",
+            name="Aquarea Cooling water temperature mode",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_water_temperature_mode,
+            state_to_mqtt=parity_water_temperature_mode_to_mqtt,
+            options=list(PARITY_WATER_TEMPERATURE_MODE.values()),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET84",
+            key=f"{mqtt_prefix}main/Liquid_Type",
+            command_topic=f"{mqtt_prefix}commands/SetLiquidType",
+            name="Aquarea Liquid type",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_liquid_type,
+            state_to_mqtt=parity_liquid_type_to_mqtt,
+            options=list(PARITY_LIQUID_TYPE.values()),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET85",
+            key=f"{mqtt_prefix}main/DHW_Heater_Type",
+            command_topic=f"{mqtt_prefix}commands/SetDHWHeaterType",
+            name="Aquarea DHW heater type",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_dhw_heater_type,
+            state_to_mqtt=parity_dhw_heater_type_to_mqtt,
+            options=list(PARITY_DHW_HEATER_TYPE.values()),
+            requires=(Feature.DHW,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET87",
+            key=f"{mqtt_prefix}main/Solar_Mode",
+            command_topic=f"{mqtt_prefix}commands/SetSolarMode",
+            name="Aquarea Solar mode",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_solar_mode,
+            state_to_mqtt=parity_solar_mode_to_mqtt,
+            options=list(PARITY_SOLAR_MODE.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET89",
+            key=f"{mqtt_prefix}main/SG_Ready_Control",
+            command_topic=f"{mqtt_prefix}commands/SetSGReadyMode",
+            name="Aquarea SG ready mode",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_sg_ready_control,
+            state_to_mqtt=parity_sg_ready_control_to_mqtt,
+            options=list(PARITY_SG_READY_CONTROL.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSelectEntityDescription(
+            heishamon_topic_id="SET100",
+            key=f"{mqtt_prefix}main/Z1_Sensor_Settings",
+            command_topic=f"{mqtt_prefix}commands/SetZ1SensorSettings",
+            name="Aquarea Zone 1 sensor type",
+            entity_category=EntityCategory.CONFIG,
+            state=read_parity_zone_sensor_type,
+            state_to_mqtt=parity_zone_sensor_type_to_mqtt,
+            options=list(PARITY_ZONE_SENSOR_TYPE.values()),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
         ),
     ]
 
@@ -1060,6 +2023,7 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
         ),
         HeishaMonSwitchEntityDescription(
             heishamon_topic_id="SET10",  # also corresponds to TOP2
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/Force_DHW_State",
             command_topic=f"{mqtt_prefix}commands/SetForceDHW",
             name="Aquarea Force DHW Mode",
@@ -1076,6 +2040,7 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
         ),
         HeishaMonSwitchEntityDescription(
             heishamon_topic_id="SET13",  # corresponds to TOP69
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/Sterilization_State",
             command_topic=f"{mqtt_prefix}commands/SetForceSterilization",
             name="Aquarea Force Sterilization",
@@ -1126,6 +2091,7 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
         ),
         HeishaMonSwitchEntityDescription(
             heishamon_topic_id="SET31",  # corresponds to TOP121
+            requires=(Feature.OPTIONAL_PCB,),
             key=f"{mqtt_prefix}main/External_Error_Signal",
             command_topic=f"{mqtt_prefix}commands/SetExternalError",
             name="Aquarea External Error Signal",
@@ -1135,6 +2101,7 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
         ),
         HeishaMonSwitchEntityDescription(
             heishamon_topic_id="SET32",  # corresponds to TOP122
+            requires=(Feature.OPTIONAL_PCB,),
             key=f"{mqtt_prefix}main/External_Compressor_Control",
             command_topic=f"{mqtt_prefix}commands/SetExternalCompressorControl",
             name="Aquarea External Compressor control",
@@ -1154,6 +2121,7 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
         ),
         HeishaMonSwitchEntityDescription(
             heishamon_topic_id="SET33",  # corresponds to TOP120
+            requires=(Feature.OPTIONAL_PCB,),
             key=f"{mqtt_prefix}main/External_Heat_Cool_Control",
             command_topic=f"{mqtt_prefix}commands/SetExternalHeatCoolControl",
             name="Aquarea External Heat Cool control",
@@ -1195,6 +2163,97 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
             payload_off="off",
             entity_registry_enabled_default=False,  # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
         ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET55",
+            key=f"{mqtt_prefix}main/Quiet_Mode_Schedule",
+            command_topic=f"{mqtt_prefix}commands/SetQuietModeSchedule",
+            name="Aquarea Quiet mode schedule",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            firmware_marker="main/DHW_Heatup_Max_Time",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET56",
+            key=f"{mqtt_prefix}main/Anti_Freeze_Mode",
+            command_topic=f"{mqtt_prefix}commands/SetAntiFreezeMode",
+            name="Aquarea Anti freeze mode",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET58",
+            key=f"{mqtt_prefix}main/Demand_Control",
+            command_topic=f"{mqtt_prefix}commands/SetDemandControlEnable",
+            name="Aquarea Demand control",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            requires=(Feature.OPTIONAL_PCB,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET59",
+            key=f"{mqtt_prefix}main/DHW_Defrost",
+            command_topic=f"{mqtt_prefix}commands/SetDHWDefrost",
+            name="Aquarea DHW defrost",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            requires=(Feature.DHW,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET60",
+            key=f"{mqtt_prefix}main/Static_Pressure",
+            command_topic=f"{mqtt_prefix}commands/SetStaticPressure",
+            name="Aquarea Static pressure",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET69",
+            key=f"{mqtt_prefix}main/Bivalent_Advanced_Heat",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentAPHeat",
+            name="Aquarea Bivalent advanced heat",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            requires=(Feature.BIVALENT,),
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET71",
+            key=f"{mqtt_prefix}main/Bivalent_External_Pump",
+            command_topic=f"{mqtt_prefix}commands/SetBivalentExternalPump",
+            name="Aquarea Bivalent external pump",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            requires=(Feature.BIVALENT,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET86",
+            key=f"{mqtt_prefix}main/DHW_Installed",
+            command_topic=f"{mqtt_prefix}commands/SetDHWInstalled",
+            name="Aquarea DHW tank",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            firmware_marker="main/Static_Pressure",
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSwitchEntityDescription(
+            heishamon_topic_id="SET102",
+            key=f"{mqtt_prefix}main/Defrost_Signal",
+            command_topic=f"{mqtt_prefix}commands/SetDefrostSignal",
+            name="Aquarea Defrost signal",
+            entity_category=EntityCategory.CONFIG,
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
     ]
 
 
@@ -1228,6 +2287,7 @@ def build_binary_sensors(
         # deprecated since we have a switch now
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP58",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Heater_State",
             name="Aquarea Tank Heater Enabled",
             state=bit_to_bool,
@@ -1288,6 +2348,7 @@ def build_binary_sensors(
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP132",
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Heat",
             name="Aquarea Bivalent Advanced Heat",
             state=read_enabled_disabled,
@@ -1295,6 +2356,7 @@ def build_binary_sensors(
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP133",
+            requires=(Feature.BIVALENT, Feature.DHW,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_DHW",
             name="Aquarea Bivalent Advanced DHW",
             state=read_enabled_disabled,
@@ -1353,6 +2415,108 @@ def build_binary_sensors(
             state=bit_to_bool,
             device_class=BinarySensorDeviceClass.PROBLEM,
             entity_registry_enabled_default=False,  # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP144",
+            key=f"{mqtt_prefix}main/Dry_Concrete_State",
+            name="Aquarea Dry concrete",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP150",
+            key=f"{mqtt_prefix}main/Demand_Control",
+            name="Aquarea Demand control enabled",
+            state=bit_to_bool,
+            requires=(Feature.OPTIONAL_PCB,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP151",
+            key=f"{mqtt_prefix}main/DHW_Defrost",
+            name="Aquarea DHW defrost",
+            state=bit_to_bool,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP160",
+            key=f"{mqtt_prefix}main/Quiet_Mode_Actual_State",
+            name="Aquarea Quiet mode active",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP161",
+            key=f"{mqtt_prefix}main/Powerful_Mode_Actual_State",
+            name="Aquarea Powerful mode active",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP164",
+            key=f"{mqtt_prefix}main/Bivalent_Boiler_Contact_State",
+            name="Aquarea Bivalent boiler contact",
+            state=bit_to_bool,
+            requires=(Feature.BIVALENT,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP165",
+            key=f"{mqtt_prefix}main/Z2_Active",
+            name="Aquarea Zone 2 active",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP166",
+            key=f"{mqtt_prefix}main/Z1_Active",
+            name="Aquarea Zone 1 active",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP167",
+            key=f"{mqtt_prefix}main/Backup_Heater_Enable",
+            name="Aquarea Backup heater enabled",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP168",
+            key=f"{mqtt_prefix}main/Cooling_Enable",
+            name="Aquarea Cooling enabled",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP170",
+            key=f"{mqtt_prefix}main/Static_Pressure",
+            name="Aquarea Static pressure",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP179",
+            key=f"{mqtt_prefix}main/Anti_Stick_Mode",
+            name="Aquarea Anti-stick mode",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP181",
+            key=f"{mqtt_prefix}main/Bivalent_External_Pump",
+            name="Aquarea Bivalent external pump",
+            state=bit_to_bool,
+            requires=(Feature.BIVALENT,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP194",
+            key=f"{mqtt_prefix}main/Defrost_Signal",
+            name="Aquarea Defrost signal",
+            state=bit_to_bool,
+            entity_registry_enabled_default=False,
         ),
     ]
 
@@ -1583,6 +2747,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP10",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Temp",
             name="Aquarea Tank Actual Tank Temperature",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -1684,6 +2849,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP24",
+            requires=(Feature.COOLING,),
             key=f"{mqtt_prefix}main/Cool_Delta",
             state_class=SensorStateClass.MEASUREMENT,
             name="Aquarea Cool delta",
@@ -1694,6 +2860,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP25",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Holiday_Shift_Temp",
             state_class=SensorStateClass.MEASUREMENT,
             name="Aquarea DHW Holiday shift temperature",
@@ -1831,6 +2998,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP46",
+            requires=(Feature.BUFFER,),
             key=f"{mqtt_prefix}main/Buffer_Temp",
             name="Aquarea Actual Buffer temperature",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -1841,6 +3009,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP47",
+            requires=(Feature.SOLAR,),
             key=f"{mqtt_prefix}main/Solar_Temp",
             name="Aquarea Actual Solar temperature",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -1996,6 +3165,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP70",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/Sterilization_Temp",
             name="Aquarea Sterilization Temperature",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -2005,6 +3175,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP71",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/Sterilization_Max_Time",
             name="Aquarea Sterilization maximum time",
             device_class=SensorDeviceClass.DURATION,
@@ -2031,6 +3202,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP79",
+            requires=(Feature.COOLING,),
             key=f"{mqtt_prefix}main/Heat_To_Cool_Temp",
             name="Aquarea Outdoor temperature heat->cool threshold",  # when in "auto" mode
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -2041,6 +3213,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP80",
+            requires=(Feature.COOLING,),
             key=f"{mqtt_prefix}main/Cool_To_Heat_Temp",
             name="Aquarea Outdoor temperature cool->heat threshold",  # when in "auto" mode
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -2051,6 +3224,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP81",
+            requires=(Feature.COOLING,),
             key=f"{mqtt_prefix}main/Cooling_Mode",
             name="Aquarea Cooling Mode",
             state=read_heating_mode,
@@ -2069,6 +3243,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP91",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/DHW_Heater_Operations_Hours",
             name="Aquarea Electric heater operating time for DHW",
             device_class=SensorDeviceClass.DURATION,
@@ -2091,6 +3266,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP101",
+            requires=(Feature.OPTIONAL_PCB,),
             key=f"{mqtt_prefix}main/Solar_Mode",
             name="Aquarea Solar Mode",
             state=read_solar_mode,
@@ -2098,6 +3274,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP102",
+            requires=(Feature.SOLAR,),
             key=f"{mqtt_prefix}main/Solar_On_Delta",
             name="Aquarea Solar delta on",
             device_class=SensorDeviceClass.TEMPERATURE_DELTA,
@@ -2108,6 +3285,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP103",
+            requires=(Feature.SOLAR,),
             key=f"{mqtt_prefix}main/Solar_Off_Delta",
             name="Aquarea Solar delta off",
             device_class=SensorDeviceClass.TEMPERATURE_DELTA,
@@ -2118,6 +3296,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP104",
+            requires=(Feature.SOLAR,),
             key=f"{mqtt_prefix}main/Solar_Frost_Protection",
             name="Aquarea Solar frost protection temperature",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -2128,6 +3307,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP105",
+            requires=(Feature.SOLAR,),
             key=f"{mqtt_prefix}main/Solar_High_Limit",
             name="Aquarea Solar max temperature limit",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -2165,6 +3345,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP113",
+            requires=(Feature.BUFFER,),
             key=f"{mqtt_prefix}main/Buffer_Tank_Delta",
             state_class=SensorStateClass.MEASUREMENT,
             name="Aquarea Buffer tank delta",
@@ -2233,6 +3414,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP131",
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Start_Temp",
             state_class=SensorStateClass.MEASUREMENT,
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -2244,6 +3426,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP136",
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Start_Delay",
             state_class=SensorStateClass.MEASUREMENT,
             device_class=SensorDeviceClass.DURATION,
@@ -2255,6 +3438,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP137",
+            requires=(Feature.BIVALENT,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_Stop_Delay",
             state_class=SensorStateClass.MEASUREMENT,
             device_class=SensorDeviceClass.DURATION,
@@ -2266,6 +3450,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP138",
+            requires=(Feature.BIVALENT, Feature.DHW,),
             key=f"{mqtt_prefix}main/Bivalent_Advanced_DHW_Delay",
             state_class=SensorStateClass.MEASUREMENT,
             device_class=SensorDeviceClass.DURATION,
@@ -2286,6 +3471,7 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
         ),
         HeishaMonSensorEntityDescription(
             heishamon_topic_id="TOP140",
+            requires=(Feature.DHW,),
             key=f"{mqtt_prefix}main/Smart_DHW",
             name="Aquarea Smart DHW",
             state=read_smart_dhw,
@@ -2482,6 +3668,372 @@ def build_sensors(mqtt_prefix: str) -> list[HeishaMonSensorEntityDescription]:
             device_class=SensorDeviceClass.ENUM,
             options=["Off", "Decrease", "Increase"],
             entity_registry_enabled_default=False,  # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP145",
+            key=f"{mqtt_prefix}main/DHW_Capacity_Mode",
+            name="Aquarea DHW capacity mode",
+            state=read_parity_dhw_capacity_mode,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_DHW_CAPACITY_MODE.values()),
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP146",
+            key=f"{mqtt_prefix}main/Zone_Configuration",
+            name="Aquarea Zone configuration",
+            state=read_parity_zone_configuration,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_ZONE_CONFIGURATION.values()),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP147",
+            key=f"{mqtt_prefix}main/Internal_Heater_Capacity",
+            name="Aquarea Internal heater capacity",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=read_optional_int,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP148",
+            key=f"{mqtt_prefix}main/DHW_Heater_Type",
+            name="Aquarea DHW heater type",
+            state=read_parity_dhw_heater_type,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_DHW_HEATER_TYPE.values()),
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP149",
+            key=f"{mqtt_prefix}main/SG_Ready_Control",
+            name="Aquarea SG ready control",
+            state=read_parity_sg_ready_control,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_SG_READY_CONTROL.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP152",
+            key=f"{mqtt_prefix}main/Dry_Concrete_Target_Temp",
+            name="Aquarea Dry concrete target temperature",
+            native_unit_of_measurement="°C",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP153",
+            key=f"{mqtt_prefix}main/Pool_Delta",
+            name="Aquarea Pool delta",
+            native_unit_of_measurement="K",
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP154",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Heat_Capacity",
+            name="Aquarea SG ready 1 heating capacity",
+            native_unit_of_measurement="%",
+            state=float,
+            requires=(Feature.SG_READY,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP155",
+            key=f"{mqtt_prefix}main/SG_Ready_1_DHW_Capacity",
+            name="Aquarea SG ready 1 DHW capacity",
+            native_unit_of_measurement="%",
+            state=float,
+            requires=(Feature.SG_READY, Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP156",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Heat_Capacity",
+            name="Aquarea SG ready 2 heating capacity",
+            native_unit_of_measurement="%",
+            state=float,
+            requires=(Feature.SG_READY,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP157",
+            key=f"{mqtt_prefix}main/SG_Ready_2_DHW_Capacity",
+            name="Aquarea SG ready 2 DHW capacity",
+            native_unit_of_measurement="%",
+            state=float,
+            requires=(Feature.SG_READY, Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP158",
+            key=f"{mqtt_prefix}main/Room_Operation_Max_Time",
+            name="Aquarea Room operation maximum time",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP159",
+            key=f"{mqtt_prefix}main/DHW_Heatup_Max_Time",
+            name="Aquarea DHW heat-up maximum time",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP162",
+            key=f"{mqtt_prefix}main/Heat_Cool_Switch_State",
+            name="Aquarea Heat/cool switch state",
+            state=read_parity_heat_cool_switch,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_HEAT_COOL_SWITCH.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP163",
+            key=f"{mqtt_prefix}main/External_Switch_State",
+            name="Aquarea External switch state",
+            state=read_parity_external_switch,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_EXTERNAL_SWITCH.values()),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP169",
+            key=f"{mqtt_prefix}main/Heat_Request_Temp_With_Buffer",
+            name="Aquarea Heat request temperature with buffer",
+            native_unit_of_measurement="°C",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state=float,
+            requires=(Feature.BUFFER,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP171",
+            key=f"{mqtt_prefix}main/Heating_On_Outdoor_Temp",
+            name="Aquarea Outdoor temperature heating on",
+            native_unit_of_measurement="°C",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP172",
+            key=f"{mqtt_prefix}main/Heating_On_Delay",
+            name="Aquarea Heating on delay",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP173",
+            key=f"{mqtt_prefix}main/DHW_Booster_Delay",
+            name="Aquarea DHW booster heater delay",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP174",
+            key=f"{mqtt_prefix}main/Efficiency_Stage1_Time",
+            name="Aquarea Efficiency stage 1 time",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP175",
+            key=f"{mqtt_prefix}main/Efficiency_Stage2_Time",
+            name="Aquarea Efficiency stage 2 time",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP176",
+            key=f"{mqtt_prefix}main/Efficiency_Stage3_Time",
+            name="Aquarea Efficiency stage 3 time",
+            native_unit_of_measurement="min",
+            device_class=SensorDeviceClass.DURATION,
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP177",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Remote_Th1",
+            name="Aquarea Sensor offset remote thermistor 1",
+            native_unit_of_measurement="K",
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP178",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Outdoor",
+            name="Aquarea Sensor offset outdoor",
+            native_unit_of_measurement="K",
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP180",
+            key=f"{mqtt_prefix}main/Bivalent_Operating_Mode",
+            name="Aquarea Bivalent operating mode",
+            state=read_parity_bivalent_operating_mode,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_BIVALENT_OPERATING_MODE.values()),
+            requires=(Feature.BIVALENT,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP182",
+            key=f"{mqtt_prefix}main/Extra_Pump_Use",
+            name="Aquarea Extra pump use",
+            state=read_parity_extra_pump_use,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_EXTRA_PUMP_USE.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP183",
+            key=f"{mqtt_prefix}main/Extra_Pump_Mode",
+            name="Aquarea Extra pump mode",
+            state=read_parity_extra_pump_mode,
+            device_class=SensorDeviceClass.ENUM,
+            options=list(PARITY_EXTRA_PUMP_MODE.values()),
+            requires=(Feature.OPTIONAL_PCB,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP184",
+            key=f"{mqtt_prefix}main/SG_Ready_1_DHW_Power",
+            name="Aquarea SG ready 1 DHW power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY, Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP185",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Heat_Power",
+            name="Aquarea SG ready 1 heating power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP186",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Cool_Power",
+            name="Aquarea SG ready 1 cooling power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP187",
+            key=f"{mqtt_prefix}main/SG_Ready_2_DHW_Power",
+            name="Aquarea SG ready 2 DHW power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY, Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP188",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Heat_Power",
+            name="Aquarea SG ready 2 heating power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP189",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Cool_Power",
+            name="Aquarea SG ready 2 cooling power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP190",
+            key=f"{mqtt_prefix}main/SG_Ready_Stop_Power",
+            name="Aquarea SG ready stop power",
+            native_unit_of_measurement="kW",
+            device_class=SensorDeviceClass.POWER,
+            state=float,
+            requires=(Feature.SG_READY,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP191",
+            key=f"{mqtt_prefix}main/SG_Ready_1_Cool_Capacity",
+            name="Aquarea SG ready 1 cooling offset",
+            native_unit_of_measurement="°C",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state=float,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP192",
+            key=f"{mqtt_prefix}main/SG_Ready_2_Cool_Capacity",
+            name="Aquarea SG ready 2 cooling offset",
+            native_unit_of_measurement="°C",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state=float,
+            requires=(Feature.SG_READY, Feature.COOLING,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP193",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Return",
+            name="Aquarea Sensor offset return",
+            native_unit_of_measurement="K",
+            state=float,
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP195",
+            key=f"{mqtt_prefix}main/Sensor_Offset_DHW_Tank",
+            name="Aquarea Sensor offset DHW tank",
+            native_unit_of_measurement="K",
+            state=float,
+            requires=(Feature.DHW,),
+            entity_registry_enabled_default=False,
+        ),
+        HeishaMonSensorEntityDescription(
+            heishamon_topic_id="TOP196",
+            key=f"{mqtt_prefix}main/Sensor_Offset_Flow",
+            name="Aquarea Sensor offset flow",
+            native_unit_of_measurement="K",
+            state=float,
+            entity_registry_enabled_default=False,
         ),
     ]
 

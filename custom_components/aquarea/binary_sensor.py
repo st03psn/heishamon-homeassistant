@@ -17,6 +17,7 @@ from .definitions import (
     HeishaMonBinarySensorEntityDescription,
 )
 from . import build_device_info
+from .features import FeatureGatedEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ async def async_setup_entry(
     async_add_entities(readonly_switches)
 
 
-class HeishaMonBinarySensor(BinarySensorEntity):
+class HeishaMonBinarySensor(FeatureGatedEntity, BinarySensorEntity):
     """Representation of a HeishaMon binary sensor that is updated via MQTT."""
 
     entity_description: HeishaMonBinarySensorEntityDescription
@@ -89,6 +90,7 @@ class HeishaMonBinarySensor(BinarySensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events."""
+        self._setup_feature_gating()
 
         @callback
         def message_received(message):
