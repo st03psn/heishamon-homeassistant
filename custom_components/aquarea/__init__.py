@@ -7,12 +7,14 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.storage import Store
 
 from homeassistant.helpers import entity_registry as er
 
 from . import definitions
 from .const import DOMAIN, OBSOLETE_SUB_DEVICES, SUB_DEVICES, DeviceType, Feature
 from .features import FeatureTracker, ManagedEntity, managed_entities
+from .hub import HeatPumpHub, storage_key
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -24,6 +26,7 @@ PLATFORMS = [
     Platform.WATER_HEATER,
     Platform.UPDATE,
     Platform.BUTTON,
+    Platform.EVENT,
 ]
 _LOGGER = logging.getLogger(__name__)
 
@@ -109,9 +112,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ],
     )
     hass.data[DOMAIN][entry.entry_id]["features"] = tracker
+    hub = HeatPumpHub(hass, entry, mqtt_topic)
+    hass.data[DOMAIN][entry.entry_id]["hub"] = hub
+    await hub.async_load()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await tracker.async_start()
+    await hub.async_start()
     entry.async_on_unload(tracker.async_stop)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
@@ -125,12 +132,18 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Remove what the integration stored for this entry."""
     await FeatureTracker(hass, entry, []).async_remove_storage()
+    await Store(hass, 1, storage_key(entry.entry_id)).async_remove()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload the HeishaMon integration."""
-    hass.data[DOMAIN].pop(entry.entry_id, None)
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    data = hass.data[DOMAIN].get(entry.entry_id, {})
+    if (hub := data.get("hub")) is not None:
+        await hub.async_stop()
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unloaded:
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+    return unloaded
 
 
 def _sub_device_identifier(mqtt_topic: str, device_type: DeviceType) -> tuple[str, str]:

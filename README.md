@@ -49,6 +49,20 @@ Changes are applied about 10 seconds after a message, so that the burst of messa
 
 Entities that belong to no optional part (heater capacity, sensor offsets, efficiency stages, heating on/off, anti freeze, DHW tank switch, ...) are enabled once HeishaMon publishes their topic and are never disabled automatically.
 
+### Operating state and compressor runs
+
+The integration keeps one picture of the heat pump and derives from it:
+
+- `Operating state`: off, idle, heating, cooling, heating water, defrosting or fault. It is unknown while HeishaMon is offline. The climate entities show the same as their current activity.
+- Compressor runs: starts, run time, short runs (shorter than 10 minutes) and defrosts of today, the current and the last run time and the last pause. A defrost belongs to the run it happens in. The counters are kept across restarts; the time Home Assistant was not running is not counted as run time.
+- The event entity `Compressor run` fires `started` (with the pause before it) and `finished` (with duration in minutes, defrosts, short run or not, and what the run was for).
+
+The operating state is derived from TOP0, TOP4, TOP8, TOP20, TOP26 and TOP44. Tested on M series only; may work on other series, not tested there.
+
+### Commands the heat pump does not take over
+
+A command is repeated up to three times when the heat pump does not report the new value. After the last attempt a Repairs issue names the entity, and the event `aquarea_command_failed` is fired (entity, expected and reported value) for automations. The issue disappears when the next command of that entity is taken over.
+
 ### Faults
 
 The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44); its attributes hold the code and its meaning. A Repairs issue (Settings > System > Repairs) is shown at the same time and disappears when the fault is gone. Code meanings come from the error code tables of the H, J, K, L and M series service manuals. A fault can be reset with the button `Reset fault code` (SetReset) once its cause is removed.

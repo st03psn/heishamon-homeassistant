@@ -34,6 +34,60 @@
     "heat_pump_fault": {
       "title": "Störung der Wärmepumpe {code}",
       "description": "Die Wärmepumpe meldet die Störung **{code}**: {description}.\n\nDie Wärmepumpe kann stehen bleiben, bis die Störung zurückgesetzt ist. Erst die Ursache beheben, dann bei der Wärmepumpe den Knopf „Reset fault code“ drücken. Diese Meldung verschwindet, sobald die Wärmepumpe keine Störung mehr meldet."
+    },
+    "command_failed": {
+      "title": "Wärmepumpe hat einen Befehl nicht übernommen",
+      "description": "`{entity}` wurde auf **{expected}** gesetzt, nach {attempts} Versuchen meldet die Wärmepumpe aber weiterhin **{received}**.\n\nPrüfe, ob HeishaMon online und nicht im Nur-Lesen-Modus ist und ob die Wärmepumpe diesen Wert bei ihren aktuellen Einstellungen annimmt. Diese Meldung verschwindet, sobald der nächste Befehl dieser Entität übernommen wurde."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "operating_state": {
+        "name": "Betriebszustand",
+        "state": {
+          "off": "Aus",
+          "idle": "Stillstand",
+          "heating": "Heizen",
+          "cooling": "Kühlen",
+          "dhw": "Warmwasser",
+          "defrost": "Abtauen",
+          "fault": "Störung"
+        }
+      },
+      "compressor_starts_today": {
+        "name": "Verdichterstarts heute"
+      },
+      "compressor_run_time_today": {
+        "name": "Verdichterlaufzeit heute"
+      },
+      "short_runs_today": {
+        "name": "Kurze Verdichterläufe heute"
+      },
+      "defrosts_today": {
+        "name": "Abtauungen heute"
+      },
+      "current_run_time": {
+        "name": "Verdichter aktuelle Laufzeit"
+      },
+      "last_run_time": {
+        "name": "Verdichter letzte Laufzeit"
+      },
+      "last_pause": {
+        "name": "Verdichter letzte Pause"
+      }
+    },
+    "event": {
+      "compressor_run": {
+        "name": "Verdichterlauf",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "started": "Gestartet",
+              "finished": "Beendet"
+            }
+          }
+        }
+      }
     }
   }
 }

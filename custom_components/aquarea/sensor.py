@@ -35,6 +35,7 @@ from .definitions import (
 )
 from . import build_device_info
 from .features import FeatureGatedEntity
+from .hub_entities import build_hub_sensors
 
 
 # async_setup_platform should be defined if one wants to support config via configuration.yaml
@@ -58,6 +59,8 @@ async def async_setup_entry(
             case _:
                 s = HeishaMonSensor(hass, description, config_entry)
         sensors.append(s)
+
+    sensors.extend(build_hub_sensors(hass, config_entry))
 
     # this special sensor will listen to 1wire topics and create new sensors accordingly
     dallas_list_config = SensorEntityDescription(
