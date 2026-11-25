@@ -137,12 +137,12 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload the HeishaMon integration."""
-    data = hass.data[DOMAIN].get(entry.entry_id, {})
-    if (hub := data.get("hub")) is not None:
-        await hub.async_stop()
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        # only now: an entry that stays loaded keeps its hub running
+        data = hass.data[DOMAIN].pop(entry.entry_id, {})
+        if (hub := data.get("hub")) is not None:
+            await hub.async_stop()
     return unloaded
 
 

@@ -277,6 +277,7 @@ class CommandRetryMixin:
     async def async_will_remove_from_hass(self) -> None:
         """Clean up when entity is removed."""
         self._cancel_pending_command()
+        self._clear_command_failure()
         await super().async_will_remove_from_hass()
 
     @property

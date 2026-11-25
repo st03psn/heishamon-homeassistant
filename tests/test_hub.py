@@ -167,3 +167,32 @@ async def test_diagnostics(hass, mqtt_mock):
     assert get_hub(hass, entry.entry_id).online is None
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_counters_are_written_when_home_assistant_stops(hass, mqtt_mock, hass_storage):
+    from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+
+    entry = await setup(hass)
+    await publish(hass, Heatpump_State="1", Compressor_Freq="24", Operating_Mode_State="0")
+    assert storage_key(entry.entry_id) not in hass_storage
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
+    await hass.async_block_till_done()
+    stored = hass_storage[storage_key(entry.entry_id)]["data"]["cycles"]
+    assert stored["running"] is True and stored["today"]["starts"] == 1
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+async def test_hub_keeps_running_when_the_unload_fails(hass, mqtt_mock):
+    from unittest.mock import patch
+
+    entry = await setup(hass)
+    from custom_components.aquarea import async_unload_entry
+
+    # called directly: Home Assistant itself leaves such an entry in a failed state
+    with patch.object(hass.config_entries, "async_unload_platforms", return_value=False):
+        assert not await async_unload_entry(hass, entry)
+    await publish(hass, Heatpump_State="1", Compressor_Freq="24", Operating_Mode_State="0")
+    assert get_hub(hass, entry.entry_id).state.value == "heating"
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

@@ -1,6 +1,7 @@
 """What the heat pump is doing right now, derived from its topics."""
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -31,9 +32,11 @@ def _number(value: Optional[str]) -> Optional[float]:
     if value is None:
         return None
     try:
-        return float(value)
+        number = float(value)
     except ValueError:
         return None
+    # float() also reads "nan" and "inf"
+    return number if math.isfinite(number) else None
 
 
 def _flag(value: Optional[str]) -> Optional[bool]:

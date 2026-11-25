@@ -79,6 +79,8 @@ class CycleTracker:
     last_stop: Optional[float] = None
     last_update: Optional[float] = None
     last_state: Optional[str] = None
+    # part of the open run was not seen, so its length is not known
+    run_incomplete: bool = False
 
     def update(
         self, now: float, day: str, state: Optional[OperatingState]
@@ -94,11 +96,17 @@ class CycleTracker:
         if state is None:
             self.last_update = None
             self.last_state = None
+            if self.running:
+                self.run_incomplete = True
             return events
 
         step = 0.0
         if self.last_update is not None:
-            step = max(0.0, min(now - self.last_update, MAX_STEP))
+            step = max(0.0, now - self.last_update)
+            if step > MAX_STEP:
+                step = MAX_STEP
+                if self.running:
+                    self.run_incomplete = True
         self.last_update = now
 
         if self.running:
@@ -118,6 +126,7 @@ class CycleTracker:
             self.run_seconds = 0.0
             self.run_defrosts = 0
             self.run_purpose_seconds = {}
+            self.run_incomplete = False
             self.defrosting = False
             self.today.starts += 1
             events.append(RunStarted(at=now, pause=pause))
@@ -130,7 +139,8 @@ class CycleTracker:
             self.defrosting = defrosting
 
         if self.running and not running:
-            short = self.run_seconds < self.short_run_seconds
+            # a run that was only seen in part is not called short
+            short = not self.run_incomplete and self.run_seconds < self.short_run_seconds
             if short:
                 self.today.short_runs += 1
             purpose = None
@@ -162,4 +172,7 @@ class CycleTracker:
         today = DayCounters(**data.pop("today", {}))
         data.pop("last_update", None)
         data.pop("last_state", None)
-        return cls(today=today, **data)
+        tracker = cls(today=today, **data)
+        # the time while the tracker was stored was not seen
+        tracker.run_incomplete = tracker.running
+        return tracker

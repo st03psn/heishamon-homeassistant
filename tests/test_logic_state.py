@@ -60,3 +60,9 @@ def test_states(changes, expected):
 def test_values_that_are_not_numbers():
     assert state(Compressor_Freq="nan?") is None
     assert state(Heatpump_State="") is None
+
+
+@pytest.mark.parametrize("payload", ["nan", "inf", "-inf"])
+def test_values_that_are_not_finite(payload):
+    assert state(Operating_Mode_State=payload) is OperatingState.HEATING
+    assert state(Compressor_Freq=payload) is None

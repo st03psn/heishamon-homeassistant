@@ -13,6 +13,7 @@ from typing import Any, Optional
 
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
@@ -64,25 +65,39 @@ class HeatPumpHub:
 
     async def async_start(self) -> None:
         """Start listening."""
-        self._unsubscribe.append(
-            await mqtt.async_subscribe(
-                self.hass, f"{self.mqtt_prefix}main/#", self._topic_received, 1
+        try:
+            self._unsubscribe.append(
+                await mqtt.async_subscribe(
+                    self.hass, f"{self.mqtt_prefix}main/#", self._topic_received, 1
+                )
             )
-        )
-        self._unsubscribe.append(
-            await mqtt.async_subscribe(
-                self.hass, f"{self.mqtt_prefix}LWT", self._lwt_received, 1
+            self._unsubscribe.append(
+                await mqtt.async_subscribe(
+                    self.hass, f"{self.mqtt_prefix}LWT", self._lwt_received, 1
+                )
             )
-        )
+        except Exception:
+            self._stop_listening()
+            raise
         self._unsubscribe.append(
             async_track_time_interval(self.hass, self._tick, TICK)
         )
+        # a normal stop of Home Assistant does not unload config entries
+        self._unsubscribe.append(
+            self.hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, self._save_on_stop)
+        )
 
-    async def async_stop(self) -> None:
-        """Stop listening and write the counters to disk."""
+    async def _save_on_stop(self, _event: Any) -> None:
+        await self._store.async_save(self._data_to_store())
+
+    def _stop_listening(self) -> None:
         for unsubscribe in self._unsubscribe:
             unsubscribe()
         self._unsubscribe.clear()
+
+    async def async_stop(self) -> None:
+        """Stop listening and write the counters to disk."""
+        self._stop_listening()
         await self._store.async_save(self._data_to_store())
 
     def async_add_listener(self, listener: Callable[[], None]) -> CALLBACK_TYPE:

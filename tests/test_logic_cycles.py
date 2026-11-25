@@ -118,3 +118,26 @@ def test_store_and_restore():
     assert restored.run_seconds == 900
     (finished,) = restored.update(5030, DAY, S.IDLE)
     assert finished.duration == 930 and finished.defrosts == 1
+
+
+def test_run_seen_only_in_part_is_not_a_short_run():
+    # HeishaMon offline during the run
+    tracker = CycleTracker()
+    feed(tracker, 0, 120, S.HEATING)
+    feed(tracker, 150, 3000, None)
+    (finished,) = tracker.update(3030, DAY, S.IDLE)
+    assert finished.short is False and finished.duration == 120
+    assert tracker.today.short_runs == 0
+
+    # Home Assistant restarted during the run
+    tracker = CycleTracker()
+    feed(tracker, 0, 120, S.HEATING)
+    restored = CycleTracker.from_dict(tracker.as_dict())
+    (finished,) = restored.update(9000, DAY, S.IDLE)
+    assert finished.short is False
+
+    # a run seen from start to end still is
+    tracker = CycleTracker()
+    feed(tracker, 0, 120, S.HEATING)
+    (finished,) = tracker.update(150, DAY, S.IDLE)
+    assert finished.short is True

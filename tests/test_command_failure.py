@@ -75,3 +75,21 @@ async def test_issue_and_event_after_the_last_retry(hass, mqtt_mock):
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_issue_is_removed_with_the_entry(hass, mqtt_mock):
+    entry = MockConfigEntry(domain=DOMAIN, data={"discovery_prefix": PREFIX}, version=2)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    registry = ir.async_get(hass)
+    await set_value(hass, 2)
+    for _ in range(20):
+        async_fire_mqtt_message(hass, f"{PREFIX}main/Z1_Heat_Request_Temp", "0")
+        await asyncio.sleep(0.01)
+    await hass.async_block_till_done()
+    assert registry.async_get_issue(DOMAIN, ISSUE) is not None
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert registry.async_get_issue(DOMAIN, ISSUE) is None
