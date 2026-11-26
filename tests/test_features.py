@@ -15,13 +15,11 @@ from custom_components.aquarea.const import (
     MODE_UNAVAILABLE,
     Feature,
 )
-from custom_components.aquarea.definitions import (
-    build_binary_sensors,
-    build_numbers,
-    build_selects,
-    build_sensors,
-    build_switches,
-)
+from custom_components.aquarea.definitions.binary_sensors import build_binary_sensors
+from custom_components.aquarea.definitions.numbers import build_numbers
+from custom_components.aquarea.definitions.selects import build_selects
+from custom_components.aquarea.definitions.sensors import build_sensors
+from custom_components.aquarea.definitions.switches import build_switches
 from custom_components.aquarea.features import (
     FeatureTracker,
     ManagedEntity,

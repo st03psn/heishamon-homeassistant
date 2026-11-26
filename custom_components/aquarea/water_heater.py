@@ -19,16 +19,10 @@ from homeassistant.components.water_heater import (
     STATE_PERFORMANCE,
 )
 
-try:
-    from homeassistant.components.water_heater import WaterHeaterEntityDescription
-except ImportError:
-    # compatibility code for HA < 2025.1
-    from homeassistant.components.water_heater import WaterHeaterEntityEntityDescription
-
-    WaterHeaterEntityDescription = WaterHeaterEntityEntityDescription
+from homeassistant.components.water_heater import WaterHeaterEntityDescription
 
 
-from .definitions import OperatingMode
+from .definitions.values import OperatingMode
 from . import build_device_info
 from .const import Feature
 from .features import FeatureGatedEntity

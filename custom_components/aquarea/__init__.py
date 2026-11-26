@@ -11,10 +11,16 @@ from homeassistant.helpers.storage import Store
 
 from homeassistant.helpers import entity_registry as er
 
-from . import definitions
 from .const import DOMAIN, OBSOLETE_SUB_DEVICES, SUB_DEVICES, DeviceType, Feature
+from .definitions.arrange import SUB_DEVICE_OF_TOPIC
+from .definitions.binary_sensors import build_binary_sensors
+from .definitions.numbers import build_numbers
+from .definitions.selects import build_selects
+from .definitions.sensors import build_sensors
+from .definitions.switches import build_switches
 from .features import FeatureTracker, ManagedEntity, managed_entities
 from .hub import HeatPumpHub, storage_key
+from .model_catalog import ModelCatalog
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -47,6 +53,12 @@ def _compute_identifiers(mqtt_topic: str) -> dict[DeviceType, tuple[str, str]]:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the HeishaMon integration."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    catalog = domain_data.get("model_catalog")
+    if catalog is None:
+        catalog = domain_data["model_catalog"] = ModelCatalog(hass)
+    await catalog.async_load()
+
     mqtt_topic = entry.data["discovery_prefix"]
     identifiers = _compute_identifiers(mqtt_topic)
 
@@ -95,11 +107,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.entry_id,
             mqtt_topic,
             {
-                Platform.SENSOR: definitions.build_sensors(mqtt_topic),
-                Platform.BINARY_SENSOR: definitions.build_binary_sensors(mqtt_topic),
-                Platform.SWITCH: definitions.build_switches(mqtt_topic),
-                Platform.SELECT: definitions.build_selects(mqtt_topic),
-                Platform.NUMBER: definitions.build_numbers(mqtt_topic),
+                Platform.SENSOR: build_sensors(mqtt_topic),
+                Platform.BINARY_SENSOR: build_binary_sensors(mqtt_topic),
+                Platform.SWITCH: build_switches(mqtt_topic),
+                Platform.SELECT: build_selects(mqtt_topic),
+                Platform.NUMBER: build_numbers(mqtt_topic),
             },
         )
         + [
@@ -190,7 +202,7 @@ def _remove_obsolete_sub_devices(
             entity_registry, device.id, include_disabled_entities=True
         ):
             topic_id = entity_entry.unique_id.removeprefix(f"{entry.entry_id}-")
-            target = definitions.SUB_DEVICE_OF_TOPIC.get(topic_id)
+            target = SUB_DEVICE_OF_TOPIC.get(topic_id)
             entity_registry.async_update_entity(
                 entity_entry.entity_id,
                 device_id=sub_device_ids.get(target, heatpump_device_id),

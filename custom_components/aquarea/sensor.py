@@ -23,16 +23,18 @@ _LOGGER = logging.getLogger(__name__)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
-from .const import DeviceType
-from .definitions import (
-    build_sensors,
+from .const import DOMAIN, DeviceType
+from .definitions.descriptions import (
     HeishaMonSensorEntityDescription,
     MultiMQTTSensorEntityDescription,
-    bit_to_bool,
 )
+from .definitions.sensors import build_sensors
+from .definitions.values import bit_to_bool, read_heatpump_model
+from .model_catalog import SIGNAL_MODEL_CATALOG_UPDATED
 from . import build_device_info
 from .features import FeatureGatedEntity
 from .hub_entities import build_hub_sensors
@@ -61,6 +63,7 @@ async def async_setup_entry(
         sensors.append(s)
 
     sensors.extend(build_hub_sensors(hass, config_entry))
+    sensors.append(ModelCatalogLastRefreshSensor(hass, config_entry))
 
     # this special sensor will listen to 1wire topics and create new sensors accordingly
     dallas_list_config = SensorEntityDescription(
@@ -256,7 +259,37 @@ class EnergyIntegrationEntity(IntegrationSensor):
     def device_class(self):
         return SensorDeviceClass.ENERGY
 
-class MultiMQTTSensorEntity(SensorEntity):
+class HeishaMonAvailability:
+    """Unavailable while HeishaMon is offline (its MQTT last will on LWT).
+
+    Only measurement sensors follow it: stale totals and enums are more useful
+    if they remain visible. A stale power measurement, however, would keep the
+    energy totals (IntegrationSensor with max_sub_interval) accumulating until
+    it becomes unavailable.
+    """
+
+    _heishamon_online = True
+
+    async def _async_subscribe_lwt(self) -> None:
+        @callback
+        def lwt_received(message):
+            online = message.payload != "Offline"
+            if online != self._heishamon_online:
+                self._heishamon_online = online
+                self.async_write_ha_state()
+
+        self.async_on_remove(
+            await mqtt.async_subscribe(
+                self.hass, f"{self.discovery_prefix}LWT", lwt_received, 1
+            )
+        )
+
+    @property
+    def available(self) -> bool:
+        return self._heishamon_online
+
+
+class MultiMQTTSensorEntity(HeishaMonAvailability, SensorEntity):
     def __init__(
         self,
         hass: HomeAssistant,
@@ -309,6 +342,8 @@ class MultiMQTTSensorEntity(SensorEntity):
 
         for topic in self.entity_description.topics or []:
             await mqtt.async_subscribe(self.hass, topic, message_received, 1)
+        if self.entity_description.state_class == SensorStateClass.MEASUREMENT:
+            await self._async_subscribe_lwt()
 
     @property
     def device_info(self):
@@ -468,7 +503,54 @@ class DallasListSensor(SensorEntity):
         return build_device_info(self.hass, DeviceType.HEISHAMON, self.discovery_prefix, self.config_entry_entry_id)
 
 
-class HeishaMonSensor(FeatureGatedEntity, SensorEntity):
+class ModelCatalogLastRefreshSensor(SensorEntity):
+    """Show when heat pump models were last refreshed by the user."""
+
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_has_entity_name = True
+    _attr_name = "Heat pump models last refreshed"
+
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+        self.hass = hass
+        self.entity_description = SensorEntityDescription(
+            key=f"{config_entry.data['discovery_prefix']}model_catalog_last_refreshed",
+            name=self._attr_name,
+            device_class=self._attr_device_class,
+            entity_category=self._attr_entity_category,
+        )
+        self.config_entry_entry_id = config_entry.entry_id
+        self.discovery_prefix = config_entry.data["discovery_prefix"]
+        self._attr_unique_id = f"{config_entry.entry_id}-model-catalog-last-refreshed"
+        self.entity_id = f"sensor.{slugify(self._attr_unique_id)}"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, SIGNAL_MODEL_CATALOG_UPDATED, self._update_from_catalog
+            )
+        )
+        self._update_from_catalog()
+
+    @callback
+    def _update_from_catalog(self) -> None:
+        catalog = self.hass.data[DOMAIN]["model_catalog"]
+        self._attr_native_value = catalog.last_refreshed
+        self._attr_extra_state_attributes = {"model_count": len(catalog.models)}
+        self.async_write_ha_state()
+
+    @property
+    def device_info(self):
+        return build_device_info(
+            self.hass,
+            DeviceType.HEISHAMON,
+            self.discovery_prefix,
+            self.config_entry_entry_id,
+        )
+
+
+class HeishaMonSensor(FeatureGatedEntity, HeishaMonAvailability, SensorEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     entity_description: HeishaMonSensorEntityDescription
@@ -494,15 +576,29 @@ class HeishaMonSensor(FeatureGatedEntity, SensorEntity):
         )
         if description.entity_category is not None:
             self._attr_entity_category = description.entity_category
+        self._raw_model_signature: str | None = None
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events"""
         self._setup_feature_gating()
         await super().async_added_to_hass()
+        if self.entity_description.heishamon_topic_id == "TOP92":
+            self.async_on_remove(
+                async_dispatcher_connect(
+                    self.hass,
+                    SIGNAL_MODEL_CATALOG_UPDATED,
+                    self._refresh_heatpump_model,
+                )
+            )
 
         @callback
         def message_received(message):
             """Handle new MQTT messages."""
+            if self.entity_description.heishamon_topic_id == "TOP92":
+                self._raw_model_signature = message.payload
+                self._refresh_heatpump_model()
+                return
+
             if self.entity_description.state is not None:
                 self._attr_native_value = self.entity_description.state(message.payload)
             else:
@@ -517,6 +613,26 @@ class HeishaMonSensor(FeatureGatedEntity, SensorEntity):
         await mqtt.async_subscribe(
             self.hass, self.entity_description.key, message_received, 1
         )
+        if self.entity_description.state_class == SensorStateClass.MEASUREMENT:
+            await self._async_subscribe_lwt()
+
+    @callback
+    def _refresh_heatpump_model(self) -> None:
+        """Re-evaluate the latest model signature against the active catalog."""
+        if self._raw_model_signature is None:
+            return
+        catalog = self.hass.data[DOMAIN]["model_catalog"]
+        self._attr_native_value = read_heatpump_model(
+            self._raw_model_signature, catalog.models
+        )
+        self.async_write_ha_state()
+        if self.entity_description.on_receive is not None:
+            self.entity_description.on_receive(
+                self.hass,
+                self,
+                self.config_entry_entry_id,
+                self._attr_native_value,
+            )
 
     @property
     def device_info(self):

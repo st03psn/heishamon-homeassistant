@@ -7,14 +7,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.aquarea import _compute_identifiers, _sub_device_identifier_for
 from custom_components.aquarea.const import DOMAIN, OBSOLETE_SUB_DEVICES, DeviceType
-from custom_components.aquarea.definitions import (
-    ENTITY_NAMES,
-    build_binary_sensors,
-    build_numbers,
-    build_selects,
-    build_sensors,
-    build_switches,
-)
+from custom_components.aquarea.definitions.arrange import ENTITY_NAMES
+from custom_components.aquarea.definitions.binary_sensors import build_binary_sensors
+from custom_components.aquarea.definitions.numbers import build_numbers
+from custom_components.aquarea.definitions.selects import build_selects
+from custom_components.aquarea.definitions.sensors import build_sensors
+from custom_components.aquarea.definitions.switches import build_switches
 
 PREFIX = "panasonic_heat_pump/"
 BUILDS = (build_sensors, build_binary_sensors, build_numbers, build_selects, build_switches)
