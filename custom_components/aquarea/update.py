@@ -22,12 +22,14 @@ from homeassistant.components.update import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 from . import build_device_info
-from .const import DeviceType
+from .auth import api_key_headers
+from .const import DOMAIN, DeviceType
 from .translated_name import TranslatedNameMixin
 from .definitions.descriptions import HeishaMonEntityDescription
 from .definitions.values import read_board_type
@@ -44,8 +46,8 @@ def _firmware_http_error(
     if phase == "upload" and status in (401, 403):
         return HomeAssistantError(
             f"HeishaMon rejected the firmware upload (HTTP {status}{status_detail}). "
-            "The integration does not send web/update credentials. If a password "
-            "is configured, update through the HeishaMon web UI instead."
+            "If a password is configured on HeishaMon, set its API key in the "
+            "options of the integration."
         )
     if phase == "upload":
         return HomeAssistantError(
@@ -216,31 +218,31 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
 
     async def _update_latest_release(self):
         _LOGGER.debug("Starting refresh latest version info")
-        async with aiohttp.ClientSession() as session:
-            _LOGGER.info(f"Fetching https://api.github.com/repos/{HEISHAMON_REPOSITORY}/releases")
-            resp = await session.get(
-                f"https://api.github.com/repos/{HEISHAMON_REPOSITORY}/releases/latest"
+        session = async_get_clientsession(self.hass)
+        _LOGGER.info(f"Fetching https://api.github.com/repos/{HEISHAMON_REPOSITORY}/releases")
+        resp = await session.get(
+            f"https://api.github.com/repos/{HEISHAMON_REPOSITORY}/releases/latest"
+        )
+
+        if resp.status != 200:
+            _LOGGER.warn(
+                f"Impossible to get latest release from heishamon repository {HEISHAMON_REPOSITORY}"
             )
+            return
 
-            if resp.status != 200:
-                _LOGGER.warn(
-                    f"Impossible to get latest release from heishamon repository {HEISHAMON_REPOSITORY}"
-                )
-                return
-
-            releases = await resp.json()
-            _LOGGER.debug(f"Received json with list of releases")
-            if len(releases) == 0:
-                _LOGGER.warn(
-                    f"Not a single release was found for heishamon repository {HEISHAMON_REPOSITORY}"
-                )
-            
-            last_release = await resp.json()
-            self._attr_latest_version = re.sub(r"^v", "", last_release["tag_name"])
-            self._attr_release_url = last_release["html_url"]
-            self._release_notes = last_release["body"]
-            _LOGGER.debug(f"Latest release is {self._attr_latest_version}")
-            self.async_write_ha_state()
+        releases = await resp.json()
+        _LOGGER.debug(f"Received json with list of releases")
+        if len(releases) == 0:
+            _LOGGER.warn(
+                f"Not a single release was found for heishamon repository {HEISHAMON_REPOSITORY}"
+            )
+        
+        last_release = await resp.json()
+        self._attr_latest_version = re.sub(r"^v", "", last_release["tag_name"])
+        self._attr_release_url = last_release["html_url"]
+        self._release_notes = last_release["body"]
+        _LOGGER.debug(f"Latest release is {self._attr_latest_version}")
+        self.async_write_ha_state()
 
     @property
     def model_to_path(self) -> str | None:
@@ -275,54 +277,54 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
             _LOGGER.info(f"Will install version {version} of the firmware")
         self._attr_in_progress = True
         self._attr_update_percentage = 0
-        async with aiohttp.ClientSession() as session:
-            try:
-                url=f"https://github.com/{HEISHAMON_REPOSITORY}/raw/refs/heads/main/binaries/{self.model_to_path}/HeishaMon.ino.{self.model_to_file}-v{version}.bin"
-                _LOGGER.debug(f"Will try to download url {url}")
-                resp = await session.get(url)
+        session = async_get_clientsession(self.hass)
+        try:
+            url=f"https://github.com/{HEISHAMON_REPOSITORY}/raw/refs/heads/main/binaries/{self.model_to_path}/HeishaMon.ino.{self.model_to_file}-v{version}.bin"
+            _LOGGER.debug(f"Will try to download url {url}")
+            resp = await session.get(url)
 
-                if resp.status != 200:
-                    _LOGGER.warning(
-                        "Could not download firmware version %s from %s (HTTP %s)",
-                        version,
-                        url,
-                        resp.status,
-                    )
-                    raise _firmware_http_error(
-                        "download", resp.status, resp.reason or "", version
-                    )
+            if resp.status != 200:
+                _LOGGER.warning(
+                    "Could not download firmware version %s from %s (HTTP %s)",
+                    version,
+                    url,
+                    resp.status,
+                )
+                raise _firmware_http_error(
+                    "download", resp.status, resp.reason or "", version
+                )
 
-                firmware_binary = await resp.read()
-                _LOGGER.info(f"Firmware is {len(firmware_binary)} bytes long")
-                self._attr_update_percentage = 10
-                url=f"https://github.com/{HEISHAMON_REPOSITORY}/raw/refs/heads/main/binaries/{self.model_to_path}/HeishaMon.ino.{self.model_to_file}-v{version}.md5"
-                resp = await session.get(url)
+            firmware_binary = await resp.read()
+            _LOGGER.info(f"Firmware is {len(firmware_binary)} bytes long")
+            self._attr_update_percentage = 10
+            url=f"https://github.com/{HEISHAMON_REPOSITORY}/raw/refs/heads/main/binaries/{self.model_to_path}/HeishaMon.ino.{self.model_to_file}-v{version}.md5"
+            resp = await session.get(url)
 
-                if resp.status != 200:
-                    _LOGGER.warning(
-                        "Could not download checksum for firmware version %s from "
-                        "%s (HTTP %s)",
-                        version,
-                        url,
-                        resp.status,
-                    )
-                    raise _firmware_http_error(
-                        "download checksum", resp.status, resp.reason or "", version
-                    )
-                checksum = await resp.text()
-                self._attr_update_percentage = 20
-                _LOGGER.info(f"Downloaded binary and checksum {checksum} of version {version}")
+            if resp.status != 200:
+                _LOGGER.warning(
+                    "Could not download checksum for firmware version %s from "
+                    "%s (HTTP %s)",
+                    version,
+                    url,
+                    resp.status,
+                )
+                raise _firmware_http_error(
+                    "download checksum", resp.status, resp.reason or "", version
+                )
+            checksum = await resp.text()
+            self._attr_update_percentage = 20
+            _LOGGER.info(f"Downloaded binary and checksum {checksum} of version {version}")
 
-                while self._heishamon_ip is None:
-                    _LOGGER.warn("Waiting for an mqtt message to get the ip address of heishamon")
-                    await asyncio.sleep(1)
-            except HomeAssistantError:
-                raise
-            except Exception as e:
-                _LOGGER.exception("Unable to prepare firmware version %s", version)
-                raise HomeAssistantError(
-                    f"Could not prepare firmware version {version}: {e}"
-                ) from e
+            while self._heishamon_ip is None:
+                _LOGGER.warn("Waiting for an mqtt message to get the ip address of heishamon")
+                await asyncio.sleep(1)
+        except HomeAssistantError:
+            raise
+        except Exception as e:
+            _LOGGER.exception("Unable to prepare firmware version %s", version)
+            raise HomeAssistantError(
+                f"Could not prepare firmware version {version}: {e}"
+            ) from e
 
         # This whole mechanic is made to call async_write_ha_state to make sure the entity state (especially the _attr_in_progress attribute is updated)
         # trying to call this method from a callback when posting the firmware update leads HA to crash the integration
@@ -336,52 +338,68 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
         self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_update_progress_tracking)
         self.hass.bus.async_listen_once("stop_heishamon_update_tracker", stop_update_progress_tracking)
 
-        async with aiohttp.ClientSession() as session:
-            _LOGGER.info(f"Starting upgrade of firmware to version {version} on {self._heishamon_ip}")
-            to = aiohttp.ClientTimeout(total=300, connect=10)
-            try:
-                boundary = uuid.uuid4().hex
-                filename = f"HeishaMon.ino.{self.model_to_file}-v{version}.bin"
-                body = (
-                    f"--{boundary}\r\n"
-                    f"Content-Type: application/octet-stream\r\n"
-                    f"Content-Disposition: form-data; name=\"firmware\"; filename=\"{filename}\"\r\n"
-                    f"Content-Length: {len(firmware_binary)}\r\n"
-                    f"\r\n"
-                ).encode() + firmware_binary + (
-                    f"\r\n"
-                    f"--{boundary}\r\n"
-                    f"Content-Disposition: form-data; name=\"md5\"\r\n"
-                    f"\r\n"
-                    f"{checksum}\r\n"
-                    f"--{boundary}--\r\n"
-                ).encode()
-                resp = await session.post(
-                    f"http://{self._heishamon_ip}/firmware",
-                    data=body,
-                    headers={'Content-Type': f'multipart/form-data; boundary={boundary}'},
-                    timeout=to
-                )
-                response_body = await resp.text()
-            except (TimeoutError, asyncio.TimeoutError):
-                _LOGGER.info(f"Firmware upload complete, HeishaMon is rebooting (timeout is expected)")
-                return
-            except Exception as e:
-                _LOGGER.exception("Unable to upload firmware version %s", version)
-                raise HomeAssistantError(
-                    f"Could not upload firmware version {version} to HeishaMon at "
-                    f"{self._heishamon_ip}: {e}"
-                ) from e
-            finally:
-                self.hass.bus.fire("stop_heishamon_update_tracker")
-            upload_error = _firmware_upload_error(
-                resp.status, resp.reason or "", response_body, version
+        session = async_get_clientsession(self.hass)
+        _LOGGER.info(f"Starting upgrade of firmware to version {version} on {self._heishamon_ip}")
+        to = aiohttp.ClientTimeout(total=300, connect=10)
+        try:
+            boundary = uuid.uuid4().hex
+            filename = f"HeishaMon.ino.{self.model_to_file}-v{version}.bin"
+            body = (
+                f"--{boundary}\r\n"
+                f"Content-Type: application/octet-stream\r\n"
+                f"Content-Disposition: form-data; name=\"firmware\"; filename=\"{filename}\"\r\n"
+                f"Content-Length: {len(firmware_binary)}\r\n"
+                f"\r\n"
+            ).encode() + firmware_binary + (
+                f"\r\n"
+                f"--{boundary}\r\n"
+                f"Content-Disposition: form-data; name=\"md5\"\r\n"
+                f"\r\n"
+                f"{checksum}\r\n"
+                f"--{boundary}--\r\n"
+            ).encode()
+            resp = await session.post(
+                f"http://{self._heishamon_ip}/firmware",
+                data=body,
+                headers={
+                    'Content-Type': f'multipart/form-data; boundary={boundary}',
+                    **api_key_headers(self.config_entry),
+                },
+                timeout=to
             )
-            if upload_error is not None:
-                _LOGGER.warning(
-                    "HeishaMon firmware upload failed for version %s: %s",
-                    version,
-                    upload_error,
-                )
-                raise upload_error
-            _LOGGER.info(f"Finished uploading firmware. Heishamon should now be rebooting")
+            response_body = await resp.text()
+        except (TimeoutError, asyncio.TimeoutError):
+            _LOGGER.info(f"Firmware upload complete, HeishaMon is rebooting (timeout is expected)")
+            return
+        except aiohttp.ClientError as e:
+            # a board with a login closes the connection without an answer
+            # when the API key is missing or wrong
+            _LOGGER.warning("Connection to HeishaMon failed during upload of firmware version %s: %s", version, e)
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="firmware_upload_connection_failed",
+                translation_placeholders={
+                    "version": version,
+                    "host": str(self._heishamon_ip),
+                    "error": f"{type(e).__name__}: {e}",
+                },
+            ) from e
+        except Exception as e:
+            _LOGGER.exception("Unable to upload firmware version %s", version)
+            raise HomeAssistantError(
+                f"Could not upload firmware version {version} to HeishaMon at "
+                f"{self._heishamon_ip}: {e}"
+            ) from e
+        finally:
+            self.hass.bus.fire("stop_heishamon_update_tracker")
+        upload_error = _firmware_upload_error(
+            resp.status, resp.reason or "", response_body, version
+        )
+        if upload_error is not None:
+            _LOGGER.warning(
+                "HeishaMon firmware upload failed for version %s: %s",
+                version,
+                upload_error,
+            )
+            raise upload_error
+        _LOGGER.info(f"Finished uploading firmware. Heishamon should now be rebooting")

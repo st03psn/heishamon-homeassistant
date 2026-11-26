@@ -17,9 +17,14 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 
+from .auth import normalize_api_key
 from .const import (
+    CONF_API_KEY,
     CONF_ENTITY_MANAGEMENT,
     CONF_HIDE_WITHOUT_EFFECT,
     CONF_SETTINGS_GUARD,
@@ -106,16 +111,29 @@ class HeishaMonOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
-        current = self.config_entry.options.get(
-            CONF_ENTITY_MANAGEMENT, MODE_ENABLE_ONLY
-        )
+            user_input = dict(user_input)
+            key = normalize_api_key(user_input.get(CONF_API_KEY))
+            if key is None:
+                errors[CONF_API_KEY] = "invalid_api_key"
+            else:
+                # no login: store no key at all
+                if key:
+                    user_input[CONF_API_KEY] = key
+                else:
+                    user_input.pop(CONF_API_KEY, None)
+                return self.async_create_entry(data=user_input)
+        values = user_input if user_input is not None else self.config_entry.options
         return self.async_show_form(
             step_id="init",
+            errors=errors,
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_ENTITY_MANAGEMENT, default=current): SelectSelector(
+                    vol.Required(
+                        CONF_ENTITY_MANAGEMENT,
+                        default=values.get(CONF_ENTITY_MANAGEMENT, MODE_ENABLE_ONLY),
+                    ): SelectSelector(
                         SelectSelectorConfig(
                             options=ENTITY_MANAGEMENT_MODES,
                             mode=SelectSelectorMode.LIST,
@@ -124,12 +142,17 @@ class HeishaMonOptionsFlow(OptionsFlow):
                     ),
                     vol.Required(
                         CONF_HIDE_WITHOUT_EFFECT,
-                        default=self.config_entry.options.get(CONF_HIDE_WITHOUT_EFFECT, True),
+                        default=values.get(CONF_HIDE_WITHOUT_EFFECT, True),
                     ): bool,
                     vol.Required(
                         CONF_SETTINGS_GUARD,
-                        default=self.config_entry.options.get(CONF_SETTINGS_GUARD, True),
+                        default=values.get(CONF_SETTINGS_GUARD, True),
                     ): bool,
+                    # suggested value, not default: clearing the field must work
+                    vol.Optional(
+                        CONF_API_KEY,
+                        description={"suggested_value": values.get(CONF_API_KEY, "")},
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
                 }
             ),
         )
