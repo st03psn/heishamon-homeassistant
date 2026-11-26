@@ -48,28 +48,46 @@ def _blocked_settings(hub: HeatPumpHub) -> dict[str, Any]:
     }
 
 
+def _text(hub: HeatPumpHub, change: Any) -> dict[str, str]:
+    """The change as Home Assistant shows the setting; raw values without labels."""
+    labels = hub.labels
+    if labels is None:
+        return {"name": change.setting, "old": change.old, "new": change.new, "origin": change.origin}
+    return {
+        "name": labels.name(change.setting),
+        "old": labels.value(change.setting, change.old),
+        "new": labels.value(change.setting, change.new),
+        "origin": labels.origin(change.origin),
+    }
+
+
 def _last_change(hub: HeatPumpHub) -> Optional[str]:
     if not hub.journal.entries:
         return None
-    change = hub.journal.entries[-1]
+    text = _text(hub, hub.journal.entries[-1])
     # a state holds at most 255 characters
-    return f"{change.setting}: {change.old[:60]} → {change.new[:60]}"
+    return f"{text['name'][:100]}: {text['old'][:60]} → {text['new'][:60]}"
 
 
 def _recent_changes(hub: HeatPumpHub) -> dict[str, Any]:
     """The newest changes first, for the state attributes."""
-    return {
-        "changes": [
+    changes = []
+    for change in reversed(hub.journal.entries[-20:]):
+        text = _text(hub, change)
+        changes.append(
             {
                 "at": dt_util.utc_from_timestamp(change.at).isoformat(),
                 "setting": change.setting,
                 "old": change.old,
                 "new": change.new,
                 "origin": change.origin,
+                "name": text["name"],
+                "old_text": text["old"],
+                "new_text": text["new"],
+                "origin_text": text["origin"],
             }
-            for change in reversed(hub.journal.entries[-20:])
-        ]
-    }
+        )
+    return {"changes": changes}
 
 
 def _minutes(seconds: Optional[float]) -> Optional[float]:

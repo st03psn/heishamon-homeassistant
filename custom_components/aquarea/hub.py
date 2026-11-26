@@ -65,6 +65,8 @@ class HeatPumpHub:
         self.state: Optional[OperatingState] = None
         self.cycles = CycleTracker()
         self._readbacks_of_command = dict(settings or {})
+        # readable names and values of the settings, set up with the entities
+        self.labels: Any = None
         self.journal = SettingsJournal(
             name for names in self._readbacks_of_command.values() for name in names
         )
