@@ -6,6 +6,8 @@ from pytest_homeassistant_custom_component.common import (
     async_fire_mqtt_message,
 )
 
+from homeassistant.helpers import entity_registry as er
+
 from custom_components.aquarea.const import DOMAIN
 from custom_components.aquarea.hub import EVENT_SETTING_CHANGED, get_hub
 
@@ -47,7 +49,8 @@ async def test_changes_are_recorded_with_their_origin(hass, mqtt_mock, hass_stor
         "new": "1",
         "origin": "other",
     }
-    assert hass.states.get(LAST).state == "Z1_Heat_Request_Temp: 0 → 1"
+    name = er.async_get(hass).async_get(NUMBER).original_name
+    assert hass.states.get(LAST).state == f"{name}: 0 °C → 1 °C"
 
     # changed from Home Assistant
     await hass.services.async_call(
@@ -64,7 +67,7 @@ async def test_changes_are_recorded_with_their_origin(hass, mqtt_mock, hass_stor
     await hass.async_block_till_done()
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
-    assert hass.states.get(LAST).state == "Z1_Heat_Request_Temp: 1 → 2"
+    assert hass.states.get(LAST).state == f"{name}: 1 °C → 2 °C"
     await publish(hass, "Z1_Heat_Request_Temp", "2")
     assert len(get_hub(hass, entry.entry_id).journal.entries) == 2
 
@@ -117,3 +120,41 @@ async def test_change_through_the_climate_entity_is_asked_for(hass, mqtt_mock):
     assert events[-1].data["origin"] == "home_assistant"
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_changes_are_readable(hass, mqtt_mock, hass_storage):
+    entry = MockConfigEntry(domain=DOMAIN, data={"discovery_prefix": PREFIX}, version=2)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    labels = get_hub(hass, entry.entry_id).labels
+    registry = er.async_get(hass)
+
+    # the name the user sees, also after renaming the entity
+    assert labels.name("Z1_Heat_Request_Temp") == registry.async_get(NUMBER).original_name
+    registry.async_update_entity(NUMBER, name="Vorlauf Soll")
+    assert labels.name("Z1_Heat_Request_Temp") == "Vorlauf Soll"
+    assert labels.name("Not_A_Setting") == "Not_A_Setting"
+
+    # numbers with unit, options as text, switches as on/off, unknown raw
+    assert labels.value("Z1_Heat_Request_Temp", "-2.0") == "-2 °C"
+    assert labels.value("Z1_Sensor_Settings", "2") not in ("2", "")
+    assert labels.value("Holiday_Mode_State", "0") == "off"
+    assert labels.value("Not_A_Setting", "7") == "7"
+    assert labels.value("Z1_Heat_Request_Temp", "garbage") == "garbage"
+    # a reader that raises a bare Exception on an unknown mode
+    assert labels.value("Operating_Mode_State", "9") == "9"
+    assert labels.origin("home_assistant") == "Home Assistant"
+
+    hass.config.language = "de"
+    assert labels.value("Holiday_Mode_State", "0") == "aus"
+    assert labels.origin("other") == "extern"
+
+    await publish(hass, "Z1_Heat_Request_Temp", "0")
+    await publish(hass, "Z1_Heat_Request_Temp", "1")
+    change = hass.states.get(LAST).attributes["changes"][0]
+    assert change["setting"] == "Z1_Heat_Request_Temp" and change["new"] == "1"
+    assert change["name"] == "Vorlauf Soll"
+    assert (change["old_text"], change["new_text"]) == ("0 °C", "1 °C")
+    assert change["origin_text"] == "extern"
+    assert hass.states.get(LAST).state == "Vorlauf Soll: 0 °C → 1 °C"

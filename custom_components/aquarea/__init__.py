@@ -20,6 +20,7 @@ from .definitions.sensors import build_sensors
 from .definitions.switches import build_switches
 from .features import FeatureTracker, ManagedEntity, managed_entities
 from .child_visibility import ChildVisibility, topic_ids_of_commands
+from .setting_labels import SettingLabels
 from .hub import HeatPumpHub, storage_key
 from .model_catalog import ModelCatalog
 
@@ -129,14 +130,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id]["features"] = tracker
     hub = HeatPumpHub(hass, entry, mqtt_topic, _settings_of(mqtt_topic))
     hass.data[DOMAIN][entry.entry_id]["hub"] = hub
+    descriptions = [
+        d for build in (build_numbers, build_selects, build_switches) for d in build(mqtt_topic)
+    ]
+    hub.labels = SettingLabels(hass, entry.entry_id, descriptions, mqtt_topic)
     await hub.async_load()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await tracker.async_start()
     await hub.async_start()
-    descriptions = [
-        d for build in (build_numbers, build_selects, build_switches) for d in build(mqtt_topic)
-    ]
     visibility = ChildVisibility(hass, entry, hub, topic_ids_of_commands(descriptions, mqtt_topic))
     visibility.start()
     entry.async_on_unload(visibility.stop)
