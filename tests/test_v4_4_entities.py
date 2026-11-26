@@ -3,7 +3,6 @@
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.helpers.entity import EntityCategory
 
-from custom_components.aquarea.const import Feature
 from custom_components.aquarea.definitions.binary_sensors import build_binary_sensors
 from custom_components.aquarea.definitions.descriptions import (
     HeishaMonBinarySensorEntityDescription,
@@ -136,13 +135,8 @@ def test_v4_4_installer_and_sg_ready_entities_are_disabled_by_default():
 
     for topic_id in DISABLED_BY_DEFAULT_TOPICS:
         assert descriptions[topic_id].entity_registry_enabled_default is False
-    for topic_id in {"TOP197", "TOP198"}:
+    for topic_id in {"TOP180", "TOP181", "TOP197", "TOP198"}:
         assert descriptions[topic_id].entity_registry_enabled_default is True
-    # the bivalent readbacks follow the bivalent part: disabled until the
-    # heat pump reports it as installed (features.py)
-    for topic_id in {"TOP180", "TOP181"}:
-        assert descriptions[topic_id].entity_registry_enabled_default is False
-        assert descriptions[topic_id].requires == (Feature.BIVALENT,)
 
 
 def test_v4_4_read_only_entities_use_supported_categories():

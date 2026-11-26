@@ -840,3 +840,12 @@ def one_decimal_to_mqtt(value: float) -> str:
 
 def integer_to_mqtt(value: float) -> str:
     return str(int(round(float(value))))
+
+
+def read_sg_ready_enabled(value: str) -> Optional[bool]:
+    """SG ready control (TOP149): 0 = off, 1 = on with capacities, 2 = on with power limits."""
+    if value == "0":
+        return False
+    if value in ("1", "2"):
+        return True
+    return None

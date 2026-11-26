@@ -76,3 +76,25 @@ async def test_old_sub_devices_are_removed(hass, mqtt_mock):
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_sensor_entries_of_moved_topics_are_removed(hass, mqtt_mock):
+    from homeassistant.helpers import entity_registry as er
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(domain=DOMAIN, data={"discovery_prefix": PREFIX}, version=2)
+    entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    old = registry.async_get_or_create(
+        "sensor", DOMAIN, f"{entry.entry_id}-TOP149", config_entry=entry
+    )
+    kept = registry.async_get_or_create(
+        "sensor", DOMAIN, f"{entry.entry_id}-TOP8", config_entry=entry
+    )
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert registry.async_get(old.entity_id) is None
+    assert registry.async_get(kept.entity_id) is not None
+    assert registry.async_get_entity_id("binary_sensor", DOMAIN, f"{entry.entry_id}-TOP149")
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

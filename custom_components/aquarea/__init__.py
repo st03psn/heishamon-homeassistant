@@ -94,6 +94,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
     _remove_obsolete_sub_devices(hass, entry, mqtt_topic, heatpump_device.id, sub_device_ids)
 
+    _remove_moved_entities(hass, entry)
+
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         "heishamon_device_id": heishamon_device.id,
@@ -208,6 +210,25 @@ def _remove_obsolete_sub_devices(
                 device_id=sub_device_ids.get(target, heatpump_device_id),
             )
         device_registry.async_remove_device(device.id)
+
+
+# topics that earlier versions of the fork had as sensors and that are binary sensors now
+MOVED_TO_BINARY_SENSOR = ("TOP149", "TOP163")
+
+
+def _remove_moved_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove the sensor entries of topics that are binary sensors now.
+
+    The binary sensor has the same unique id in another domain, so the old
+    entry would stay behind as an entity that is no longer provided.
+    """
+    entity_registry = er.async_get(hass)
+    for topic_id in MOVED_TO_BINARY_SENSOR:
+        entity_id = entity_registry.async_get_entity_id(
+            Platform.SENSOR, DOMAIN, f"{entry.entry_id}-{topic_id}"
+        )
+        if entity_id is not None:
+            entity_registry.async_remove(entity_id)
 
 
 def build_device_info(hass: HomeAssistant, device_type: DeviceType, mqtt_topic: str, config_entry_id: str) -> DeviceInfo:

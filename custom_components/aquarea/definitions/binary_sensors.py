@@ -10,6 +10,7 @@ from .descriptions import HeishaMonBinarySensorEntityDescription
 from .values import bit_to_bool, online_to_bool, positive_to_bool, read_enabled_disabled
 from ..const import Feature
 from .arrange import arranged
+from .values import read_sg_ready_enabled
 
 
 def build_binary_sensors(
@@ -246,36 +247,39 @@ def build_binary_sensors(
             heishamon_topic_id="TOP170",
             key=f"{mqtt_prefix}main/Static_Pressure",
             name="Aquarea Static pressure",
-            state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            state=read_enabled_disabled,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # HeishaMon 4.4+ installer topic group is off by default
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP179",
             key=f"{mqtt_prefix}main/Anti_Stick_Mode",
             name="Aquarea Anti-stick mode",
-            state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            state=read_enabled_disabled,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # HeishaMon 4.4+ installer topic group is off by default
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP181",
             key=f"{mqtt_prefix}main/Bivalent_External_Pump",
             name="Aquarea Bivalent external pump",
             state=bit_to_bool,
+            entity_category=EntityCategory.DIAGNOSTIC,
             requires=(Feature.BIVALENT,),
-            entity_registry_enabled_default=False,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP194",
             key=f"{mqtt_prefix}main/Defrost_Signal",
             name="Aquarea Defrost signal",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # HeishaMon 4.4+ installer topic group is off by default
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP149",
             key=f"{mqtt_prefix}main/SG_Ready_Control",
             name="Aquarea SG Ready control",
-            state=read_enabled_disabled,
+            state=read_sg_ready_enabled,
             entity_category=EntityCategory.DIAGNOSTIC,
             entity_registry_enabled_default=False,  # SG Ready is a less common external-control setup
             requires=(Feature.OPTIONAL_PCB,),
