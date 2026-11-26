@@ -23,6 +23,7 @@ from homeassistant.util import dt as dt_util
 from .const import CONF_SETTINGS_GUARD, DOMAIN
 from .definitions.values import read_heatpump_model
 from .logic.dependencies import Reason, blocked_commands, rules_apply_to
+from .logic.journal import Change, SettingsJournal
 from .logic.cycles import CycleTracker, RunFinished, RunStarted
 from .logic.state import OperatingState, Snapshot, operating_state
 
@@ -36,11 +37,21 @@ SAVE_DELAY = 600
 
 RunEvent = RunStarted | RunFinished
 
+# fired on the Home Assistant bus when a setting of the heat pump changed
+EVENT_SETTING_CHANGED = f"{DOMAIN}_setting_changed"
+
 
 class HeatPumpHub:
     """State of one heat pump, shared by the entities of its config entry."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, mqtt_prefix: str) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        mqtt_prefix: str,
+        settings: Optional[dict[str, str]] = None,
+    ) -> None:
+        """`settings` maps command names to the topic name of their readback."""
         self.hass = hass
         self.entry = entry
         self.mqtt_prefix = mqtt_prefix
@@ -51,6 +62,8 @@ class HeatPumpHub:
         self.snapshot = Snapshot()
         self.state: Optional[OperatingState] = None
         self.cycles = CycleTracker()
+        self._readback_of_command = dict(settings or {})
+        self.journal = SettingsJournal(self._readback_of_command.values())
         self._store: Store = Store(hass, STORAGE_VERSION, storage_key(entry.entry_id))
         self._listeners: list[Callable[[], None]] = []
         self._run_listeners: list[Callable[[RunEvent], None]] = []
@@ -65,6 +78,10 @@ class HeatPumpHub:
                 self.cycles = CycleTracker.from_dict(stored["cycles"])
             except (KeyError, TypeError):
                 _LOGGER.warning("Stored compressor run counters are not readable, starting new")
+            try:
+                self.journal.restore(stored.get("journal", {}))
+            except (KeyError, TypeError):
+                _LOGGER.warning("Stored settings journal is not readable, starting new")
 
     async def async_start(self) -> None:
         """Start listening."""
@@ -176,6 +193,9 @@ class HeatPumpHub:
         if self.topics.get(name) == payload:
             return
         self.topics[name] = payload
+        change = self.journal.update(dt_util.utcnow().timestamp(), name, payload)
+        if change is not None:
+            self._setting_changed(change)
         self._evaluate()
 
     @callback
@@ -207,8 +227,26 @@ class HeatPumpHub:
         for listener in list(self._listeners):
             listener()
 
+    def note_command(self, command_topic: str) -> None:
+        """Home Assistant sends this command; its change will count as asked for."""
+        readback = self._readback_of_command.get(command_topic.rsplit("/", 1)[-1])
+        if readback is not None:
+            self.journal.note_command(dt_util.utcnow().timestamp(), readback)
+
+    def _setting_changed(self, change: Change) -> None:
+        self.hass.bus.async_fire(
+            EVENT_SETTING_CHANGED,
+            {
+                "setting": change.setting,
+                "old": change.old,
+                "new": change.new,
+                "origin": change.origin,
+            },
+        )
+        self._saved_at = 0.0  # written with the next evaluation
+
     def _data_to_store(self) -> dict[str, Any]:
-        return {"cycles": self.cycles.as_dict()}
+        return {"cycles": self.cycles.as_dict(), "journal": self.journal.as_dict()}
 
 
 def storage_key(entry_id: str) -> str:

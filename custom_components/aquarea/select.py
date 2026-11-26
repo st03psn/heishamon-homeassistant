@@ -76,6 +76,7 @@ class HeishaMonMQTTSelect(FeatureGatedEntity, CommandRetryMixin, SelectEntity):
         hub = find_hub(self.hass, self.config_entry_entry_id)
         if hub is not None:
             hub.check_command(self.entity_description.command_topic, payload)
+            hub.note_command(self.entity_description.command_topic)
         await async_publish(
             self.hass,
             self.entity_description.command_topic,
