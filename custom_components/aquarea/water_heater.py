@@ -28,6 +28,7 @@ from .hub import note_command
 from .const import Feature
 from .features import FeatureGatedEntity
 from .const import DeviceType
+from .translated_name import TranslatedNameMixin
 from .retry_mixin import CommandRetryMixin
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ async def async_setup_entry(
     description = WaterHeaterEntityDescription(
         key=f"{discovery_prefix}main/DHW_Target_Temp",
         name="DHW",
+        translation_key="dhw",
     )
     async_add_entities([HeishaMonDHW(hass, description, config_entry)])
 
@@ -55,7 +57,7 @@ async def async_setup_entry(
 STATE_SUPERECO = "Super Eco"
 
 
-class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
+class HeishaMonDHW(TranslatedNameMixin, FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     _attr_native_current_temperature: float | None = None

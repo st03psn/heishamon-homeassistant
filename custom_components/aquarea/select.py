@@ -15,6 +15,7 @@ from .definitions.selects import build_selects
 from . import build_device_info
 from .hub import find_hub
 from .features import FeatureGatedEntity
+from .translated_name import TranslatedNameMixin
 from .retry_mixin import CommandRetryMixin
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ async def async_setup_entry(
     )
 
 
-class HeishaMonMQTTSelect(FeatureGatedEntity, CommandRetryMixin, SelectEntity):
+class HeishaMonMQTTSelect(TranslatedNameMixin, FeatureGatedEntity, CommandRetryMixin, SelectEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     entity_description: HeishaMonSelectEntityDescription

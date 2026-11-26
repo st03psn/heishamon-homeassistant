@@ -1,4 +1,7 @@
-"""Display names, diagnostic categories and automatic enabling, applied to built descriptions."""
+"""Display names, translation keys, diagnostic categories and automatic enabling, applied to built descriptions.
+
+The translation key of an entity is the slug of its topic id (``TOP8`` -> ``top8``);
+the English display name built here is the fallback and the source of en.json."""
 from __future__ import annotations
 
 import re
@@ -8,6 +11,7 @@ from functools import wraps
 from typing import Any, Optional
 
 from homeassistant.helpers.entity import EntityCategory
+from homeassistant.util import slugify
 
 from ..const import DeviceType
 
@@ -210,6 +214,9 @@ def arranged(build: Callable) -> Callable:
         for description in build(*args, **kwargs):
             topic_id = getattr(description, "heishamon_topic_id", None)
             changes = {}
+            if topic_id and getattr(description, "translation_key", None) is None:
+                # the name is translated, the English name stays as the fallback
+                changes["translation_key"] = slugify(topic_id)
             if getattr(description, "device", None) != DeviceType.HEISHAMON:
                 name = _display_name(topic_id, description.name)
                 if name != description.name:

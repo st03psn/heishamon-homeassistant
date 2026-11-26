@@ -19,6 +19,7 @@ from homeassistant.components.climate import ClimateEntityDescription
 from .definitions.values import OperatingMode
 from . import build_device_info
 from .const import DeviceType
+from .translated_name import TranslatedNameMixin
 from .hub import find_hub, note_command
 from .logic.state import OperatingState
 from .retry_mixin import CommandRetryMixin
@@ -72,6 +73,7 @@ async def async_setup_entry(
     description_zone1_heating = ZoneClimateEntityDescription(
         key=f"{discovery_prefix}main/Z1_Temp",
         name="Zone 1 heating",
+        translation_key="zone_1_heating",
         zone_id=1,
     )
     zone1_climate_heating = HeishaMonZoneClimate(hass, description_zone1_heating, config_entry, True)
@@ -79,17 +81,20 @@ async def async_setup_entry(
     description_zone1_cooling = ZoneClimateEntityDescription(
         key=f"{discovery_prefix}main/Z1_Temp_Cooling",
         name="Zone 1 cooling",
+        translation_key="zone_1_cooling",
         zone_id=1,
     )
     zone1_climate_cooling = HeishaMonZoneClimate(hass, description_zone1_cooling, config_entry, False)
     description_zone2_heating = ZoneClimateEntityDescription(
         name="Zone 2 heating",
+        translation_key="zone_2_heating",
         key=f"{discovery_prefix}main/Z2_Temp",
         zone_id=2,
     )
     # this entity is supposed to be temporary until we can implement a unified climate component without bug
     description_zone2_cooling = ZoneClimateEntityDescription(
         name="Zone 2 cooling",
+        translation_key="zone_2_cooling",
         key=f"{discovery_prefix}main/Z2_Temp_Cooling",
         zone_id=2,
     )
@@ -121,7 +126,7 @@ class ZoneTemperatureMode(Enum):
     ROOM = 3  # ROOM temperature is the driver, you set it directly from 10:30 deg C
     NAN = 4  # if external thermostat is choosen you cannot drive the temperature at all
 
-class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
+class HeishaMonZoneClimate(TranslatedNameMixin, CommandRetryMixin, ClimateEntity):
     """Representation of a HeishaMon climate entity that is updated via MQTT."""
 
     _attr_native_current_temperature: float | None = None

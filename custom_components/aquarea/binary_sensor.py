@@ -23,6 +23,7 @@ from . import build_device_info
 from .const import DOMAIN, DeviceType
 from .errors import describe, is_fault
 from .features import FeatureGatedEntity
+from .translated_name import TranslatedNameMixin
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ async def async_setup_entry(
                     heishamon_topic_id=switch_description.heishamon_topic_id,
                     key=switch_description.key,
                     name=f"{switch_description.name} (readonly)",
+                    translation_key=switch_description.translation_key,
                     entity_category=category,
                     device=switch_description.device,
                     state=switch_description.state,
@@ -85,7 +87,7 @@ async def async_setup_entry(
     async_add_entities([HeishaMonFaultSensor(config_entry)])
 
 
-class HeishaMonBinarySensor(FeatureGatedEntity, BinarySensorEntity):
+class HeishaMonBinarySensor(TranslatedNameMixin, FeatureGatedEntity, BinarySensorEntity):
     """Representation of a HeishaMon binary sensor that is updated via MQTT."""
 
     entity_description: HeishaMonBinarySensorEntityDescription
@@ -135,11 +137,12 @@ class HeishaMonBinarySensor(FeatureGatedEntity, BinarySensorEntity):
         return build_device_info(self.hass, self.entity_description.device, self.discovery_prefix, self.config_entry_entry_id)
 
 
-class HeishaMonFaultSensor(BinarySensorEntity):
+class HeishaMonFaultSensor(TranslatedNameMixin, BinarySensorEntity):
     """On while the heat pump reports a fault (TOP44), with a Repairs issue."""
 
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
     _attr_name = "Fault"
+    _attr_translation_key = "fault"
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.config_entry_entry_id = config_entry.entry_id

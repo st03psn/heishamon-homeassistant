@@ -81,6 +81,474 @@
       },
       "last_setting_change": {
         "name": "Last setting change"
+      },
+      "top1": {
+        "name": "Pump flow"
+      },
+      "top5": {
+        "name": "Water inlet temp"
+      },
+      "top6": {
+        "name": "Water outlet temp"
+      },
+      "top7": {
+        "name": "Water outlet target"
+      },
+      "top8": {
+        "name": "Compressor frequency"
+      },
+      "top10": {
+        "name": "DHW tank temp"
+      },
+      "top11": {
+        "name": "Compressor hours"
+      },
+      "top12": {
+        "name": "Compressor starts"
+      },
+      "top14": {
+        "name": "Outdoor temp"
+      },
+      "top15": {
+        "name": "Heat power produced"
+      },
+      "top16": {
+        "name": "Heat power consumed"
+      },
+      "top20": {
+        "name": "Valve 3-way"
+      },
+      "top125": {
+        "name": "Valve 2-way"
+      },
+      "top21": {
+        "name": "Outdoor pipe temp"
+      },
+      "top23": {
+        "name": "Heating delta"
+      },
+      "top24": {
+        "name": "Cooling delta"
+      },
+      "top25": {
+        "name": "DHW holiday shift temp"
+      },
+      "top33": {
+        "name": "Remote control temp"
+      },
+      "top36": {
+        "name": "Zone 1 water outlet"
+      },
+      "top37": {
+        "name": "Zone 2 water outlet"
+      },
+      "top38": {
+        "name": "Cooling power produced"
+      },
+      "top39": {
+        "name": "Cooling power consumed"
+      },
+      "top40": {
+        "name": "DHW power produced"
+      },
+      "top41": {
+        "name": "DHW power consumed"
+      },
+      "top42": {
+        "name": "Zone 1 water target"
+      },
+      "top43": {
+        "name": "Zone 2 water target"
+      },
+      "top44": {
+        "name": "Error code"
+      },
+      "top45": {
+        "name": "Heating holiday shift"
+      },
+      "top46": {
+        "name": "Buffer temp"
+      },
+      "top47": {
+        "name": "Solar temp"
+      },
+      "top48": {
+        "name": "Pool temp"
+      },
+      "top49": {
+        "name": "Main HEX outlet temp"
+      },
+      "top50": {
+        "name": "Discharge temp"
+      },
+      "top51": {
+        "name": "Inside pipe temp"
+      },
+      "top52": {
+        "name": "Defrost temp"
+      },
+      "top53": {
+        "name": "Eva outlet temp"
+      },
+      "top54": {
+        "name": "Bypass outlet temp"
+      },
+      "top55": {
+        "name": "Ipm temp"
+      },
+      "top56": {
+        "name": "Zone 1 temp"
+      },
+      "top57": {
+        "name": "Zone 2 temp"
+      },
+      "top62": {
+        "name": "Fan 1 speed"
+      },
+      "top63": {
+        "name": "Fan 2 speed"
+      },
+      "top64": {
+        "name": "Pressure high"
+      },
+      "top65": {
+        "name": "Pump speed"
+      },
+      "top66": {
+        "name": "Pressure low"
+      },
+      "top67": {
+        "name": "Compressor current"
+      },
+      "top70": {
+        "name": "DHW sterilization temp"
+      },
+      "top71": {
+        "name": "DHW sterilization max time"
+      },
+      "top76": {
+        "name": "Heating water mode"
+      },
+      "top78": {
+        "name": "Heater on outdoor temp"
+      },
+      "top79": {
+        "name": "Auto to cool above"
+      },
+      "top80": {
+        "name": "Auto to heat below"
+      },
+      "top81": {
+        "name": "Cooling water mode"
+      },
+      "top90": {
+        "name": "Heater hours room"
+      },
+      "top91": {
+        "name": "Heater hours DHW"
+      },
+      "top92": {
+        "name": "Heat pump model"
+      },
+      "top93": {
+        "name": "Pump duty"
+      },
+      "top101": {
+        "name": "Solar mode"
+      },
+      "top102": {
+        "name": "Solar delta on"
+      },
+      "top103": {
+        "name": "Solar delta off"
+      },
+      "top104": {
+        "name": "Solar frost protection"
+      },
+      "top105": {
+        "name": "Solar max temp"
+      },
+      "top106": {
+        "name": "Pump flow rate mode"
+      },
+      "top107": {
+        "name": "Liquid type"
+      },
+      "top111": {
+        "name": "Zone 2 sensor setting"
+      },
+      "top112": {
+        "name": "Zone 1 sensor setting"
+      },
+      "top113": {
+        "name": "Buffer delta"
+      },
+      "top115": {
+        "name": "Water pressure"
+      },
+      "top116": {
+        "name": "Water inlet 2 temp"
+      },
+      "top117": {
+        "name": "Economizer outlet temp"
+      },
+      "top118": {
+        "name": "Remote control 2 temp"
+      },
+      "top127": {
+        "name": "Zone 1 valve PID"
+      },
+      "top128": {
+        "name": "Zone 2 valve PID"
+      },
+      "top131": {
+        "name": "Bivalent start temp"
+      },
+      "top136": {
+        "name": "Bivalent adv. start delay"
+      },
+      "top137": {
+        "name": "Bivalent adv. stop delay"
+      },
+      "top138": {
+        "name": "Bivalent adv. DHW delay"
+      },
+      "top139": {
+        "name": "Heating control"
+      },
+      "top140": {
+        "name": "DHW smart mode"
+      },
+      "top141": {
+        "name": "Quiet mode priority"
+      },
+      "top142": {
+        "name": "Expansion valve"
+      },
+      "top197": {
+        "name": "Rated heating capacity"
+      },
+      "top198": {
+        "name": "Heat pump type"
+      },
+      "stat1_rssi": {
+        "name": "HeishaMon RSSI"
+      },
+      "stat1_uptime": {
+        "name": "HeishaMon Uptime"
+      },
+      "stat1_total_reads": {
+        "name": "HeishaMon Total reads"
+      },
+      "stat1_good_reads": {
+        "name": "HeishaMon Good reads"
+      },
+      "stat1_badcrc_reads": {
+        "name": "HeishaMon bad CRC reads"
+      },
+      "stat1_badheader_reads": {
+        "name": "HeishaMon bad header reads"
+      },
+      "stat1_tooshort_reads": {
+        "name": "HeishaMon too short reads"
+      },
+      "stat1_toolong_reads": {
+        "name": "HeishaMon too long reads"
+      },
+      "stat1_timeout_reads": {
+        "name": "HeishaMon timeout reads"
+      },
+      "stat1_voltage": {
+        "name": "HeishaMon voltage"
+      },
+      "stat1_freememory": {
+        "name": "HeishaMon free memory"
+      },
+      "stat1_freeheap": {
+        "name": "HeishaMon free heap"
+      },
+      "stat1_mqttreconnects": {
+        "name": "HeishaMon mqtt reconnects"
+      },
+      "stat1_active_rules": {
+        "name": "HeishaMon Active rules"
+      },
+      "stat1_board": {
+        "name": "HeishaMon Board type"
+      },
+      "info_ip": {
+        "name": "HeishaMon IP Address"
+      },
+      "opt1": {
+        "name": "Emulated PCB Z1 mixing valve"
+      },
+      "opt3": {
+        "name": "Emulated PCB Z2 mixing valve"
+      },
+      "top145": {
+        "name": "DHW capacity mode"
+      },
+      "top146": {
+        "name": "Zone configuration"
+      },
+      "top147": {
+        "name": "Heater capacity"
+      },
+      "top148": {
+        "name": "DHW heater type"
+      },
+      "top152": {
+        "name": "Dry concrete target"
+      },
+      "top153": {
+        "name": "Pool delta"
+      },
+      "top154": {
+        "name": "SG ready 1 heating capacity"
+      },
+      "top155": {
+        "name": "SG ready 1 DHW capacity"
+      },
+      "top156": {
+        "name": "SG ready 2 heating capacity"
+      },
+      "top157": {
+        "name": "SG ready 2 DHW capacity"
+      },
+      "top158": {
+        "name": "DHW alternation room max"
+      },
+      "top159": {
+        "name": "DHW heat-up max time"
+      },
+      "top162": {
+        "name": "External heat/cool switch"
+      },
+      "top169": {
+        "name": "Heating target with buffer"
+      },
+      "top171": {
+        "name": "Heating on outdoor temp"
+      },
+      "top172": {
+        "name": "Heating ON delay"
+      },
+      "top173": {
+        "name": "DHW booster delay"
+      },
+      "top174": {
+        "name": "Heating efficiency stage 1"
+      },
+      "top175": {
+        "name": "Heating efficiency stage 2"
+      },
+      "top176": {
+        "name": "Heating efficiency stage 3"
+      },
+      "top177": {
+        "name": "Sensor offset remote Th1"
+      },
+      "top178": {
+        "name": "Outdoor sensor offset"
+      },
+      "top180": {
+        "name": "Bivalent operating mode"
+      },
+      "top182": {
+        "name": "Extra pump use"
+      },
+      "top183": {
+        "name": "Extra pump mode"
+      },
+      "top184": {
+        "name": "SG ready 1 DHW power"
+      },
+      "top185": {
+        "name": "SG ready 1 heating power"
+      },
+      "top186": {
+        "name": "SG ready 1 cooling power"
+      },
+      "top187": {
+        "name": "SG ready 2 DHW power"
+      },
+      "top188": {
+        "name": "SG ready 2 heating power"
+      },
+      "top189": {
+        "name": "SG ready 2 cooling power"
+      },
+      "top190": {
+        "name": "SG ready stop power"
+      },
+      "top191": {
+        "name": "SG ready 1 cooling capacity offset"
+      },
+      "top192": {
+        "name": "SG ready 2 cooling capacity offset"
+      },
+      "top193": {
+        "name": "Return sensor offset"
+      },
+      "top195": {
+        "name": "DHW tank sensor offset"
+      },
+      "top196": {
+        "name": "Flow sensor offset"
+      },
+      "top15_total": {
+        "name": "Heat power produced Total"
+      },
+      "top16_total": {
+        "name": "Heat power consumed Total"
+      },
+      "top38_total": {
+        "name": "Cooling power produced Total"
+      },
+      "top39_total": {
+        "name": "Cooling power consumed Total"
+      },
+      "top40_total": {
+        "name": "DHW power produced Total"
+      },
+      "top41_total": {
+        "name": "DHW power consumed Total"
+      },
+      "heishamon_detected_1wire_sensors": {
+        "name": "HeishaMon detected 1wire sensors"
+      },
+      "heishamon_detected_s0_sensors": {
+        "name": "HeishaMon detected s0 sensors"
+      },
+      "total_heat_production": {
+        "name": "Total heat production"
+      },
+      "total_power_consumption": {
+        "name": "Total power consumption"
+      },
+      "cop": {
+        "name": "COP"
+      },
+      "total_heat_production_total": {
+        "name": "Total heat production Total"
+      },
+      "total_power_consumption_total": {
+        "name": "Total power consumption Total"
+      },
+      "heat_pump_models_last_refreshed": {
+        "name": "Heat pump models last refreshed"
+      },
+      "onewire_sensor": {
+        "name": "HeishaMon 1wire {device_id}"
+      },
+      "s0_watthour": {
+        "name": "HeishaMon s0 {device_id} WattHour"
+      },
+      "s0_totalwatthour": {
+        "name": "HeishaMon s0 {device_id} WattHourTotal"
+      },
+      "s0_watt": {
+        "name": "HeishaMon s0 {device_id} Watt"
       }
     },
     "event": {
@@ -94,6 +562,571 @@
             }
           }
         }
+      }
+    },
+    "binary_sensor": {
+      "lwt": {
+        "name": "HeatPump online"
+      },
+      "top3": {
+        "name": "Quiet mode schedule"
+      },
+      "top58": {
+        "name": "DHW heater enabled"
+      },
+      "top59": {
+        "name": "Heater room enabled"
+      },
+      "top60": {
+        "name": "Heater internal state"
+      },
+      "top61": {
+        "name": "Heater external state"
+      },
+      "top68": {
+        "name": "Heater force state"
+      },
+      "top93": {
+        "name": "Pump running"
+      },
+      "top100": {
+        "name": "DHW installed"
+      },
+      "top109": {
+        "name": "Anti freeze mode"
+      },
+      "top110": {
+        "name": "Optional PCB enabled"
+      },
+      "top132": {
+        "name": "Bivalent advanced heat"
+      },
+      "top133": {
+        "name": "Bivalent advanced DHW"
+      },
+      "top123": {
+        "name": "Zone 1 pump state"
+      },
+      "top124": {
+        "name": "Zone 2 pump state"
+      },
+      "opt0": {
+        "name": "Emulated PCB Z1 pump"
+      },
+      "opt2": {
+        "name": "Emulated PCB Z2 pump"
+      },
+      "opt4": {
+        "name": "Emulated PCB pool pump"
+      },
+      "opt5": {
+        "name": "Emulated PCB solar pump"
+      },
+      "opt6": {
+        "name": "Emulated PCB alarm"
+      },
+      "top144": {
+        "name": "Dry concrete"
+      },
+      "top150": {
+        "name": "Demand control"
+      },
+      "top151": {
+        "name": "DHW defrost"
+      },
+      "top160": {
+        "name": "Quiet mode active"
+      },
+      "top161": {
+        "name": "Powerful mode active"
+      },
+      "top164": {
+        "name": "Bivalent boiler contact"
+      },
+      "top165": {
+        "name": "Zone 2 active"
+      },
+      "top166": {
+        "name": "Zone 1 active"
+      },
+      "top167": {
+        "name": "Heater backup enabled"
+      },
+      "top168": {
+        "name": "Cooling enabled"
+      },
+      "top170": {
+        "name": "Static pressure"
+      },
+      "top179": {
+        "name": "Anti-stick mode"
+      },
+      "top181": {
+        "name": "Bivalent external pump"
+      },
+      "top194": {
+        "name": "Defrost signal"
+      },
+      "top149": {
+        "name": "SG ready control"
+      },
+      "top163": {
+        "name": "External switch open"
+      },
+      "set1": {
+        "name": "Main power (readonly)"
+      },
+      "set2": {
+        "name": "Holiday mode (readonly)"
+      },
+      "set10": {
+        "name": "DHW force (readonly)"
+      },
+      "set12": {
+        "name": "Defrost routine (readonly)"
+      },
+      "set13": {
+        "name": "DHW sterilization force (readonly)"
+      },
+      "set24": {
+        "name": "Main thermostat schedule (readonly)"
+      },
+      "set25": {
+        "name": "External outdoor sensor (readonly)"
+      },
+      "set28": {
+        "name": "Buffer tank installed (readonly)"
+      },
+      "set30": {
+        "name": "External control (readonly)"
+      },
+      "set31": {
+        "name": "External error signal (readonly)"
+      },
+      "set32": {
+        "name": "External compressor control (readonly)"
+      },
+      "setcompressorstate": {
+        "name": "Emulated PCB compressor (readonly)"
+      },
+      "set33": {
+        "name": "External heat/cool control (readonly)"
+      },
+      "set34": {
+        "name": "Bivalent control (readonly)"
+      },
+      "relay01": {
+        "name": "Relay 1 (readonly)"
+      },
+      "relay02": {
+        "name": "Relay 2 (readonly)"
+      },
+      "fault": {
+        "name": "Fault"
+      }
+    },
+    "number": {
+      "set5": {
+        "name": "Zone 1 heat shift"
+      },
+      "set6": {
+        "name": "Zone 1 cool shift"
+      },
+      "set7": {
+        "name": "Zone 2 heat shift"
+      },
+      "set8": {
+        "name": "Zone 2 cool shift"
+      },
+      "set11": {
+        "name": "DHW target temp"
+      },
+      "set15": {
+        "name": "Pump max duty"
+      },
+      "set18": {
+        "name": "Heating delta"
+      },
+      "set19": {
+        "name": "Cooling delta"
+      },
+      "set20": {
+        "name": "DHW heating delta"
+      },
+      "set21": {
+        "name": "Heater delay time"
+      },
+      "set22": {
+        "name": "Heater start delta"
+      },
+      "set23": {
+        "name": "Heater stop delta"
+      },
+      "set27": {
+        "name": "Buffer delta"
+      },
+      "set29": {
+        "name": "Heating off outdoor temp"
+      },
+      "set46": {
+        "name": "Heater on outdoor temp"
+      },
+      "setdemandcontrol": {
+        "name": "Emulated PCB demand control"
+      },
+      "set36": {
+        "name": "Bivalent start temp"
+      },
+      "set37": {
+        "name": "Bivalent adv. start temp"
+      },
+      "set38": {
+        "name": "Bivalent adv. stop temp"
+      },
+      "set49": {
+        "name": "DHW sterilization temp"
+      },
+      "set50": {
+        "name": "DHW sterilization max time"
+      },
+      "set51": {
+        "name": "Auto to cool above"
+      },
+      "set52": {
+        "name": "Auto to heat below"
+      },
+      "set53": {
+        "name": "DHW alternation room max"
+      },
+      "set54": {
+        "name": "DHW heat-up max time"
+      },
+      "set57": {
+        "name": "Pool delta"
+      },
+      "set61": {
+        "name": "Heating on outdoor temp"
+      },
+      "set62": {
+        "name": "Heating on delay"
+      },
+      "set63": {
+        "name": "DHW booster heater delay"
+      },
+      "set64": {
+        "name": "Heating efficiency stage 1"
+      },
+      "set65": {
+        "name": "Heating efficiency stage 2"
+      },
+      "set66": {
+        "name": "Heating efficiency stage 3"
+      },
+      "set67": {
+        "name": "Sensor offset remote Th1"
+      },
+      "set68": {
+        "name": "Sensor offset outdoor"
+      },
+      "set72": {
+        "name": "Bivalent adv. start delay"
+      },
+      "set73": {
+        "name": "Bivalent adv. stop delay"
+      },
+      "set77": {
+        "name": "Solar delta on"
+      },
+      "set78": {
+        "name": "Solar delta off"
+      },
+      "set79": {
+        "name": "Solar frost protection"
+      },
+      "set80": {
+        "name": "Heating holiday shift"
+      },
+      "set88": {
+        "name": "Solar max temp"
+      },
+      "set90": {
+        "name": "SG ready 1 DHW power"
+      },
+      "set91": {
+        "name": "SG ready 1 heating power"
+      },
+      "set92": {
+        "name": "SG ready 1 cooling power"
+      },
+      "set93": {
+        "name": "SG ready 2 DHW power"
+      },
+      "set94": {
+        "name": "SG ready 2 heating power"
+      },
+      "set95": {
+        "name": "SG ready 2 cooling power"
+      },
+      "set96": {
+        "name": "SG ready stop power"
+      },
+      "set97": {
+        "name": "SG ready 1 cooling offset"
+      },
+      "set98": {
+        "name": "SG ready 2 cooling offset"
+      },
+      "set99": {
+        "name": "Sensor offset return"
+      },
+      "set103": {
+        "name": "Sensor offset DHW tank"
+      },
+      "set104": {
+        "name": "Sensor offset flow"
+      },
+      "top72": {
+        "name": "Zone 1 cool curve target high"
+      },
+      "top74": {
+        "name": "Zone 1 cool curve outside high"
+      },
+      "top73": {
+        "name": "Zone 1 cool curve target low"
+      },
+      "top75": {
+        "name": "Zone 1 cool curve outside low"
+      },
+      "top29": {
+        "name": "Zone 1 heat curve target high"
+      },
+      "top31": {
+        "name": "Zone 1 heat curve outside high"
+      },
+      "top30": {
+        "name": "Zone 1 heat curve target low"
+      },
+      "top32": {
+        "name": "Zone 1 heat curve outside low"
+      },
+      "top86": {
+        "name": "Zone 2 cool curve target high"
+      },
+      "top88": {
+        "name": "Zone 2 cool curve outside high"
+      },
+      "top87": {
+        "name": "Zone 2 cool curve target low"
+      },
+      "top89": {
+        "name": "Zone 2 cool curve outside low"
+      },
+      "top82": {
+        "name": "Zone 2 heat curve target high"
+      },
+      "top84": {
+        "name": "Zone 2 heat curve outside high"
+      },
+      "top83": {
+        "name": "Zone 2 heat curve target low"
+      },
+      "top85": {
+        "name": "Zone 2 heat curve outside low"
+      }
+    },
+    "select": {
+      "set3": {
+        "name": "Quiet mode"
+      },
+      "set4": {
+        "name": "Powerful mode"
+      },
+      "set9": {
+        "name": "Operating mode"
+      },
+      "set17": {
+        "name": "Zones active"
+      },
+      "set26": {
+        "name": "External pad heater type"
+      },
+      "set35": {
+        "name": "Bivalent mode"
+      },
+      "set39": {
+        "name": "Heating control"
+      },
+      "set40": {
+        "name": "DHW smart mode"
+      },
+      "set41": {
+        "name": "Quiet mode priority"
+      },
+      "set42": {
+        "name": "Pump flow rate mode"
+      },
+      "setsmartgridmode": {
+        "name": "Emulated PCB SG ready signal"
+      },
+      "set43": {
+        "name": "DHW sensor selection"
+      },
+      "set44": {
+        "name": "DHW heater release"
+      },
+      "set45": {
+        "name": "Heater room release"
+      },
+      "set70": {
+        "name": "Bivalent operating mode"
+      },
+      "set74": {
+        "name": "Extra pump use"
+      },
+      "set75": {
+        "name": "Extra pump mode"
+      },
+      "set76": {
+        "name": "Heater capacity"
+      },
+      "set81": {
+        "name": "Zone 1 type"
+      },
+      "set82": {
+        "name": "Heating water mode"
+      },
+      "set83": {
+        "name": "Cooling water mode"
+      },
+      "set84": {
+        "name": "Liquid type"
+      },
+      "set85": {
+        "name": "DHW heater type"
+      },
+      "set87": {
+        "name": "Solar mode"
+      },
+      "set89": {
+        "name": "SG ready mode"
+      },
+      "set100": {
+        "name": "Zone 1 sensor type"
+      }
+    },
+    "switch": {
+      "set1": {
+        "name": "Main power"
+      },
+      "set2": {
+        "name": "Holiday mode"
+      },
+      "set10": {
+        "name": "DHW force"
+      },
+      "set12": {
+        "name": "Defrost routine"
+      },
+      "set13": {
+        "name": "DHW sterilization force"
+      },
+      "set47": {
+        "name": "Heater force"
+      },
+      "set24": {
+        "name": "Main thermostat schedule"
+      },
+      "set25": {
+        "name": "External outdoor sensor"
+      },
+      "set28": {
+        "name": "Buffer tank installed"
+      },
+      "set30": {
+        "name": "External control"
+      },
+      "set31": {
+        "name": "External error signal"
+      },
+      "set32": {
+        "name": "External compressor control"
+      },
+      "setcompressorstate": {
+        "name": "Emulated PCB compressor"
+      },
+      "set33": {
+        "name": "External heat/cool control"
+      },
+      "set34": {
+        "name": "Bivalent control"
+      },
+      "relay01": {
+        "name": "Relay 1"
+      },
+      "relay02": {
+        "name": "Relay 2"
+      },
+      "set55": {
+        "name": "Quiet mode schedule"
+      },
+      "set56": {
+        "name": "Anti freeze mode"
+      },
+      "set58": {
+        "name": "Demand control"
+      },
+      "set59": {
+        "name": "DHW defrost"
+      },
+      "set60": {
+        "name": "Static pressure"
+      },
+      "set69": {
+        "name": "Bivalent advanced heat"
+      },
+      "set71": {
+        "name": "Bivalent external pump"
+      },
+      "set86": {
+        "name": "DHW tank installed"
+      },
+      "set102": {
+        "name": "Defrost signal"
+      }
+    },
+    "button": {
+      "reboot": {
+        "name": "Reboot"
+      },
+      "set48": {
+        "name": "Reset fault code"
+      },
+      "refresh_heat_pump_models": {
+        "name": "Refresh heat pump models"
+      }
+    },
+    "climate": {
+      "zone_1_heating": {
+        "name": "Zone 1 heating"
+      },
+      "zone_1_cooling": {
+        "name": "Zone 1 cooling"
+      },
+      "zone_2_heating": {
+        "name": "Zone 2 heating"
+      },
+      "zone_2_cooling": {
+        "name": "Zone 2 cooling"
+      }
+    },
+    "water_heater": {
+      "dhw": {
+        "name": "DHW"
+      }
+    },
+    "update": {
+      "heishamon_firmware_update": {
+        "name": "HeishaMon Firmware update"
       }
     }
   },

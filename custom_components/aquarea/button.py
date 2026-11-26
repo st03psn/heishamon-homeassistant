@@ -17,6 +17,7 @@ from homeassistant.util import slugify
 from .definitions.buttons import build_buttons
 from .definitions.descriptions import HeishaMonButtonEntityDescription
 from .const import DOMAIN, DeviceType
+from .translated_name import TranslatedNameMixin
 from .model_catalog import ModelCatalog, ModelRefreshError
 from . import build_device_info
 
@@ -46,12 +47,13 @@ async def async_setup_entry(
     )
 
 
-class RefreshHeatpumpModelsButton(ButtonEntity):
+class RefreshHeatpumpModelsButton(TranslatedNameMixin, ButtonEntity):
     """Button to manually refresh model definitions from HeishaMon upstream."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:database-refresh"
     _attr_name = "Refresh heat pump models"
+    _attr_translation_key = "refresh_heat_pump_models"
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         self.hass = hass
@@ -80,7 +82,7 @@ class RefreshHeatpumpModelsButton(ButtonEntity):
         )
 
 
-class HeishaMonMQTTButton(ButtonEntity):
+class HeishaMonMQTTButton(TranslatedNameMixin, ButtonEntity):
     """Representation of a HeishaMon switch that is updated via MQTT."""
 
     entity_description: HeishaMonButtonEntityDescription

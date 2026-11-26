@@ -15,6 +15,7 @@ from .definitions.switches import build_switches
 from . import build_device_info
 from .hub import find_hub
 from .features import FeatureGatedEntity
+from .translated_name import TranslatedNameMixin
 from .retry_mixin import CommandRetryMixin
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ async def async_setup_entry(
     )
 
 
-class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
+class HeishaMonMQTTSwitch(TranslatedNameMixin, FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
     """Representation of a HeishaMon switch that is updated via MQTT."""
 
     entity_description: HeishaMonSwitchEntityDescription
