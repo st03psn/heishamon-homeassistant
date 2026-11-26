@@ -29,6 +29,10 @@ class Requirement:
     # True: the children are NOT usable while the conditions hold (the table words
     # one row this way: with the heat/cool switch on, weekly timer and auto mode are not usable)
     blocks: bool = False
+    # True: `any_of` lists every parent of the row, so it can be judged (the children
+    # work while one of the conditions holds). False: the row has parts the data does
+    # not express and is skipped.
+    any_of_complete: bool = False
 
 
 @dataclass(frozen=True)
@@ -232,6 +236,22 @@ REQUIREMENTS: tuple[Requirement, ...] = (
         source='SM 106, 190',
         note='parent: Heat/cool switch on (TOP120 = 1); children: Weekly timer and operation mode auto are not usable; children: no topic, weekly timer and operation mode auto are not usable',
         blocks=True,
+    ),
+    Requirement(
+        when=(Condition('TOP144', 'Dry_Concrete_State', ('1',)),),
+        child_topics=('TOP144', 'TOP152'),
+        source='HeishaMon MQTT-Topics (TOP144, TOP152)',
+        note='the dry concrete program runs once after installation: its state and target are only shown while it runs',
+    ),
+    Requirement(
+        any_of=(
+            Condition('TOP112', 'Z1_Sensor_Settings', ('2',)),
+            Condition('TOP111', 'Z2_Sensor_Settings', ('2',)),
+        ),
+        child_topics=('TOP33',),
+        source='Installationsanleitung WH-WXG ME8, Systemaufbau 2 (Raumthermostat intern)',
+        note='the sensor in the remote controller only controls a zone set to internal thermostat',
+        any_of_complete=True,
     ),
 )
 
