@@ -132,18 +132,16 @@ class HeishaMonMQTTButton(TranslatedNameMixin, ButtonEntity):
         session = async_get_clientsession(self.hass)
         url = f"http://{self._inner_state}/reboot"
         _LOGGER.info(f"GET on {url}")
-        resp = await session.get(
-            url, headers=api_key_headers(self._config_entry)
-        )
-        if resp.status == 401:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="reboot_unauthorized",
-            )
-        if resp.status != 200:
-            raise HomeAssistantError("Impossible to reboot heishamon")
-        # we apparently need to read the output to let heishamon reboot
-        await resp.text()
+        async with session.get(url, headers=api_key_headers(self._config_entry)) as resp:
+            if resp.status == 401:
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="reboot_unauthorized",
+                )
+            if resp.status != 200:
+                raise HomeAssistantError("Impossible to reboot heishamon")
+            # we apparently need to read the output to let heishamon reboot
+            await resp.text()
         _LOGGER.info("Successfully triggered heishamon reboot")
 
     async def async_added_to_hass(self) -> None:

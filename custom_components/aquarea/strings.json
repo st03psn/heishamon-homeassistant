@@ -1146,7 +1146,7 @@
       "message": "HeishaMon rejected the request because a web login is active. Enter the API key of HeishaMon (created on its security page) in the options of the integration."
     },
     "firmware_upload_connection_failed": {
-      "message": "Could not upload firmware version {version} to HeishaMon at {host}: {error}. If a password is set on HeishaMon, the board closes the connection without an answer when the API key is missing or wrong: enter the API key in the options of the integration."
+      "message": "Could not upload firmware version {version} to HeishaMon at {host}: {error}. The network or a restart of the board may have interrupted the upload. If a password is set on HeishaMon, a missing or wrong API key has the same effect: check the API key in the options of the integration."
     }
   }
 }

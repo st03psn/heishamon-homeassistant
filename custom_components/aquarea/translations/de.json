@@ -1146,7 +1146,7 @@
       "message": "HeishaMon hat die Anfrage abgelehnt, weil eine Anmeldung aktiv ist. API-Schlüssel in den Optionen der Integration eintragen (er wird auf der Sicherheitsseite von HeishaMon erzeugt)."
     },
     "firmware_upload_connection_failed": {
-      "message": "Firmware-Version {version} konnte nicht zu HeishaMon unter {host} hochgeladen werden: {error}. Ist bei HeishaMon ein Passwort gesetzt, schließt die Platine die Verbindung ohne Antwort, wenn der API-Schlüssel fehlt oder falsch ist: API-Schlüssel in den Optionen der Integration eintragen."
+      "message": "Firmware-Version {version} konnte nicht zu HeishaMon unter {host} hochgeladen werden: {error}. Das Netz oder ein Neustart der Platine kann den Upload unterbrochen haben. Ist bei HeishaMon ein Passwort gesetzt, wirkt ein fehlender oder falscher API-Schlüssel genauso: API-Schlüssel in den Optionen der Integration prüfen."
     }
   }
 }
