@@ -28,6 +28,7 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 from . import build_device_info
 from .const import DeviceType
+from .translated_name import TranslatedNameMixin
 from .definitions.descriptions import HeishaMonEntityDescription
 from .definitions.values import read_board_type
 
@@ -90,6 +91,7 @@ async def async_setup_entry(
     firmware_update = HeishaMonUpdateEntityDescription(
         key="heishamon_firmware",
         name="HeishaMon Firmware update",
+        translation_key="heishamon_firmware_update",
         heishamon_topic_id=f"{discovery_prefix}stats",
         device_class=UpdateDeviceClass.FIRMWARE,
         device=DeviceType.HEISHAMON,
@@ -111,7 +113,7 @@ class HeishaMonUpdateEntityDescription(
     pass
 
 
-class HeishaMonMQTTUpdate(UpdateEntity):
+class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
     """Representation of a HeishaMon update that is updated via MQTT."""
 
     entity_description: HeishaMonUpdateEntityDescription

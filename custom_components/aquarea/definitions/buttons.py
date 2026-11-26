@@ -21,6 +21,7 @@ def build_buttons(
             heishamon_topic_id="Reboot",
             key=f"{mqtt_prefix}ip",
             name="Reboot",
+            translation_key="reboot",
             device=DeviceType.HEISHAMON,
             entity_category=EntityCategory.DIAGNOSTIC,
             device_class=ButtonDeviceClass.RESTART,
@@ -31,6 +32,7 @@ def build_buttons(
             key=f"{mqtt_prefix}commands/SetReset",
             command_topic=f"{mqtt_prefix}commands/SetReset",
             name="Reset fault code",
+            translation_key="set48",
             entity_category=EntityCategory.DIAGNOSTIC,
         ),
     ]

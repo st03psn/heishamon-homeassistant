@@ -37,6 +37,7 @@ from .definitions.values import bit_to_bool, read_heatpump_model
 from .model_catalog import SIGNAL_MODEL_CATALOG_UPDATED
 from . import build_device_info
 from .features import FeatureGatedEntity
+from .translated_name import TranslatedNameMixin
 from .hub_entities import build_hub_sensors
 
 
@@ -69,6 +70,7 @@ async def async_setup_entry(
     dallas_list_config = SensorEntityDescription(
         key=f"{discovery_prefix}1wire/+",
         name="HeishaMon detected 1wire sensors",
+        translation_key="heishamon_detected_1wire_sensors",
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     dallas_listing = DallasListSensor(
@@ -78,6 +80,7 @@ async def async_setup_entry(
     s0_list_config = SensorEntityDescription(
         key=f"{discovery_prefix}s0/Watt/+",
         name="HeishaMon detected s0 sensors",
+        translation_key="heishamon_detected_s0_sensors",
         entity_category=EntityCategory.DIAGNOSTIC,
     )
     s0_listing = S0Detector(hass, s0_list_config, config_entry, async_add_entities)
@@ -87,6 +90,7 @@ async def async_setup_entry(
         unique_id=f"{config_entry.entry_id}-heishamon_w_production",
         key=f"{discovery_prefix}/production",
         name="Total heat production",
+        translation_key="total_heat_production",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement="W",
         state_class=SensorStateClass.MEASUREMENT,
@@ -118,6 +122,7 @@ async def async_setup_entry(
         unique_id=f"{config_entry.entry_id}-heishamon_w_consumption",
         key=f"{discovery_prefix}/consumption",
         name="Total power consumption",
+        translation_key="total_power_consumption",
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement="W",
         state_class=SensorStateClass.MEASUREMENT,
@@ -148,6 +153,7 @@ async def async_setup_entry(
         unique_id=f"{config_entry.entry_id}-heishamon_cop",
         key=f"{discovery_prefix}/cop",
         name="COP",
+        translation_key="cop",
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         topics=[
@@ -192,6 +198,9 @@ async def async_setup_entry(
                 hass,
                 integration_method=METHOD_LEFT,
                 name=f"{sensor.entity_description.name} Total",
+                translation_key=f"{sensor.entity_description.translation_key}_total"
+                if sensor.entity_description.translation_key
+                else None,
                 round_digits=3,
                 source_entity=sensor.entity_id,
                 unique_id=f"{sensor._attr_unique_id}_integration",
@@ -234,7 +243,7 @@ def extract_sum(values):
     _LOGGER.debug(f"No values at all, here the values: {values}, assuming sum is 0")
     return 0
 
-class EnergyIntegrationEntity(IntegrationSensor):
+class EnergyIntegrationEntity(TranslatedNameMixin, IntegrationSensor):
 
     def __init__(self, hass, **kwargs):
         # HA core removed the `hass` constructor argument from IntegrationSensor
@@ -249,7 +258,9 @@ class EnergyIntegrationEntity(IntegrationSensor):
         # installed signature has it.
         if "device_class" in parameters:
             kwargs.setdefault("device_class", SensorDeviceClass.ENERGY)
+        translation_key = kwargs.pop("translation_key", None)
         super().__init__(**kwargs)
+        self._attr_translation_key = translation_key
 
     @property
     def entity_category(self):
@@ -289,7 +300,7 @@ class HeishaMonAvailability:
         return self._heishamon_online
 
 
-class MultiMQTTSensorEntity(HeishaMonAvailability, SensorEntity):
+class MultiMQTTSensorEntity(TranslatedNameMixin, HeishaMonAvailability, SensorEntity):
     def __init__(
         self,
         hass: HomeAssistant,
@@ -350,7 +361,7 @@ class MultiMQTTSensorEntity(HeishaMonAvailability, SensorEntity):
         return build_device_info(self.hass, DeviceType.HEATPUMP, self.discovery_prefix, self.config_entry_entry_id)
 
 
-class S0Detector(SensorEntity):
+class S0Detector(TranslatedNameMixin, SensorEntity):
     def __init__(
         self,
         hass: HomeAssistant,
@@ -386,6 +397,7 @@ class S0Detector(SensorEntity):
                     heishamon_topic_id=f"s0-{device_id}-watthour",
                     key="/".join([base, s0, "Watthour", device_id]),
                     name=f"HeishaMon s0 {device_id} WattHour",
+                    translation_key="s0_watthour",
                     device_class=SensorDeviceClass.ENERGY,
                     state_class=SensorStateClass.TOTAL_INCREASING,
                     unit_of_measurement="kWh",
@@ -396,10 +408,12 @@ class S0Detector(SensorEntity):
                 watt_hour_sensor = HeishaMonSensor(
                     self.hass, description, self.config_entry
                 )
+                watt_hour_sensor._attr_translation_placeholders = {"device_id": device_id}
                 description = HeishaMonSensorEntityDescription(
                     heishamon_topic_id=f"s0-{device_id}-totalwatthour",
                     key="/".join([base, s0, "WatthourTotal", device_id]),
                     name=f"HeishaMon s0 {device_id} WattHourTotal",
+                    translation_key="s0_totalwatthour",
                     device_class=SensorDeviceClass.ENERGY,
                     unit_of_measurement="kWh",
                     native_unit_of_measurement="Wh",
@@ -410,16 +424,19 @@ class S0Detector(SensorEntity):
                 total_watt_hour_sensor = HeishaMonSensor(
                     self.hass, description, self.config_entry
                 )
+                total_watt_hour_sensor._attr_translation_placeholders = {"device_id": device_id}
                 description = HeishaMonSensorEntityDescription(
                     heishamon_topic_id=f"s0-{device_id}-watt",
                     key="/".join([base, s0, "Watt", device_id]),
                     name=f"HeishaMon s0 {device_id} Watt",
+                    translation_key="s0_watt",
                     device_class=SensorDeviceClass.POWER,
                     native_unit_of_measurement="W",
                     state_class=SensorStateClass.MEASUREMENT,
                     device=DeviceType.HEISHAMON,
                 )
                 watt_sensor = HeishaMonSensor(self.hass, description, self.config_entry)
+                watt_sensor._attr_translation_placeholders = {"device_id": device_id}
                 _LOGGER.info(
                     f"Detected new s0 sensor with id {device_id}, creating new sensors"
                 )
@@ -440,7 +457,7 @@ class S0Detector(SensorEntity):
         return build_device_info(self.hass, DeviceType.HEISHAMON, self.discovery_prefix, self.config_entry_entry_id)
 
 
-class DallasListSensor(SensorEntity):
+class DallasListSensor(TranslatedNameMixin, SensorEntity):
     def __init__(
         self,
         hass: HomeAssistant,
@@ -476,12 +493,14 @@ class DallasListSensor(SensorEntity):
                     heishamon_topic_id=f"1wire-{device_id}",
                     key=message.topic,
                     name=f"HeishaMon 1wire {device_id}",
+                    translation_key="onewire_sensor",
                     native_unit_of_measurement="°C",  # we assume everything will be temperature
                     device_class=SensorDeviceClass.TEMPERATURE,
                     state_class=SensorStateClass.MEASUREMENT,
                     device=DeviceType.HEISHAMON,
                 )
                 sensor = HeishaMonSensor(self.hass, description, self.config_entry)
+                sensor._attr_translation_placeholders = {"device_id": device_id}
                 _LOGGER.info(
                     f"Detected new 1wire sensor with id {device_id}, creating a new sensor"
                 )
@@ -503,19 +522,21 @@ class DallasListSensor(SensorEntity):
         return build_device_info(self.hass, DeviceType.HEISHAMON, self.discovery_prefix, self.config_entry_entry_id)
 
 
-class ModelCatalogLastRefreshSensor(SensorEntity):
+class ModelCatalogLastRefreshSensor(TranslatedNameMixin, SensorEntity):
     """Show when heat pump models were last refreshed by the user."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_has_entity_name = True
     _attr_name = "Heat pump models last refreshed"
+    _attr_translation_key = "heat_pump_models_last_refreshed"
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         self.hass = hass
         self.entity_description = SensorEntityDescription(
             key=f"{config_entry.data['discovery_prefix']}model_catalog_last_refreshed",
             name=self._attr_name,
+            translation_key=self._attr_translation_key,
             device_class=self._attr_device_class,
             entity_category=self._attr_entity_category,
         )
@@ -550,7 +571,7 @@ class ModelCatalogLastRefreshSensor(SensorEntity):
         )
 
 
-class HeishaMonSensor(FeatureGatedEntity, HeishaMonAvailability, SensorEntity):
+class HeishaMonSensor(TranslatedNameMixin, FeatureGatedEntity, HeishaMonAvailability, SensorEntity):
     """Representation of a HeishaMon sensor that is updated via MQTT."""
 
     entity_description: HeishaMonSensorEntityDescription
