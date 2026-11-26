@@ -57,16 +57,16 @@
         }
       },
       "compressor_starts_today": {
-        "name": "Verdichterstarts heute"
+        "name": "Verdichter Starts heute"
       },
       "compressor_run_time_today": {
-        "name": "Verdichterlaufzeit heute"
+        "name": "Verdichter Laufzeit heute"
       },
       "short_runs_today": {
-        "name": "Kurze Verdichterläufe heute"
+        "name": "Verdichter Kurzläufe heute"
       },
       "defrosts_today": {
-        "name": "Abtauungen heute"
+        "name": "Abtauvorgänge heute"
       },
       "current_run_time": {
         "name": "Verdichter aktuelle Laufzeit"
@@ -87,10 +87,10 @@
         "name": "Pumpe Durchfluss"
       },
       "top5": {
-        "name": "Rücklauftemperatur"
+        "name": "Rücklauf Temperatur"
       },
       "top6": {
-        "name": "Vorlauftemperatur"
+        "name": "Vorlauf Temperatur"
       },
       "top7": {
         "name": "Vorlauf Sollwert"
@@ -111,49 +111,49 @@
         "name": "Außentemperatur"
       },
       "top15": {
-        "name": "Heizleistung erzeugt"
+        "name": "Heizen Wärmeleistung"
       },
       "top16": {
-        "name": "Heizleistung verbraucht"
+        "name": "Heizen elektrische Leistung"
       },
       "top20": {
-        "name": "Ventil 3-Wege"
+        "name": "3-Wege-Ventil"
       },
       "top125": {
-        "name": "Ventil 2-Wege"
+        "name": "2-Wege-Ventil"
       },
       "top21": {
-        "name": "Außenleitung Temperatur"
+        "name": "Außengerät Rohrtemperatur"
       },
       "top23": {
-        "name": "Heizen Hysterese"
+        "name": "Heizen Spreizung (ΔT)"
       },
       "top24": {
-        "name": "Kühlen Hysterese"
+        "name": "Kühlen Spreizung (ΔT)"
       },
       "top25": {
         "name": "Warmwasser Urlaubsverschiebung"
       },
       "top33": {
-        "name": "Fernbedienung Temperatur"
+        "name": "Fernbedienung Raumtemperatur"
       },
       "top36": {
-        "name": "Zone 1 Vorlauf"
+        "name": "Zone 1 Vorlauftemperatur"
       },
       "top37": {
-        "name": "Zone 2 Vorlauf"
+        "name": "Zone 2 Vorlauftemperatur"
       },
       "top38": {
-        "name": "Kühlleistung erzeugt"
+        "name": "Kühlen Kälteleistung"
       },
       "top39": {
-        "name": "Kühlleistung verbraucht"
+        "name": "Kühlen elektrische Leistung"
       },
       "top40": {
-        "name": "Warmwasserleistung erzeugt"
+        "name": "Warmwasser Wärmeleistung"
       },
       "top41": {
-        "name": "Warmwasserleistung verbraucht"
+        "name": "Warmwasser elektrische Leistung"
       },
       "top42": {
         "name": "Zone 1 Vorlauf Sollwert"
@@ -177,25 +177,25 @@
         "name": "Pool Temperatur"
       },
       "top49": {
-        "name": "Hauptwärmetauscher Austrittstemperatur"
+        "name": "Vorlauf nach Plattenwärmetauscher"
       },
       "top50": {
-        "name": "Heißgas Temperatur"
+        "name": "Verdichter Heißgas"
       },
       "top51": {
-        "name": "Innenleitung Temperatur"
+        "name": "Innengerät Rohrtemperatur"
       },
       "top52": {
-        "name": "Abtau Temperatur"
+        "name": "Abtautemperatur"
       },
       "top53": {
-        "name": "Verdampfer Austrittstemperatur"
+        "name": "Verdampfer Austritt"
       },
       "top54": {
-        "name": "Bypass Austrittstemperatur"
+        "name": "Bypass Austritt"
       },
       "top55": {
-        "name": "IPM Temperatur"
+        "name": "Leistungselektronik (IPM) Temperatur"
       },
       "top56": {
         "name": "Zone 1 Temperatur"
@@ -219,31 +219,31 @@
         "name": "Niederdruck"
       },
       "top67": {
-        "name": "Verdichter Strom"
+        "name": "Verdichter Stromaufnahme"
       },
       "top70": {
-        "name": "Warmwasser Desinfektion Temperatur"
+        "name": "Warmwasser Legionellenschutz Temperatur"
       },
       "top71": {
-        "name": "Warmwasser Desinfektion max. Dauer"
+        "name": "Warmwasser Legionellenschutz max. Dauer"
       },
       "top76": {
-        "name": "Heizen Wassermodus"
+        "name": "Heizen Vorlaufmodus"
       },
       "top78": {
-        "name": "Heizstab ein unter Außentemperatur"
+        "name": "Heizstab Freigabe unter Außentemperatur"
       },
       "top79": {
-        "name": "Automatik auf Kühlen über"
+        "name": "Automatik Kühlen ab Außentemperatur"
       },
       "top80": {
-        "name": "Automatik auf Heizen unter"
+        "name": "Automatik Heizen unter Außentemperatur"
       },
       "top81": {
-        "name": "Kühlen Wassermodus"
+        "name": "Kühlen Vorlaufmodus"
       },
       "top90": {
-        "name": "Heizstab Betriebsstunden Raum"
+        "name": "Heizstab Betriebsstunden Heizen"
       },
       "top91": {
         "name": "Heizstab Betriebsstunden Warmwasser"
@@ -252,16 +252,16 @@
         "name": "Wärmepumpenmodell"
       },
       "top93": {
-        "name": "Pumpe Last"
+        "name": "Pumpe Leistung"
       },
       "top101": {
         "name": "Solar Modus"
       },
       "top102": {
-        "name": "Solar Differenz ein"
+        "name": "Solar ΔT ein"
       },
       "top103": {
-        "name": "Solar Differenz aus"
+        "name": "Solar ΔT aus"
       },
       "top104": {
         "name": "Solar Frostschutz"
@@ -282,7 +282,7 @@
         "name": "Zone 1 Sensoreinstellung"
       },
       "top113": {
-        "name": "Puffer Hysterese"
+        "name": "Puffer ΔT"
       },
       "top115": {
         "name": "Wasserdruck"
@@ -291,16 +291,16 @@
         "name": "Rücklauf 2 Temperatur"
       },
       "top117": {
-        "name": "Economizer Austrittstemperatur"
+        "name": "Economizer Austritt"
       },
       "top118": {
-        "name": "Fernbedienung 2 Temperatur"
+        "name": "Fernbedienung 2 Raumtemperatur"
       },
       "top127": {
-        "name": "Zone 1 Ventil PID"
+        "name": "Zone 1 Mischventil PID"
       },
       "top128": {
-        "name": "Zone 2 Ventil PID"
+        "name": "Zone 2 Mischventil PID"
       },
       "top131": {
         "name": "Bivalent Starttemperatur"
@@ -393,7 +393,7 @@
         "name": "Zonenkonfiguration"
       },
       "top147": {
-        "name": "Heizstab Leistung"
+        "name": "Heizstab Nennleistung"
       },
       "top148": {
         "name": "Warmwasser Heizstabtyp"
@@ -402,22 +402,22 @@
         "name": "Estrichtrocknung Sollwert"
       },
       "top153": {
-        "name": "Pool Hysterese"
+        "name": "Pool ΔT"
       },
       "top154": {
-        "name": "SG Ready 1 Heizleistung"
+        "name": "SG Ready 1 Heizen Kapazität"
       },
       "top155": {
-        "name": "SG Ready 1 Warmwasserleistung"
+        "name": "SG Ready 1 Warmwasser Kapazität"
       },
       "top156": {
-        "name": "SG Ready 2 Heizleistung"
+        "name": "SG Ready 2 Heizen Kapazität"
       },
       "top157": {
-        "name": "SG Ready 2 Warmwasserleistung"
+        "name": "SG Ready 2 Warmwasser Kapazität"
       },
       "top158": {
-        "name": "Warmwasser Wechsel Raum max."
+        "name": "Heizen max. Dauer im Wechselbetrieb"
       },
       "top159": {
         "name": "Warmwasser Aufheizzeit max."
@@ -429,28 +429,28 @@
         "name": "Heizen Sollwert mit Puffer"
       },
       "top171": {
-        "name": "Heizen ein über Außentemperatur"
+        "name": "Heizen ein unter Außentemperatur"
       },
       "top172": {
         "name": "Heizen Einschaltverzögerung"
       },
       "top173": {
-        "name": "Warmwasser Zusatzheizung Verzögerung"
+        "name": "Warmwasser Heizstab Einschaltverzögerung"
       },
       "top174": {
-        "name": "Heizeffizienz Stufe 1"
+        "name": "Heizungsregelung Stufe 1 Dauer"
       },
       "top175": {
-        "name": "Heizeffizienz Stufe 2"
+        "name": "Heizungsregelung Stufe 2 Dauer"
       },
       "top176": {
-        "name": "Heizeffizienz Stufe 3"
+        "name": "Heizungsregelung Stufe 3 Dauer"
       },
       "top177": {
         "name": "Sensorkorrektur Fernbedienung Th1"
       },
       "top178": {
-        "name": "Außensensor Korrektur"
+        "name": "Sensorkorrektur Außen"
       },
       "top180": {
         "name": "Bivalent Betriebsmodus"
@@ -462,58 +462,58 @@
         "name": "Zusatzpumpe Modus"
       },
       "top184": {
-        "name": "SG Ready 1 Warmwasser Leistung"
+        "name": "SG Ready 1 Warmwasser Leistungsaufnahme"
       },
       "top185": {
-        "name": "SG Ready 1 Heizen Leistung"
+        "name": "SG Ready 1 Heizen Leistungsaufnahme"
       },
       "top186": {
-        "name": "SG Ready 1 Kühlen Leistung"
+        "name": "SG Ready 1 Kühlen Leistungsaufnahme"
       },
       "top187": {
-        "name": "SG Ready 2 Warmwasser Leistung"
+        "name": "SG Ready 2 Warmwasser Leistungsaufnahme"
       },
       "top188": {
-        "name": "SG Ready 2 Heizen Leistung"
+        "name": "SG Ready 2 Heizen Leistungsaufnahme"
       },
       "top189": {
-        "name": "SG Ready 2 Kühlen Leistung"
+        "name": "SG Ready 2 Kühlen Leistungsaufnahme"
       },
       "top190": {
-        "name": "SG Ready Stopp Leistung"
+        "name": "SG Ready Stopp Leistungsaufnahme"
       },
       "top191": {
-        "name": "SG Ready 1 Kühlleistung Offset"
+        "name": "SG Ready 1 Kühlen Offset"
       },
       "top192": {
-        "name": "SG Ready 2 Kühlleistung Offset"
+        "name": "SG Ready 2 Kühlen Offset"
       },
       "top193": {
-        "name": "Rücklaufsensor Korrektur"
+        "name": "Sensorkorrektur Rücklauf"
       },
       "top195": {
-        "name": "Warmwasser Speichersensor Korrektur"
+        "name": "Sensorkorrektur Warmwasserspeicher"
       },
       "top196": {
-        "name": "Vorlaufsensor Korrektur"
+        "name": "Sensorkorrektur Vorlauf"
       },
       "top15_total": {
-        "name": "Heizleistung erzeugt gesamt"
+        "name": "Heizen Wärmemenge"
       },
       "top16_total": {
-        "name": "Heizleistung verbraucht gesamt"
+        "name": "Heizen Stromverbrauch"
       },
       "top38_total": {
-        "name": "Kühlleistung erzeugt gesamt"
+        "name": "Kühlen Kältemenge"
       },
       "top39_total": {
-        "name": "Kühlleistung verbraucht gesamt"
+        "name": "Kühlen Stromverbrauch"
       },
       "top40_total": {
-        "name": "Warmwasserleistung erzeugt gesamt"
+        "name": "Warmwasser Wärmemenge"
       },
       "top41_total": {
-        "name": "Warmwasserleistung verbraucht gesamt"
+        "name": "Warmwasser Stromverbrauch"
       },
       "heishamon_detected_1wire_sensors": {
         "name": "HeishaMon erkannte 1-Wire-Sensoren"
@@ -522,19 +522,19 @@
         "name": "HeishaMon erkannte S0-Sensoren"
       },
       "total_heat_production": {
-        "name": "Wärmeerzeugung gesamt"
+        "name": "Wärmeleistung gesamt"
       },
       "total_power_consumption": {
-        "name": "Stromverbrauch gesamt"
+        "name": "Elektrische Leistung gesamt"
       },
       "cop": {
         "name": "COP"
       },
       "total_heat_production_total": {
-        "name": "Wärmeerzeugung gesamt Summe"
+        "name": "Wärmemenge gesamt"
       },
       "total_power_consumption_total": {
-        "name": "Stromverbrauch gesamt Summe"
+        "name": "Stromverbrauch gesamt"
       },
       "heat_pump_models_last_refreshed": {
         "name": "Wärmepumpenmodelle zuletzt aktualisiert"
@@ -573,25 +573,25 @@
         "name": "Flüstermodus Zeitplan"
       },
       "top58": {
-        "name": "Warmwasser Heizstab aktiviert"
+        "name": "Heizstab für Warmwasser freigegeben"
       },
       "top59": {
-        "name": "Heizstab Raum aktiviert"
+        "name": "Heizstab für Heizen freigegeben"
       },
       "top60": {
-        "name": "Heizstab interner Zustand"
+        "name": "Heizstab Innengerät aktiv"
       },
       "top61": {
-        "name": "Heizstab externer Zustand"
+        "name": "Externer Heizstab aktiv"
       },
       "top68": {
-        "name": "Heizstab erzwungen Zustand"
+        "name": "Heizstab Zwangsbetrieb"
       },
       "top93": {
         "name": "Pumpe läuft"
       },
       "top100": {
-        "name": "Warmwasser installiert"
+        "name": "Warmwasserspeicher installiert"
       },
       "top109": {
         "name": "Frostschutzmodus"
@@ -606,10 +606,10 @@
         "name": "Bivalent erweitert Warmwasser"
       },
       "top123": {
-        "name": "Zone 1 Pumpenstatus"
+        "name": "Zone 1 Pumpe läuft"
       },
       "top124": {
-        "name": "Zone 2 Pumpenstatus"
+        "name": "Zone 2 Pumpe läuft"
       },
       "opt0": {
         "name": "Emulierte Platine Zone 1 Pumpe"
@@ -633,13 +633,13 @@
         "name": "Bedarfssteuerung"
       },
       "top151": {
-        "name": "Warmwasser Abtauen"
+        "name": "Abtauen mit Speicherwasser"
       },
       "top160": {
         "name": "Flüstermodus aktiv"
       },
       "top161": {
-        "name": "Powermodus aktiv"
+        "name": "Powerful-Modus aktiv"
       },
       "top164": {
         "name": "Bivalent Kesselkontakt"
@@ -684,10 +684,10 @@
         "name": "Warmwasser erzwingen (nur lesen)"
       },
       "set12": {
-        "name": "Abtauroutine (nur lesen)"
+        "name": "Abtauen erzwingen (nur lesen)"
       },
       "set13": {
-        "name": "Warmwasser Desinfektion erzwingen (nur lesen)"
+        "name": "Warmwasser Legionellenschutz erzwingen (nur lesen)"
       },
       "set24": {
         "name": "Hauptthermostat Zeitplan (nur lesen)"
@@ -740,19 +740,19 @@
         "name": "Zone 2 Kühlen Verschiebung"
       },
       "set11": {
-        "name": "Warmwasser Solltemperatur"
+        "name": "Warmwasser Sollwert"
       },
       "set15": {
-        "name": "Pumpe max. Last"
+        "name": "Pumpe max. Leistung"
       },
       "set18": {
-        "name": "Heizen Hysterese"
+        "name": "Heizen Spreizung (ΔT)"
       },
       "set19": {
-        "name": "Kühlen Hysterese"
+        "name": "Kühlen Spreizung (ΔT)"
       },
       "set20": {
-        "name": "Warmwasser Heizen Hysterese"
+        "name": "Warmwasser Nachheiz-Hysterese"
       },
       "set21": {
         "name": "Heizstab Verzögerungszeit"
@@ -764,13 +764,13 @@
         "name": "Heizstab Stopp Hysterese"
       },
       "set27": {
-        "name": "Puffer Hysterese"
+        "name": "Puffer ΔT"
       },
       "set29": {
         "name": "Heizen aus über Außentemperatur"
       },
       "set46": {
-        "name": "Heizstab ein unter Außentemperatur"
+        "name": "Heizstab Freigabe unter Außentemperatur"
       },
       "setdemandcontrol": {
         "name": "Emulierte Platine Bedarfssteuerung"
@@ -785,43 +785,43 @@
         "name": "Bivalent erw. Stopptemperatur"
       },
       "set49": {
-        "name": "Warmwasser Desinfektion Temperatur"
+        "name": "Warmwasser Legionellenschutz Temperatur"
       },
       "set50": {
-        "name": "Warmwasser Desinfektion max. Dauer"
+        "name": "Warmwasser Legionellenschutz max. Dauer"
       },
       "set51": {
-        "name": "Automatik auf Kühlen über"
+        "name": "Automatik Kühlen ab Außentemperatur"
       },
       "set52": {
-        "name": "Automatik auf Heizen unter"
+        "name": "Automatik Heizen unter Außentemperatur"
       },
       "set53": {
-        "name": "Warmwasser Wechsel Raum max."
+        "name": "Heizen max. Dauer im Wechselbetrieb"
       },
       "set54": {
         "name": "Warmwasser Aufheizzeit max."
       },
       "set57": {
-        "name": "Pool Hysterese"
+        "name": "Pool ΔT"
       },
       "set61": {
-        "name": "Heizen ein über Außentemperatur"
+        "name": "Heizen ein unter Außentemperatur"
       },
       "set62": {
         "name": "Heizen Einschaltverzögerung"
       },
       "set63": {
-        "name": "Warmwasser Zusatzheizung Verzögerung"
+        "name": "Warmwasser Heizstab Einschaltverzögerung"
       },
       "set64": {
-        "name": "Heizeffizienz Stufe 1"
+        "name": "Heizungsregelung Stufe 1 Dauer"
       },
       "set65": {
-        "name": "Heizeffizienz Stufe 2"
+        "name": "Heizungsregelung Stufe 2 Dauer"
       },
       "set66": {
-        "name": "Heizeffizienz Stufe 3"
+        "name": "Heizungsregelung Stufe 3 Dauer"
       },
       "set67": {
         "name": "Sensorkorrektur Fernbedienung Th1"
@@ -836,10 +836,10 @@
         "name": "Bivalent erw. Stoppverzögerung"
       },
       "set77": {
-        "name": "Solar Differenz ein"
+        "name": "Solar ΔT ein"
       },
       "set78": {
-        "name": "Solar Differenz aus"
+        "name": "Solar ΔT aus"
       },
       "set79": {
         "name": "Solar Frostschutz"
@@ -851,25 +851,25 @@
         "name": "Solar max. Temperatur"
       },
       "set90": {
-        "name": "SG Ready 1 Warmwasser Leistung"
+        "name": "SG Ready 1 Warmwasser Leistungsaufnahme"
       },
       "set91": {
-        "name": "SG Ready 1 Heizen Leistung"
+        "name": "SG Ready 1 Heizen Leistungsaufnahme"
       },
       "set92": {
-        "name": "SG Ready 1 Kühlen Leistung"
+        "name": "SG Ready 1 Kühlen Leistungsaufnahme"
       },
       "set93": {
-        "name": "SG Ready 2 Warmwasser Leistung"
+        "name": "SG Ready 2 Warmwasser Leistungsaufnahme"
       },
       "set94": {
-        "name": "SG Ready 2 Heizen Leistung"
+        "name": "SG Ready 2 Heizen Leistungsaufnahme"
       },
       "set95": {
-        "name": "SG Ready 2 Kühlen Leistung"
+        "name": "SG Ready 2 Kühlen Leistungsaufnahme"
       },
       "set96": {
-        "name": "SG Ready Stopp Leistung"
+        "name": "SG Ready Stopp Leistungsaufnahme"
       },
       "set97": {
         "name": "SG Ready 1 Kühlen Offset"
@@ -887,52 +887,52 @@
         "name": "Sensorkorrektur Vorlauf"
       },
       "top72": {
-        "name": "Zone 1 Kühlkurve Ziel hoch"
+        "name": "Zone 1 Kühlkurve Sollwert hoch"
       },
       "top74": {
-        "name": "Zone 1 Kühlkurve Außen hoch"
+        "name": "Zone 1 Kühlkurve Außentemperatur hoch"
       },
       "top73": {
-        "name": "Zone 1 Kühlkurve Ziel niedrig"
+        "name": "Zone 1 Kühlkurve Sollwert niedrig"
       },
       "top75": {
-        "name": "Zone 1 Kühlkurve Außen niedrig"
+        "name": "Zone 1 Kühlkurve Außentemperatur niedrig"
       },
       "top29": {
-        "name": "Zone 1 Heizkurve Ziel hoch"
+        "name": "Zone 1 Heizkurve Sollwert hoch"
       },
       "top31": {
-        "name": "Zone 1 Heizkurve Außen hoch"
+        "name": "Zone 1 Heizkurve Außentemperatur hoch"
       },
       "top30": {
-        "name": "Zone 1 Heizkurve Ziel niedrig"
+        "name": "Zone 1 Heizkurve Sollwert niedrig"
       },
       "top32": {
-        "name": "Zone 1 Heizkurve Außen niedrig"
+        "name": "Zone 1 Heizkurve Außentemperatur niedrig"
       },
       "top86": {
-        "name": "Zone 2 Kühlkurve Ziel hoch"
+        "name": "Zone 2 Kühlkurve Sollwert hoch"
       },
       "top88": {
-        "name": "Zone 2 Kühlkurve Außen hoch"
+        "name": "Zone 2 Kühlkurve Außentemperatur hoch"
       },
       "top87": {
-        "name": "Zone 2 Kühlkurve Ziel niedrig"
+        "name": "Zone 2 Kühlkurve Sollwert niedrig"
       },
       "top89": {
-        "name": "Zone 2 Kühlkurve Außen niedrig"
+        "name": "Zone 2 Kühlkurve Außentemperatur niedrig"
       },
       "top82": {
-        "name": "Zone 2 Heizkurve Ziel hoch"
+        "name": "Zone 2 Heizkurve Sollwert hoch"
       },
       "top84": {
-        "name": "Zone 2 Heizkurve Außen hoch"
+        "name": "Zone 2 Heizkurve Außentemperatur hoch"
       },
       "top83": {
-        "name": "Zone 2 Heizkurve Ziel niedrig"
+        "name": "Zone 2 Heizkurve Sollwert niedrig"
       },
       "top85": {
-        "name": "Zone 2 Heizkurve Außen niedrig"
+        "name": "Zone 2 Heizkurve Außentemperatur niedrig"
       }
     },
     "select": {
@@ -940,7 +940,7 @@
         "name": "Flüstermodus"
       },
       "set4": {
-        "name": "Powermodus"
+        "name": "Powerful-Modus"
       },
       "set9": {
         "name": "Betriebsmodus"
@@ -967,16 +967,16 @@
         "name": "Pumpe Durchflussmodus"
       },
       "setsmartgridmode": {
-        "name": "Emulierte Platine SG-Ready-Signal"
+        "name": "Emulierte Platine SG Ready Signal"
       },
       "set43": {
         "name": "Warmwasser Sensorauswahl"
       },
       "set44": {
-        "name": "Warmwasser Heizstab Freigabe"
+        "name": "Heizstab Freigabe Warmwasser"
       },
       "set45": {
-        "name": "Heizstab Raum Freigabe"
+        "name": "Heizstab Freigabe Heizen"
       },
       "set70": {
         "name": "Bivalent Betriebsmodus"
@@ -988,16 +988,16 @@
         "name": "Zusatzpumpe Modus"
       },
       "set76": {
-        "name": "Heizstab Leistung"
+        "name": "Heizstab Nennleistung"
       },
       "set81": {
         "name": "Zone 1 Typ"
       },
       "set82": {
-        "name": "Heizen Wassermodus"
+        "name": "Heizen Vorlaufmodus"
       },
       "set83": {
-        "name": "Kühlen Wassermodus"
+        "name": "Kühlen Vorlaufmodus"
       },
       "set84": {
         "name": "Flüssigkeitstyp"
@@ -1009,7 +1009,7 @@
         "name": "Solar Modus"
       },
       "set89": {
-        "name": "SG-Ready-Modus"
+        "name": "SG Ready Modus"
       },
       "set100": {
         "name": "Zone 1 Sensortyp"
@@ -1026,13 +1026,13 @@
         "name": "Warmwasser erzwingen"
       },
       "set12": {
-        "name": "Abtauroutine"
+        "name": "Abtauen erzwingen"
       },
       "set13": {
-        "name": "Warmwasser Desinfektion erzwingen"
+        "name": "Warmwasser Legionellenschutz erzwingen"
       },
       "set47": {
-        "name": "Heizstab erzwingen"
+        "name": "Heizstab Zwangsbetrieb"
       },
       "set24": {
         "name": "Hauptthermostat Zeitplan"
@@ -1077,7 +1077,7 @@
         "name": "Bedarfssteuerung"
       },
       "set59": {
-        "name": "Warmwasser Abtauen"
+        "name": "Abtauen mit Speicherwasser"
       },
       "set60": {
         "name": "Statischer Druck"
