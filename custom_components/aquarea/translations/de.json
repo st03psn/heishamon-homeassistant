@@ -126,10 +126,10 @@
         "name": "Außenleitung Temperatur"
       },
       "top23": {
-        "name": "Heizen Hysterese"
+        "name": "Heizen Spreizung (ΔT)"
       },
       "top24": {
-        "name": "Kühlen Hysterese"
+        "name": "Kühlen Spreizung (ΔT)"
       },
       "top25": {
         "name": "Warmwasser Urlaubsverschiebung"
@@ -282,7 +282,7 @@
         "name": "Zone 1 Sensoreinstellung"
       },
       "top113": {
-        "name": "Puffer Hysterese"
+        "name": "Puffer Delta T"
       },
       "top115": {
         "name": "Wasserdruck"
@@ -402,7 +402,7 @@
         "name": "Estrichtrocknung Sollwert"
       },
       "top153": {
-        "name": "Pool Hysterese"
+        "name": "Pool Delta T"
       },
       "top154": {
         "name": "SG Ready 1 Heizleistung"
@@ -746,13 +746,13 @@
         "name": "Pumpe max. Last"
       },
       "set18": {
-        "name": "Heizen Hysterese"
+        "name": "Heizen Spreizung (ΔT)"
       },
       "set19": {
-        "name": "Kühlen Hysterese"
+        "name": "Kühlen Spreizung (ΔT)"
       },
       "set20": {
-        "name": "Warmwasser Heizen Hysterese"
+        "name": "Warmwasser Nachheiz-Hysterese"
       },
       "set21": {
         "name": "Heizstab Verzögerungszeit"
@@ -764,7 +764,7 @@
         "name": "Heizstab Stopp Hysterese"
       },
       "set27": {
-        "name": "Puffer Hysterese"
+        "name": "Puffer Delta T"
       },
       "set29": {
         "name": "Heizen aus über Außentemperatur"
@@ -803,7 +803,7 @@
         "name": "Warmwasser Aufheizzeit max."
       },
       "set57": {
-        "name": "Pool Hysterese"
+        "name": "Pool Delta T"
       },
       "set61": {
         "name": "Heizen ein über Außentemperatur"
