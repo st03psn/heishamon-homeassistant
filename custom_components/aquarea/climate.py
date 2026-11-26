@@ -8,7 +8,7 @@ from enum import Enum, Flag, auto
 from homeassistant.components import mqtt
 from homeassistant.components.mqtt.client import async_publish
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import ClimateEntityFeature, HVACMode
+from homeassistant.components.climate.const import ClimateEntityFeature, HVACAction, HVACMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -16,9 +16,11 @@ from homeassistant.util import slugify
 from homeassistant.helpers.storage import Store
 
 from homeassistant.components.climate import ClimateEntityDescription
-from .definitions import OperatingMode
+from .definitions.values import OperatingMode
 from . import build_device_info
 from .const import DeviceType
+from .hub import find_hub
+from .logic.state import OperatingState
 from .retry_mixin import CommandRetryMixin
 
 _LOGGER = logging.getLogger(__name__)
@@ -192,6 +194,26 @@ class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
 
     UNDEFINED_VALUE = -42
 
+    @property
+    def hvac_action(self) -> HVACAction | None:
+        """What the heat pump does for this zone right now."""
+        if self._attr_hvac_mode == HVACMode.OFF:
+            return HVACAction.OFF
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        state = None if hub is None else hub.known_state
+        if state is None or state is OperatingState.FAULT:
+            return None
+        if state is OperatingState.OFF:
+            return HVACAction.OFF
+        if state is OperatingState.DEFROST:
+            return HVACAction.DEFROSTING
+        if state is OperatingState.HEATING and self.heater:
+            return HVACAction.HEATING
+        if state is OperatingState.COOLING and not self.heater:
+            return HVACAction.COOLING
+        # compressor stopped, heating the DHW tank, or serving the other mode
+        return HVACAction.IDLE
+
     async def async_turn_off(self) -> None:
         await self.async_set_hvac_mode(HVACMode.OFF)
 
@@ -344,6 +366,17 @@ class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events."""
         await super().async_added_to_hass()
+        self._last_hvac_action = self.hvac_action
+
+        @callback
+        def hub_changed() -> None:
+            if self.hvac_action != self._last_hvac_action:
+                self._last_hvac_action = self.hvac_action
+                self.async_write_ha_state()
+
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            self.async_on_remove(hub.async_add_listener(hub_changed))
 
         stored_values = await self._store.async_load()
         if stored_values:

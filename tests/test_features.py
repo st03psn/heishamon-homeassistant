@@ -15,13 +15,11 @@ from custom_components.aquarea.const import (
     MODE_UNAVAILABLE,
     Feature,
 )
-from custom_components.aquarea.definitions import (
-    build_binary_sensors,
-    build_numbers,
-    build_selects,
-    build_sensors,
-    build_switches,
-)
+from custom_components.aquarea.definitions.binary_sensors import build_binary_sensors
+from custom_components.aquarea.definitions.numbers import build_numbers
+from custom_components.aquarea.definitions.selects import build_selects
+from custom_components.aquarea.definitions.sensors import build_sensors
+from custom_components.aquarea.definitions.switches import build_switches
 from custom_components.aquarea.features import (
     FeatureTracker,
     ManagedEntity,
@@ -101,8 +99,13 @@ def test_new_topics_and_commands_are_defined():
     expected = [f"TOP{i}" for i in range(144, 197)]
     expected += [f"SET{i}" for i in range(49, 105) if i != 101]
     assert [i for i in expected if i not in ids] == []
+    # TOP144-TOP196 and SET49-SET55 are defined as in the original integration
+    # (tests/test_top144_top169_set49_set55.py, tests/test_v4_4_entities.py),
+    # which enables some of them by default
+    original = {f"TOP{i}" for i in range(144, 197)} | {f"SET{i}" for i in range(49, 56)}
     for topic_id in expected:
-        assert ids[topic_id].entity_registry_enabled_default is False, topic_id
+        if topic_id not in original:
+            assert ids[topic_id].entity_registry_enabled_default is False, topic_id
 
 
 def test_number_ranges_and_payloads():
@@ -308,3 +311,13 @@ async def test_entity_without_part_enabled_once_published(hass, no_side_effects)
     _publish(tracker, "main/DHW_Installed", "0")
     tracker.async_evaluate()
     assert _disabled_by(hass, heater) is None
+
+
+def test_sg_ready_binary_sensor_reads_both_on_values():
+    from custom_components.aquarea.definitions.binary_sensors import build_binary_sensors as build
+
+    sg_ready = next(d for d in build(PREFIX) if d.heishamon_topic_id == "TOP149")
+    assert sg_ready.state("0") is False
+    assert sg_ready.state("1") is True
+    assert sg_ready.state("2") is True
+    assert sg_ready.state("x") is None

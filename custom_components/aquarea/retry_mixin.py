@@ -7,6 +7,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Optional
 
+from homeassistant.helpers import issue_registry as ir
+
+from .const import DOMAIN
+
+# fired on the Home Assistant bus when the heat pump did not take over a command
+EVENT_COMMAND_FAILED = f"{DOMAIN}_command_failed"
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -116,6 +123,7 @@ class CommandRetryMixin:
                 f"received: {received_value}, retries: {self._pending_command.retry_count})"
             )
             self._cancel_pending_command()
+            self._clear_command_failure()
         else:
             # Track non-matching value for diagnostic purposes
             self._pending_command.received_values.append(received_value)
@@ -184,7 +192,9 @@ class CommandRetryMixin:
                         f"(expected: {self._pending_command.expected_value}, no state updates received)"
                     )
                 self._failed_commands += 1
+                expected_value = self._pending_command.expected_value
                 self._cancel_pending_command()
+                self._report_command_failure(expected_value, received_values)
                 return
 
             # Execute retry
@@ -212,6 +222,50 @@ class CommandRetryMixin:
                 exc_info=True
             )
 
+    @property
+    def _command_issue_id(self) -> Optional[str]:
+        entity_id = getattr(self, "entity_id", None)
+        return None if entity_id is None else f"command_failed_{entity_id}"
+
+    def _report_command_failure(self, expected_value: Any, received_values: list[Any]) -> None:
+        """Tell the user and automations that a command was not taken over."""
+        hass = getattr(self, "hass", None)
+        issue_id = self._command_issue_id
+        if hass is None or issue_id is None:
+            return
+        received = str(received_values[-1]) if received_values else "-"
+        hass.bus.async_fire(
+            EVENT_COMMAND_FAILED,
+            {
+                "entity_id": self.entity_id,
+                "expected": str(expected_value),
+                "received": received,
+                "attempts": self.MAX_RETRIES + 1,
+            },
+        )
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            issue_id,
+            is_fixable=False,
+            is_persistent=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="command_failed",
+            translation_placeholders={
+                "entity": self.entity_id,
+                "expected": str(expected_value),
+                "received": received,
+                "attempts": str(self.MAX_RETRIES + 1),
+            },
+        )
+
+    def _clear_command_failure(self) -> None:
+        """Remove the report once a command of this entity was taken over."""
+        hass = getattr(self, "hass", None)
+        issue_id = self._command_issue_id
+        if hass is not None and issue_id is not None:
+            ir.async_delete_issue(hass, DOMAIN, issue_id)
+
     def _cancel_pending_command(self) -> None:
         """Cancel pending command and associated retry task."""
         self._pending_command = None
@@ -223,6 +277,7 @@ class CommandRetryMixin:
     async def async_will_remove_from_hass(self) -> None:
         """Clean up when entity is removed."""
         self._cancel_pending_command()
+        self._clear_command_failure()
         await super().async_will_remove_from_hass()
 
     @property

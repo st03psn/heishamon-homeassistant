@@ -27,7 +27,7 @@ This fork (`st03psn/heishamon-homeassistant`) adds the topics and commands of an
 | Official firmware with TOP144-TOP169 and SET49-SET55 | all entities of the official firmware; the entities of the extended firmware stay disabled |
 | Older official firmware | as before; newer entities stay disabled |
 
-New entities are created disabled and are only enabled once HeishaMon has published their topic. Commands of the extended firmware whose readback topic already exists in the official firmware (for example anti freeze, TOP109) additionally wait for a topic only the extended firmware publishes (`Static_Pressure`, TOP170). With the official firmware they therefore stay disabled. If you enable one by hand anyway, the official firmware ignores the command: nothing changes in the heat pump, and the entity falls back to the value the heat pump reports after the retries. Updating the firmware later needs no change in Home Assistant: the entities are enabled when the new topics arrive.
+New entities are created disabled and are only enabled once HeishaMon has published their topic. The readbacks TOP144-TOP198 and the commands SET49-SET55 are defined as in the original integration, including which of them are enabled from the start; the fork adds the optional part they belong to and its shorter names. Commands of the extended firmware whose readback topic already exists in the official firmware (for example anti freeze, TOP109) additionally wait for a topic only the extended firmware publishes (`Static_Pressure`, TOP170). With the official firmware they therefore stay disabled. If you enable one by hand anyway, the official firmware ignores the command: nothing changes in the heat pump, and the entity falls back to the value the heat pump reports after the retries. Updating the firmware later needs no change in Home Assistant: the entities are enabled when the new topics arrive.
 
 The parts SG ready and cooling are recognised from TOP149 and TOP168, which older firmwares do not publish. Their entities are then neither enabled nor disabled automatically.
 
@@ -48,6 +48,20 @@ The heat pump reports which optional parts are installed: DHW tank (TOP100), buf
 Changes are applied about 10 seconds after a message, so that the burst of messages after a start is evaluated as a whole. Entities disabled by hand are never enabled, and an entity enabled again by hand while its part is missing is left alone. Enabling entities reloads the integration once, so its entities are unavailable for a moment.
 
 Entities that belong to no optional part (heater capacity, sensor offsets, efficiency stages, heating on/off, anti freeze, DHW tank switch, ...) are enabled once HeishaMon publishes their topic and are never disabled automatically.
+
+### Operating state and compressor runs
+
+The integration keeps one picture of the heat pump and derives from it:
+
+- `Operating state`: off, idle, heating, cooling, heating water, defrosting or fault. It is unknown while HeishaMon is offline. The climate entities show the same as their current activity.
+- Compressor runs: starts, run time, short runs (shorter than 10 minutes) and defrosts of today, the current and the last run time and the last pause. A defrost belongs to the run it happens in. The counters are kept across restarts; the time Home Assistant was not running is not counted as run time.
+- The event entity `Compressor run` fires `started` (with the pause before it) and `finished` (with duration in minutes, defrosts, short run or not, and what the run was for).
+
+The operating state is derived from TOP0, TOP4, TOP8, TOP20, TOP26 and TOP44. Tested on M series only; may work on other series, not tested there.
+
+### Commands the heat pump does not take over
+
+A command is repeated up to three times when the heat pump does not report the new value. After the last attempt a Repairs issue names the entity, and the event `aquarea_command_failed` is fired (entity, expected and reported value) for automations. The issue disappears when the next command of that entity is taken over.
 
 ### Faults
 
@@ -74,6 +88,29 @@ Topics TOP144 to TOP196 and commands SET49 to SET104 are available as entities. 
 ### Other fixes
 
 - The bivalent advanced start and stop temperatures (SET37, SET38) were sent to command topics HeishaMon does not know (`SetBivalentAStartTemp`, `SetBivalentAStopTemp`); they now use `SetBivalentAPStartTemp` and `SetBivalentAPStopTemp`.
+
+To recognize models recently added upstream, use **Refresh heat pump models** on the HeishaMon device in Home Assistant. Refreshing is manual, takes effect immediately, and is retained across Home Assistant restarts.
+
+### HeishaMon 4.4 and topic groups
+
+HeishaMon 4.4 introduced topic groups and turns the **Installer settings** group off by default. This affects both values that already existed and new installer readbacks such as static pressure, sensor offsets and efficiency stage times:
+
+- `Aquarea Max pump duty configured`
+- `Aquarea Buffer tank` / `Buffer_Installed`
+- `Aquarea DHW Installed`
+- `Aquarea Pump flowrate mode` / `Aquarea Pump Flowrate Mode`
+- `Aquarea Liquid Type`
+- `Aquarea use external outdoor sensor`
+- `Aquarea anti freeze mode`
+- `Aquarea Zone 1/2 sensor setting`
+- `Aquarea Heating Control`
+- `Aquarea Quiet Mode Priority`
+- `Aquarea DHW Sensor Selection`
+
+If you use any of these, enable **Settings → Topic groups → Installer settings** in HeishaMon after updating. While the group is off, those topics are not published and their Home Assistant entities stop updating. Values retained on the MQTT broker may remain visible until they are replaced or removed.
+
+The new installer entities are disabled by default in Home Assistant as well. Enable the topic group first, then enable the entities you need. The new SG Ready entities are also disabled by default because they only apply to less common external-control setups.
+
 
 ## Alternatives
 

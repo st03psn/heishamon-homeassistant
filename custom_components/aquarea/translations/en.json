@@ -34,6 +34,60 @@
     "heat_pump_fault": {
       "title": "Heat pump fault {code}",
       "description": "The heat pump reports fault **{code}**: {description}.\n\nThe heat pump may stay stopped until the fault is reset. Remove the cause first, then press the button \"Reset fault code\" of the heat pump. This message disappears when the heat pump reports no fault anymore."
+    },
+    "command_failed": {
+      "title": "Heat pump did not take over a command",
+      "description": "`{entity}` was set to **{expected}**, but after {attempts} attempts the heat pump still reports **{received}**.\n\nCheck that HeishaMon is online and not in listen-only mode, and that the heat pump accepts this value in its current settings. This message disappears when the next command of this entity is taken over."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "operating_state": {
+        "name": "Operating state",
+        "state": {
+          "off": "Off",
+          "idle": "Idle",
+          "heating": "Heating",
+          "cooling": "Cooling",
+          "dhw": "Heating water",
+          "defrost": "Defrosting",
+          "fault": "Fault"
+        }
+      },
+      "compressor_starts_today": {
+        "name": "Compressor starts today"
+      },
+      "compressor_run_time_today": {
+        "name": "Compressor run time today"
+      },
+      "short_runs_today": {
+        "name": "Short compressor runs today"
+      },
+      "defrosts_today": {
+        "name": "Defrosts today"
+      },
+      "current_run_time": {
+        "name": "Compressor current run time"
+      },
+      "last_run_time": {
+        "name": "Compressor last run time"
+      },
+      "last_pause": {
+        "name": "Compressor last pause"
+      }
+    },
+    "event": {
+      "compressor_run": {
+        "name": "Compressor run",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "started": "Started",
+              "finished": "Finished"
+            }
+          }
+        }
+      }
     }
   }
 }

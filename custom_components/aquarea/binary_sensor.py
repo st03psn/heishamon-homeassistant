@@ -16,11 +16,9 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
-from .definitions import (
-    build_switches,
-    build_binary_sensors,
-    HeishaMonBinarySensorEntityDescription,
-)
+from .definitions.binary_sensors import build_binary_sensors
+from .definitions.descriptions import HeishaMonBinarySensorEntityDescription
+from .definitions.switches import build_switches
 from . import build_device_info
 from .const import DOMAIN, DeviceType
 from .errors import describe, is_fault
