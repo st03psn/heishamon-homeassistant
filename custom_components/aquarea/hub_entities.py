@@ -110,7 +110,6 @@ HUB_SENSORS: tuple[HubSensorDescription, ...] = (
         key="settings_without_effect",
         translation_key="settings_without_effect",
         entity_category=EntityCategory.DIAGNOSTIC,
-        state_class=SensorStateClass.MEASUREMENT,
         value=lambda hub: len(hub.blocked_commands()),
         attributes=_blocked_settings,
     ),

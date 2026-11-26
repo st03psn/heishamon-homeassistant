@@ -66,9 +66,6 @@ class HeishaMonMQTTSelect(FeatureGatedEntity, CommandRetryMixin, SelectEntity):
         self._attr_current_option = None
 
     async def async_select_option(self, option: str) -> None:
-        hub = find_hub(self.hass, self.config_entry_entry_id)
-        if hub is not None:
-            hub.check_command(self.entity_description.command_topic)
         _LOGGER.debug(
             f"Changing {self.entity_description.name} to {option} (sent to {self.entity_description.command_topic})"
         )
@@ -76,6 +73,9 @@ class HeishaMonMQTTSelect(FeatureGatedEntity, CommandRetryMixin, SelectEntity):
             payload = self.entity_description.state_to_mqtt(option)
         else:
             payload = option
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.check_command(self.entity_description.command_topic, payload)
         await async_publish(
             self.hass,
             self.entity_description.command_topic,

@@ -69,9 +69,11 @@ The remote controller hides settings that have no effect while another setting i
 
 - A change to such a setting is refused, and the message names the setting it depends on and the value that one would need. The check can be switched off in the options of the integration.
 - The sensor `Settings without effect` counts these settings; its attributes list them with the setting in the way.
-- Nothing is refused while the value of the parent setting is not known.
+- Switching a setting off, or back to its first option, is never refused.
+- Nothing is refused while the value of the parent setting is not known or HeishaMon is offline, and nothing for other series than the M series: the rules are only known to hold there.
+- The value of the parent is the one HeishaMon last reported. An automation that changes a parent and its child in one go has to wait until the parent is reported back.
 
-The rules come from the table "Settings that depend on other settings" of the HeishaMon topic documentation (service and operating manual of the M series, and the Aquarea Service Cloud on an M-series unit). Other series may differ. Not checked this way: the operating mode, the curves and the weekly timer, because their commands also carry values the rules do not cover.
+The rules come from the table "Settings that depend on other settings" of the HeishaMon topic documentation (service and operating manual of the M series, and the Aquarea Service Cloud on an M-series unit). Not checked this way: the operating mode, the curves and the weekly timer, because their commands also carry values the rules do not cover.
 
 ### Faults
 

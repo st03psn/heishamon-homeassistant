@@ -6,6 +6,7 @@ known; an unknown parent never blocks anything.
 """
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -51,6 +52,20 @@ def _unmet(requirement: Requirement, values: Mapping[str, str]) -> list[Reason] 
         for c in conditions
         if actual[c.name] not in c.values
     ]
+
+
+def rules_apply_to(model: str | None) -> bool:
+    """Return True when the rules are known to hold for this heat pump model.
+
+    The rules come from the manuals of the M series and from an M-series
+    unit. `model` is the name of the model as the integration shows it,
+    e.g. "WH-SDC0316M9E8 9 3ph T-CAP - M-series".
+    """
+    if not model:
+        return False
+    if "M-series" in model:
+        return True
+    return re.match(r"WH-[A-Z]+\d+M\d?E\d", model) is not None
 
 
 def _is_single_command(command: str) -> bool:

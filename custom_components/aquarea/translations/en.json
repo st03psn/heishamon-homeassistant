@@ -97,9 +97,6 @@
   "exceptions": {
     "setting_needs_parent": {
       "message": "{command} has no effect now: {parent} is {actual}, it would have to be {needed}. Change that setting first, or switch off the check in the options of the integration."
-    },
-    "setting_blocked_by_parent": {
-      "message": "{command} cannot be used now, because {parent} is {actual}. Change that setting first, or switch off the check in the options of the integration."
     }
   }
 }

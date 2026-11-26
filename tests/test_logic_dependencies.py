@@ -3,6 +3,7 @@ from custom_components.aquarea.logic.dependencies import (
     Reason,
     blocked_commands,
     inactive_topics,
+    rules_apply_to,
 )
 from custom_components.aquarea.logic.dependency_data import REQUIREMENTS
 
@@ -75,3 +76,21 @@ def test_data_is_consistent():
     for requirement in REQUIREMENTS:
         for condition in requirement.when + requirement.any_of:
             assert condition.topic.startswith("TOP") and condition.values
+
+
+def test_extra_pump_use_does_not_need_a_dhw_tank():
+    blocked = blocked_commands({"DHW_Installed": "0"})
+    assert "SetDHWHeatDelta" in blocked and "SetExtraPumpMode" in blocked
+    assert "SetExtraPump" not in blocked
+    assert "TOP182" not in inactive_topics({"DHW_Installed": "0"})
+
+
+def test_rules_apply_to_the_m_series_only():
+    assert rules_apply_to("WH-SDC0316M9E8 9 3ph T-CAP - M-series")
+    assert rules_apply_to("WH-ADC0316M9E8AN2 12 3ph T-CAP - M-series DHW 185l")
+    assert rules_apply_to("WH-WXG09ME8 9 3ph")
+    assert not rules_apply_to("WH-MDC05H3E5 5 1ph HP")
+    assert not rules_apply_to("WH-MXC09J3E8 9 3ph T-CAP")
+    assert not rules_apply_to("WH-SDC0509L3E5 9 1 ph HP - split L-series 3kW elec heating")
+    assert not rules_apply_to("WH-ADC0309K3E5 9 1ph HP - K-series All-in-One R32")
+    assert not rules_apply_to(None) and not rules_apply_to("")

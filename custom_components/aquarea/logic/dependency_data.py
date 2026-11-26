@@ -75,10 +75,10 @@ REQUIREMENTS: tuple[Requirement, ...] = (
     Requirement(
         when=(Condition('TOP100', 'DHW_Installed', ('1',)),),
         any_of=(),
-        child_topics=('TOP140', 'TOP148', 'TOP151', 'TOP182', 'TOP183', 'TOP158', 'TOP159', 'TOP22', 'TOP70', 'TOP71', 'TOP58', 'TOP9'),
-        child_commands=('SetSmartDHW', 'SetDHWHeaterType', 'SetDHWDefrost', 'SetExtraPump', 'SetExtraPumpMode', 'SetRoomOperationMaxTime', 'SetDHWHeatupMaxTime', 'SetDHWHeatDelta', 'SetSterilizationTemp', 'SetSterilizationMaxTime', 'SetDHWHeaterState', 'SetDHWTemp', 'SetForceDHW'),
+        child_topics=('TOP140', 'TOP148', 'TOP151', 'TOP183', 'TOP158', 'TOP159', 'TOP22', 'TOP70', 'TOP71', 'TOP58', 'TOP9'),
+        child_commands=('SetSmartDHW', 'SetDHWHeaterType', 'SetDHWDefrost', 'SetExtraPumpMode', 'SetRoomOperationMaxTime', 'SetDHWHeatupMaxTime', 'SetDHWHeatDelta', 'SetSterilizationTemp', 'SetSterilizationMaxTime', 'SetDHWHeaterState', 'SetDHWTemp', 'SetForceDHW'),
         source='SM 97-98, 100-101; BA 19, 28, 33, 48; Cloud',
-        note='DHW operation modes (no topic given)',
+        note='DHW operation modes (no topic given). The table lists "extra pump (TOP182, TOP183)" here; the use of the extra pump (TOP182, SetExtraPump) also has the value heating, so only its DHW mode (TOP183, SetExtraPumpMode) is a child.',
     ),
     Requirement(
         when=(Condition('TOP148', 'DHW_Heater_Type', ('1',)),),

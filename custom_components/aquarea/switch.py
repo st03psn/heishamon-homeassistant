@@ -89,9 +89,7 @@ class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
         )
 
     async def async_turn_off(self) -> None:
-        hub = find_hub(self.hass, self.config_entry_entry_id)
-        if hub is not None:
-            hub.check_command(self.entity_description.command_topic)
+        # switching off is never refused
         _LOGGER.info(f"Turning off heatpump {self.entity_description.name}")
         await async_publish(
             self.hass,

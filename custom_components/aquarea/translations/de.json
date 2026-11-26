@@ -97,9 +97,6 @@
   "exceptions": {
     "setting_needs_parent": {
       "message": "{command} hat gerade keine Wirkung: {parent} ist {actual}, nötig wäre {needed}. Ändere zuerst diese Einstellung oder schalte die Prüfung in den Optionen der Integration aus."
-    },
-    "setting_blocked_by_parent": {
-      "message": "{command} ist gerade nicht nutzbar, weil {parent} auf {actual} steht. Ändere zuerst diese Einstellung oder schalte die Prüfung in den Optionen der Integration aus."
     }
   }
 }

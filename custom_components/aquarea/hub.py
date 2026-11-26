@@ -21,7 +21,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_SETTINGS_GUARD, DOMAIN
-from .logic.dependencies import Reason, blocked_commands
+from .definitions.values import read_heatpump_model
+from .logic.dependencies import Reason, blocked_commands, rules_apply_to
 from .logic.cycles import CycleTracker, RunFinished, RunStarted
 from .logic.state import OperatingState, Snapshot, operating_state
 
@@ -119,39 +120,49 @@ class HeatPumpHub:
         """The operating state, None while HeishaMon is offline."""
         return None if self.online is False else self.state
 
+    @property
+    def model(self) -> Optional[str]:
+        """Name of the heat pump model, None while it is not known."""
+        raw = self.topics.get("Heat_Pump_Model")
+        if raw is None:
+            return None
+        catalog = self.hass.data.get(DOMAIN, {}).get("model_catalog")
+        name = read_heatpump_model(raw, None if catalog is None else catalog.models)
+        return None if name.startswith("Unknown") else name
+
     def blocked_commands(self) -> dict[str, list[Reason]]:
-        """Commands that have no effect with the current settings of the heat pump."""
+        """Commands that have no effect with the current settings of the heat pump.
+
+        Empty while the values may be out of date (HeishaMon offline) and for
+        models the rules are not known to hold for.
+        """
+        if self.online is False or not rules_apply_to(self.model):
+            return {}
         return blocked_commands(self.topics)
 
-    def check_command(self, command_topic: str) -> None:
+    def check_command(self, command_topic: str, payload: Any = None) -> None:
         """Raise when the command has no effect with the current settings.
 
-        Does nothing when the guard is switched off in the options.
+        A payload of 0 is never refused: switching a setting off, or back to
+        its first option, must stay possible while its parent is off. Does
+        nothing when the guard is switched off in the options.
         """
         if not self.entry.options.get(CONF_SETTINGS_GUARD, True):
+            return
+        if str(payload) == "0":
             return
         command = command_topic.rsplit("/", 1)[-1]
         reasons = self.blocked_commands().get(command)
         if not reasons:
             return
         reason = reasons[0]
-        if reason.needed:
-            raise ServiceValidationError(
-                translation_domain=DOMAIN,
-                translation_key="setting_needs_parent",
-                translation_placeholders={
-                    "command": command,
-                    "parent": reason.parent_name,
-                    "needed": " / ".join(reason.needed),
-                    "actual": reason.actual,
-                },
-            )
         raise ServiceValidationError(
             translation_domain=DOMAIN,
-            translation_key="setting_blocked_by_parent",
+            translation_key="setting_needs_parent",
             translation_placeholders={
                 "command": command,
-                "parent": reason.parent_name,
+                "parent": reason.parent_name.replace("_", " "),
+                "needed": " / ".join(reason.needed),
                 "actual": reason.actual,
             },
         )
