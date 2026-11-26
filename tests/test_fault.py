@@ -19,7 +19,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 def test_descriptions():
     assert describe("H28") == "Abnormal solar sensor"
-    assert describe("H28", "de") == "Solarfühler gestört"
+    assert describe("H28", "de") == "Störung Solarfühler"
     assert describe("F99").startswith("Unknown code")
     assert not is_fault("No error") and not is_fault("H00") and is_fault("F12")
     assert all(len(texts) == 2 and all(texts) for texts in ERROR_CODES.values())
