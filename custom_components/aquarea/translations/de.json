@@ -17,7 +17,8 @@
         "description": "Die Wärmepumpe meldet, welche optionalen Anlagenteile vorhanden sind (Warmwasserspeicher, Pufferspeicher, Solar, bivalent, SG ready, optionale Platine, Kühlung). Entitäten dieser Anlagenteile sind standardmäßig deaktiviert.",
         "data": {
           "entity_management": "Entitäten optionaler Anlagenteile",
-          "settings_guard": "Einstellungen ablehnen, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen"
+          "settings_guard": "Einstellungen ablehnen, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen",
+          "hide_without_effect": "Einstellungen ausblenden, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen"
         }
       }
     }

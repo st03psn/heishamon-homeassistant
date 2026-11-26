@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 import time
+from datetime import timedelta
 from typing import Callable, Iterable, Optional
 
 from homeassistant.components import mqtt
@@ -17,6 +18,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 
 from .const import (
@@ -54,6 +56,14 @@ SETTLE_DELAY = 10.0
 DISABLE_DELAY = 0.0
 
 STORAGE_VERSION = 1
+
+# HeishaMon publishes the optional/ topics only while it emulates the optional
+# PCB, and republishes all values every few minutes (default 300 s). Retained
+# messages from an earlier emulation say nothing, so only live ones count.
+EMULATION_TIMEOUT = 15 * 60
+# HeishaMon counts as running while main/ topics arrived within this time
+ALIVE_WINDOW = 5 * 60
+EMULATION_CHECK = timedelta(minutes=1)
 
 
 @dataclass(frozen=True)
@@ -110,6 +120,10 @@ class FeatureTracker:
         self._reported: dict[Feature, Optional[bool]] = {f: None for f in Feature}
         self._missing_since: dict[Feature, float] = {}
         self._seen_topics: set[str] = set()
+        self._started_at = time.time()
+        self._last_main: Optional[float] = None
+        self._last_live_optional: Optional[float] = None
+        self._unsubscribe_more: list[CALLBACK_TYPE] = []
         self._listeners: list[Callable[[], None]] = []
         self._unsubscribe: Optional[CALLBACK_TYPE] = None
         self._cancel_evaluation: Optional[CALLBACK_TYPE] = None
@@ -135,12 +149,23 @@ class FeatureTracker:
         self._unsubscribe = await mqtt.async_subscribe(
             self.hass, f"{self.prefix}main/+", self._message_received, 1
         )
+        self._unsubscribe_more.append(
+            await mqtt.async_subscribe(
+                self.hass, f"{self.prefix}optional/+", self._optional_received, 1
+            )
+        )
+        self._unsubscribe_more.append(
+            async_track_time_interval(self.hass, self._check_emulation, EMULATION_CHECK)
+        )
 
     @callback
     def async_stop(self) -> None:
         if self._unsubscribe is not None:
             self._unsubscribe()
             self._unsubscribe = None
+        for unsubscribe in self._unsubscribe_more:
+            unsubscribe()
+        self._unsubscribe_more.clear()
         if self._cancel_evaluation is not None:
             self._cancel_evaluation()
             self._cancel_evaluation = None
@@ -175,8 +200,36 @@ class FeatureTracker:
         return remove
 
     @callback
+    def _optional_received(self, message) -> None:
+        topic = message.topic.removeprefix(self.prefix)
+        if topic not in self._seen_topics:
+            self._seen_topics.add(topic)
+            self._schedule_evaluation(SETTLE_DELAY)
+        if not getattr(message, "retain", False):
+            self._last_live_optional = time.time()
+            self._set_reported(Feature.EMULATED_PCB, True)
+
+    @callback
+    def _check_emulation(self, _now=None) -> None:
+        """Report the emulation as off when HeishaMon runs but sends no optional/ topic."""
+        now = time.time()
+        if self._last_main is None or now - self._last_main > ALIVE_WINDOW:
+            return
+        since = self._last_live_optional or self._started_at
+        if now - since > EMULATION_TIMEOUT:
+            self._set_reported(Feature.EMULATED_PCB, False)
+
+    @callback
+    def _set_reported(self, feature: Feature, reported: bool) -> None:
+        if self._reported[feature] != reported:
+            self._reported[feature] = reported
+            self._features_changed()
+            self._schedule_evaluation(SETTLE_DELAY)
+
+    @callback
     def _message_received(self, message) -> None:
         topic = message.topic.removeprefix(self.prefix)
+        self._last_main = time.time()
         changed = False
         if topic not in self._seen_topics:
             self._seen_topics.add(topic)

@@ -70,6 +70,7 @@ The remote controller hides settings that have no effect while another setting i
 - A change to such a setting is refused, and the message names the setting it depends on and the value that one would need. The check can be switched off in the options of the integration.
 - The sensor `Settings without effect` counts these settings; its attributes list them with the setting in the way.
 - Switching a setting off, or back to its first option, is never refused.
+- Entities of such settings are hidden while they have no effect and shown again once they have one (option "Hide settings that have no effect"). Entities you hid yourself stay hidden.
 - Nothing is refused while the value of the parent setting is not known or HeishaMon is offline, and nothing for other series than the M series: the rules are only known to hold there.
 - The value of the parent is the one HeishaMon last reported. An automation that changes a parent and its child in one go has to wait until the parent is reported back.
 
@@ -96,7 +97,7 @@ Entity names do not start with "Aquarea" (Home Assistant already shows the devic
 
 ### Emulated optional PCB
 
-HeishaMon can stand in for the optional PCB of the heat pump ("optional PCB emulation" in the HeishaMon settings). The entities named "Emulated PCB ..." belong to this emulation: the SG ready signal, the demand control limit and the compressor contact that HeishaMon sends in place of the PCB, and the pump, mixing valve and alarm requests the heat pump sends to it. They only work with the emulation switched on, not with a real optional PCB. The values sent by HeishaMon are not reported back by the heat pump, so these entities show "unknown" until a value has been sent. The installer settings "SG ready mode" and "Demand control" (whether the heat pump uses these inputs at all) are separate entities.
+HeishaMon can stand in for the optional PCB of the heat pump ("optional PCB emulation" in the HeishaMon settings). The entities named "Emulated PCB ..." belong to this emulation: the SG ready signal, the demand control limit and the compressor contact that HeishaMon sends in place of the PCB, and the pump, mixing valve and alarm requests the heat pump sends to it. They only work with the emulation switched on, not with a real optional PCB. The integration recognises the emulation from the optional topics HeishaMon publishes only while it emulates the PCB (retained values of an earlier emulation do not count): these entities follow it like an optional part, so with the emulation off they are disabled, shown as unavailable or left as they are, depending on the option for optional parts. HeishaMon counts as not emulating after 15 minutes of running without such a topic. The settings of a real optional PCB (SG ready mode, demand control, ...) are not affected. The values sent by HeishaMon are not reported back by the heat pump, so these entities show "unknown" until a value has been sent. The installer settings "SG ready mode" and "Demand control" (whether the heat pump uses these inputs at all) are separate entities.
 
 ### Installer menu settings
 

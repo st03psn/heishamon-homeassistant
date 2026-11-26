@@ -22,7 +22,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import CONF_SETTINGS_GUARD, DOMAIN
 from .definitions.values import read_heatpump_model
-from .logic.dependencies import Reason, blocked_commands, rules_apply_to
+from .logic.dependencies import Reason, blocked_commands, inactive_topics, rules_apply_to
 from .logic.journal import Change, SettingsJournal
 from .logic.cycles import CycleTracker, RunFinished, RunStarted
 from .logic.state import OperatingState, Snapshot, operating_state
@@ -150,6 +150,17 @@ class HeatPumpHub:
         catalog = self.hass.data.get(DOMAIN, {}).get("model_catalog")
         name = read_heatpump_model(raw, None if catalog is None else catalog.models)
         return None if name.startswith("Unknown") else name
+
+    @property
+    def rules_apply(self) -> bool:
+        """True when the settings rules are known to hold for this heat pump."""
+        return rules_apply_to(self.model)
+
+    def inactive_topics(self) -> dict[str, list[Reason]]:
+        """Readbacks of settings that have no effect with the current settings."""
+        if self.online is False or not self.rules_apply:
+            return {}
+        return inactive_topics(self.topics)
 
     def blocked_commands(self) -> dict[str, list[Reason]]:
         """Commands that have no effect with the current settings of the heat pump.

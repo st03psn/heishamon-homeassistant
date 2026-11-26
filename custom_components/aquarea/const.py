@@ -26,6 +26,8 @@ class Feature(Enum):
     SG_READY = "sg_ready"
     OPTIONAL_PCB = "optional_pcb"
     COOLING = "cooling"
+    # optional PCB emulated by HeishaMon (setting "Emulate optional PCB")
+    EMULATED_PCB = "emulated_pcb"
 
 
 CONF_ENTITY_MANAGEMENT = "entity_management"
@@ -39,3 +41,6 @@ ENTITY_MANAGEMENT_MODES = [MODE_ENABLE_ONLY, MODE_UNAVAILABLE, MODE_DISABLE]
 
 # refuse to change a setting that has no effect while another setting is off
 CONF_SETTINGS_GUARD = "settings_guard"
+
+# hide the entities of settings that have no effect while the setting they depend on is off
+CONF_HIDE_WITHOUT_EFFECT = "hide_without_effect"

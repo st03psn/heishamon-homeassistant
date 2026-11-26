@@ -82,7 +82,11 @@ async def test_options_flow(hass, mqtt_mock):
     assert result["type"] == "create_entry"
     await hass.async_block_till_done()
     # the settings guard is on unless it is switched off in the same form
-    assert entry.options == {CONF_ENTITY_MANAGEMENT: MODE_UNAVAILABLE, "settings_guard": True}
+    assert entry.options == {
+        CONF_ENTITY_MANAGEMENT: MODE_UNAVAILABLE,
+        "hide_without_effect": True,
+        "settings_guard": True,
+    }
     assert hass.data[DOMAIN][entry.entry_id]["features"].mode == MODE_UNAVAILABLE
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

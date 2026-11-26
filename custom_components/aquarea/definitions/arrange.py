@@ -13,7 +13,7 @@ from typing import Any, Optional
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.util import slugify
 
-from ..const import DeviceType
+from ..const import DeviceType, Feature
 
 
 # entities moved to a sub-device of the heat pump (none at the moment)
@@ -196,6 +196,13 @@ def _display_name(topic_id: Optional[str], name) -> Any:
     return name[:1].upper() + name[1:]
 
 
+# values HeishaMon sends to or receives from the heat pump in place of the optional PCB
+EMULATED_PCB_TOPICS = frozenset(
+    {"OPT0", "OPT1", "OPT2", "OPT3", "OPT4", "OPT5", "OPT6"}
+    | {"SetDemandControl", "SetSmartGridMode", "SetCompressorState"}
+)
+
+
 def _is_new_topic(topic_id: Optional[str]) -> bool:
     """TOP144-TOP196 and SET49-SET104: enabled once the firmware publishes them."""
     match = re.fullmatch(r"(TOP|SET)(\d+)", topic_id or "")
@@ -226,6 +233,10 @@ def arranged(build: Callable) -> Callable:
                 changes["device"] = device
             if topic_id in DIAGNOSTIC_READBACKS and description.entity_category is None:
                 changes["entity_category"] = EntityCategory.DIAGNOSTIC
+            if topic_id in EMULATED_PCB_TOPICS and Feature.EMULATED_PCB not in getattr(
+                description, "requires", ()
+            ):
+                changes["requires"] = (Feature.EMULATED_PCB,)
             if _is_new_topic(topic_id) and not getattr(description, "requires", ()):
                 changes["auto_enable"] = True
             result.append(replace(description, **changes) if changes else description)
