@@ -87,10 +87,10 @@
         "name": "Durchfluss"
       },
       "top5": {
-        "name": "RLT"
+        "name": "Rücklauftemperatur"
       },
       "top6": {
-        "name": "VLT"
+        "name": "Vorlauftemperatur"
       },
       "top7": {
         "name": "VLT Soll"
@@ -108,7 +108,7 @@
         "name": "Verdichter Starts"
       },
       "top14": {
-        "name": "AT"
+        "name": "Außentemperatur"
       },
       "top15": {
         "name": "Heizen Wärmeleistung"
@@ -123,7 +123,7 @@
         "name": "2-Wege-Ventil"
       },
       "top21": {
-        "name": "Rohrtemperatur außen"
+        "name": "Außen-WT Temperatur"
       },
       "top23": {
         "name": "Heizen ΔT"
@@ -183,7 +183,7 @@
         "name": "Heißgastemperatur"
       },
       "top51": {
-        "name": "Rohrtemperatur innen"
+        "name": "Kältemitteltemperatur"
       },
       "top52": {
         "name": "Abtautemperatur"
@@ -288,7 +288,7 @@
         "name": "Wasserdruck"
       },
       "top116": {
-        "name": "RLT 2"
+        "name": "Rücklauftemperatur 2"
       },
       "top117": {
         "name": "Economizer Austrittstemp."
@@ -501,19 +501,19 @@
         "name": "Heizen Wärmemenge"
       },
       "top16_total": {
-        "name": "Heizen Strom"
+        "name": "Heizen Stromverbrauch"
       },
       "top38_total": {
         "name": "Kühlen Kältemenge"
       },
       "top39_total": {
-        "name": "Kühlen Strom"
+        "name": "Kühlen Stromverbrauch"
       },
       "top40_total": {
         "name": "WW Wärmemenge"
       },
       "top41_total": {
-        "name": "WW Strom"
+        "name": "WW Stromverbrauch"
       },
       "heishamon_detected_1wire_sensors": {
         "name": "HeishaMon erkannte 1-Wire-Sensoren"
@@ -525,7 +525,7 @@
         "name": "Wärmeleistung"
       },
       "total_power_consumption": {
-        "name": "El. Leistung"
+        "name": "Elektrische Leistung"
       },
       "cop": {
         "name": "COP"
@@ -534,7 +534,7 @@
         "name": "Wärmemenge"
       },
       "total_power_consumption_total": {
-        "name": "Strom"
+        "name": "Stromverbrauch"
       },
       "heat_pump_models_last_refreshed": {
         "name": "Wärmepumpenmodelle zuletzt aktualisiert"
