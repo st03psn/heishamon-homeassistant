@@ -39,3 +39,6 @@ ENTITY_MANAGEMENT_MODES = [MODE_ENABLE_ONLY, MODE_UNAVAILABLE, MODE_DISABLE]
 
 # refuse to change a setting that has no effect while another setting is off
 CONF_SETTINGS_GUARD = "settings_guard"
+
+# hide the entities of settings that have no effect while the setting they depend on is off
+CONF_HIDE_WITHOUT_EFFECT = "hide_without_effect"

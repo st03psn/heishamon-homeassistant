@@ -70,6 +70,7 @@ The remote controller hides settings that have no effect while another setting i
 - A change to such a setting is refused, and the message names the setting it depends on and the value that one would need. The check can be switched off in the options of the integration.
 - The sensor `Settings without effect` counts these settings; its attributes list them with the setting in the way.
 - Switching a setting off, or back to its first option, is never refused.
+- Entities of such settings are hidden while they have no effect and shown again once they have one (option "Hide settings that have no effect"). Entities you hid yourself stay hidden.
 - Nothing is refused while the value of the parent setting is not known or HeishaMon is offline, and nothing for other series than the M series: the rules are only known to hold there.
 - The value of the parent is the one HeishaMon last reported. An automation that changes a parent and its child in one go has to wait until the parent is reported back.
 

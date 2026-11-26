@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_ENTITY_MANAGEMENT,
+    CONF_HIDE_WITHOUT_EFFECT,
     CONF_SETTINGS_GUARD,
     DOMAIN,
     ENTITY_MANAGEMENT_MODES,
@@ -121,6 +122,10 @@ class HeishaMonOptionsFlow(OptionsFlow):
                             translation_key=CONF_ENTITY_MANAGEMENT,
                         )
                     ),
+                    vol.Required(
+                        CONF_HIDE_WITHOUT_EFFECT,
+                        default=self.config_entry.options.get(CONF_HIDE_WITHOUT_EFFECT, True),
+                    ): bool,
                     vol.Required(
                         CONF_SETTINGS_GUARD,
                         default=self.config_entry.options.get(CONF_SETTINGS_GUARD, True),

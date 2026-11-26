@@ -19,6 +19,7 @@ from .definitions.selects import build_selects
 from .definitions.sensors import build_sensors
 from .definitions.switches import build_switches
 from .features import FeatureTracker, ManagedEntity, managed_entities
+from .child_visibility import ChildVisibility, topic_ids_of_commands
 from .hub import HeatPumpHub, storage_key
 from .model_catalog import ModelCatalog
 
@@ -133,6 +134,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await tracker.async_start()
     await hub.async_start()
+    descriptions = [
+        d for build in (build_numbers, build_selects, build_switches) for d in build(mqtt_topic)
+    ]
+    visibility = ChildVisibility(hass, entry, hub, topic_ids_of_commands(descriptions, mqtt_topic))
+    visibility.start()
+    entry.async_on_unload(visibility.stop)
     entry.async_on_unload(tracker.async_stop)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
