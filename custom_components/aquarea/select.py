@@ -13,6 +13,7 @@ from homeassistant.util import slugify
 from .definitions.descriptions import HeishaMonSelectEntityDescription
 from .definitions.selects import build_selects
 from . import build_device_info
+from .hub import find_hub
 from .features import FeatureGatedEntity
 from .retry_mixin import CommandRetryMixin
 
@@ -72,6 +73,9 @@ class HeishaMonMQTTSelect(FeatureGatedEntity, CommandRetryMixin, SelectEntity):
             payload = self.entity_description.state_to_mqtt(option)
         else:
             payload = option
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.check_command(self.entity_description.command_topic, payload)
         await async_publish(
             self.hass,
             self.entity_description.command_topic,

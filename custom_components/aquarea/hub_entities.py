@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTime
+from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.util import slugify
 
@@ -27,6 +27,24 @@ class HubSensorDescription(SensorEntityDescription):
     """A sensor whose value is read from the hub."""
 
     value: Callable[[HeatPumpHub], Any]
+    attributes: Callable[[HeatPumpHub], dict[str, Any]] | None = None
+
+
+def _blocked_settings(hub: HeatPumpHub) -> dict[str, Any]:
+    """Blocked commands with the parent setting in the way, for the state attributes."""
+    return {
+        "settings": {
+            command: [
+                {
+                    "parent": reason.parent_name,
+                    "needed": list(reason.needed),
+                    "actual": reason.actual,
+                }
+                for reason in reasons
+            ]
+            for command, reasons in sorted(hub.blocked_commands().items())
+        }
+    }
 
 
 def _minutes(seconds: Optional[float]) -> Optional[float]:
@@ -88,6 +106,13 @@ HUB_SENSORS: tuple[HubSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfTime.MINUTES,
         value=lambda hub: _minutes(hub.cycles.last_pause_seconds),
     ),
+    HubSensorDescription(
+        key="settings_without_effect",
+        translation_key="settings_without_effect",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value=lambda hub: len(hub.blocked_commands()),
+        attributes=_blocked_settings,
+    ),
 )
 
 
@@ -112,6 +137,11 @@ class HubSensor(SensorEntity):
         self.entity_id = f"sensor.{slugify(prefix.replace('/', '_'))}_{description.key}"
         self._attr_unique_id = f"{config_entry.entry_id}-hub-{description.key}"
         self._attr_native_value = description.value(self._hub)
+        self._update_attributes()
+
+    def _update_attributes(self) -> None:
+        if self.entity_description.attributes is not None:
+            self._attr_extra_state_attributes = self.entity_description.attributes(self._hub)
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(self._hub.async_add_listener(self._hub_changed))
@@ -119,7 +149,10 @@ class HubSensor(SensorEntity):
     @callback
     def _hub_changed(self) -> None:
         value = self.entity_description.value(self._hub)
-        if value != self._attr_native_value:
+        previous = getattr(self, "_attr_extra_state_attributes", None)
+        self._update_attributes()
+        changed = previous != getattr(self, "_attr_extra_state_attributes", None)
+        if value != self._attr_native_value or changed:
             self._attr_native_value = value
             self.async_write_ha_state()
 

@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_ENTITY_MANAGEMENT,
+    CONF_SETTINGS_GUARD,
     DOMAIN,
     ENTITY_MANAGEMENT_MODES,
     MODE_ENABLE_ONLY,
@@ -119,7 +120,11 @@ class HeishaMonOptionsFlow(OptionsFlow):
                             mode=SelectSelectorMode.LIST,
                             translation_key=CONF_ENTITY_MANAGEMENT,
                         )
-                    )
+                    ),
+                    vol.Required(
+                        CONF_SETTINGS_GUARD,
+                        default=self.config_entry.options.get(CONF_SETTINGS_GUARD, True),
+                    ): bool,
                 }
             ),
         )

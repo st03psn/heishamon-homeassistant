@@ -26,6 +26,9 @@ class Requirement:
     child_commands: tuple[str, ...] = ()  # "SetZoneType", ... exactly as written
     source: str = ""  # the Source column verbatim
     note: str = ""  # anything in the row not expressible above, verbatim
+    # True: the children are NOT usable while the conditions hold (the table words
+    # one row this way: with the heat/cool switch on, weekly timer and auto mode are not usable)
+    blocks: bool = False
 
 
 @dataclass(frozen=True)
@@ -64,18 +67,18 @@ REQUIREMENTS: tuple[Requirement, ...] = (
     Requirement(
         when=(Condition('TOP110', 'Optional_PCB', ('1',)),),
         any_of=(),
-        child_topics=('TOP146', 'TOP101', 'TOP121', 'TOP150', 'TOP149', 'TOP122', 'TOP120', 'TOP180'),
-        child_commands=('SetZoneType', 'SetSolarMode', 'SetExternalError', 'SetDemandControlEnable', 'SetSGReadyMode', 'SetExternalCompressorControl', 'SetExternalHeatCoolControl', 'SetBivalentOperatingMode'),
+        child_topics=('TOP146', 'TOP101', 'TOP121', 'TOP150', 'TOP149', 'TOP122', 'TOP120'),
+        child_commands=('SetZoneType', 'SetSolarMode', 'SetExternalError', 'SetDemandControlEnable', 'SetSGReadyMode', 'SetExternalCompressorControl', 'SetExternalHeatCoolControl'),
         source='SM 97, 100-106; Cloud',
-        note='child TOP180 is listed as "bivalent operating mode SG ready (TOP180 = 1)"',
+        note='The table also lists "bivalent operating mode SG ready (TOP180 = 1)" here: only that one value of TOP180 / SetBivalentOperatingMode needs the optional PCB, so the topic and the command are not in the child lists.',
     ),
     Requirement(
         when=(Condition('TOP100', 'DHW_Installed', ('1',)),),
         any_of=(),
-        child_topics=('TOP140', 'TOP148', 'TOP151', 'TOP182', 'TOP183', 'TOP158', 'TOP159', 'TOP22', 'TOP70', 'TOP71', 'TOP58', 'TOP9'),
-        child_commands=('SetSmartDHW', 'SetDHWHeaterType', 'SetDHWDefrost', 'SetExtraPump', 'SetExtraPumpMode', 'SetRoomOperationMaxTime', 'SetDHWHeatupMaxTime', 'SetDHWHeatDelta', 'SetSterilizationTemp', 'SetSterilizationMaxTime', 'SetDHWHeaterState', 'SetDHWTemp', 'SetForceDHW'),
+        child_topics=('TOP140', 'TOP148', 'TOP151', 'TOP183', 'TOP158', 'TOP159', 'TOP22', 'TOP70', 'TOP71', 'TOP58', 'TOP9'),
+        child_commands=('SetSmartDHW', 'SetDHWHeaterType', 'SetDHWDefrost', 'SetExtraPumpMode', 'SetRoomOperationMaxTime', 'SetDHWHeatupMaxTime', 'SetDHWHeatDelta', 'SetSterilizationTemp', 'SetSterilizationMaxTime', 'SetDHWHeaterState', 'SetDHWTemp', 'SetForceDHW'),
         source='SM 97-98, 100-101; BA 19, 28, 33, 48; Cloud',
-        note='DHW operation modes (no topic given)',
+        note='DHW operation modes (no topic given). The table lists "extra pump (TOP182, TOP183)" here; the use of the extra pump (TOP182, SetExtraPump) also has the value heating, so only its DHW mode (TOP183, SetExtraPumpMode) is a child.',
     ),
     Requirement(
         when=(Condition('TOP148', 'DHW_Heater_Type', ('1',)),),
@@ -228,6 +231,7 @@ REQUIREMENTS: tuple[Requirement, ...] = (
         child_commands=('SetMainSchedule', 'SetOperationMode'),
         source='SM 106, 190',
         note='parent: Heat/cool switch on (TOP120 = 1); children: Weekly timer and operation mode auto are not usable; children: no topic, weekly timer and operation mode auto are not usable',
+        blocks=True,
     ),
 )
 
