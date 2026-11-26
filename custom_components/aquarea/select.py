@@ -13,6 +13,7 @@ from homeassistant.util import slugify
 from .definitions.descriptions import HeishaMonSelectEntityDescription
 from .definitions.selects import build_selects
 from . import build_device_info
+from .hub import find_hub
 from .features import FeatureGatedEntity
 from .retry_mixin import CommandRetryMixin
 
@@ -65,6 +66,9 @@ class HeishaMonMQTTSelect(FeatureGatedEntity, CommandRetryMixin, SelectEntity):
         self._attr_current_option = None
 
     async def async_select_option(self, option: str) -> None:
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.check_command(self.entity_description.command_topic)
         _LOGGER.debug(
             f"Changing {self.entity_description.name} to {option} (sent to {self.entity_description.command_topic})"
         )

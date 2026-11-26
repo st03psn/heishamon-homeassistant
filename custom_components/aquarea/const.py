@@ -36,3 +36,6 @@ MODE_UNAVAILABLE = "unavailable"
 # same, and disable entities of a missing feature in the entity registry
 MODE_DISABLE = "disable"
 ENTITY_MANAGEMENT_MODES = [MODE_ENABLE_ONLY, MODE_UNAVAILABLE, MODE_DISABLE]
+
+# refuse to change a setting that has no effect while another setting is off
+CONF_SETTINGS_GUARD = "settings_guard"

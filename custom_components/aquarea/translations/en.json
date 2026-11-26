@@ -16,7 +16,8 @@
         "title": "Entities and installation",
         "description": "The heat pump reports which optional parts are installed (DHW tank, buffer tank, solar, bivalent, SG ready, optional PCB, cooling). Entities belonging to such a part are disabled by default.",
         "data": {
-          "entity_management": "Entities of optional parts"
+          "entity_management": "Entities of optional parts",
+          "settings_guard": "Refuse settings that have no effect while the setting they depend on is off"
         }
       }
     }
@@ -74,6 +75,9 @@
       },
       "last_pause": {
         "name": "Compressor last pause"
+      },
+      "settings_without_effect": {
+        "name": "Settings without effect"
       }
     },
     "event": {
@@ -88,6 +92,14 @@
           }
         }
       }
+    }
+  },
+  "exceptions": {
+    "setting_needs_parent": {
+      "message": "{command} has no effect now: {parent} is {actual}, it would have to be {needed}. Change that setting first, or switch off the check in the options of the integration."
+    },
+    "setting_blocked_by_parent": {
+      "message": "{command} cannot be used now, because {parent} is {actual}. Change that setting first, or switch off the check in the options of the integration."
     }
   }
 }

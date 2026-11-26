@@ -15,11 +15,13 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import CONF_SETTINGS_GUARD, DOMAIN
+from .logic.dependencies import Reason, blocked_commands
 from .logic.cycles import CycleTracker, RunFinished, RunStarted
 from .logic.state import OperatingState, Snapshot, operating_state
 
@@ -116,6 +118,43 @@ class HeatPumpHub:
     def known_state(self) -> Optional[OperatingState]:
         """The operating state, None while HeishaMon is offline."""
         return None if self.online is False else self.state
+
+    def blocked_commands(self) -> dict[str, list[Reason]]:
+        """Commands that have no effect with the current settings of the heat pump."""
+        return blocked_commands(self.topics)
+
+    def check_command(self, command_topic: str) -> None:
+        """Raise when the command has no effect with the current settings.
+
+        Does nothing when the guard is switched off in the options.
+        """
+        if not self.entry.options.get(CONF_SETTINGS_GUARD, True):
+            return
+        command = command_topic.rsplit("/", 1)[-1]
+        reasons = self.blocked_commands().get(command)
+        if not reasons:
+            return
+        reason = reasons[0]
+        if reason.needed:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="setting_needs_parent",
+                translation_placeholders={
+                    "command": command,
+                    "parent": reason.parent_name,
+                    "needed": " / ".join(reason.needed),
+                    "actual": reason.actual,
+                },
+            )
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="setting_blocked_by_parent",
+            translation_placeholders={
+                "command": command,
+                "parent": reason.parent_name,
+                "actual": reason.actual,
+            },
+        )
 
     @callback
     def _topic_received(self, message: mqtt.ReceiveMessage) -> None:

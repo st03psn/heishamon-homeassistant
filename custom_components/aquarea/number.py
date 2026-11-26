@@ -13,6 +13,7 @@ from homeassistant.util import slugify
 from .definitions.descriptions import HeishaMonNumberEntityDescription
 from .definitions.numbers import build_numbers
 from . import build_device_info
+from .hub import find_hub
 from .features import FeatureGatedEntity
 from .retry_mixin import CommandRetryMixin
 
@@ -71,6 +72,9 @@ class HeishaMonMQTTNumber(FeatureGatedEntity, CommandRetryMixin, NumberEntity):
         self._attr_native_max_value = max
 
     async def async_set_native_value(self, value: float) -> None:
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.check_command(self.entity_description.command_topic)
         _LOGGER.debug(
             f"Changing {self.entity_description.name} to {value} (sent to {self.entity_description.command_topic})"
         )

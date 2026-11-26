@@ -13,6 +13,7 @@ from homeassistant.util import slugify
 from .definitions.descriptions import HeishaMonSwitchEntityDescription
 from .definitions.switches import build_switches
 from . import build_device_info
+from .hub import find_hub
 from .features import FeatureGatedEntity
 from .retry_mixin import CommandRetryMixin
 
@@ -65,6 +66,9 @@ class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
         self._optimistic = True  # for now we hardcode this
 
     async def async_turn_on(self) -> None:
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.check_command(self.entity_description.command_topic)
         _LOGGER.info(f"Turning on heatpump {self.entity_description.name}")
         await async_publish(
             self.hass,
@@ -85,6 +89,9 @@ class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
         )
 
     async def async_turn_off(self) -> None:
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.check_command(self.entity_description.command_topic)
         _LOGGER.info(f"Turning off heatpump {self.entity_description.name}")
         await async_publish(
             self.hass,

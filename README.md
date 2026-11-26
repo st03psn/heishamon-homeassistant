@@ -63,6 +63,16 @@ The operating state is derived from TOP0, TOP4, TOP8, TOP20, TOP26 and TOP44. Te
 
 A command is repeated up to three times when the heat pump does not report the new value. After the last attempt a Repairs issue names the entity, and the event `aquarea_command_failed` is fired (entity, expected and reported value) for automations. The issue disappears when the next command of that entity is taken over.
 
+### Settings that depend on other settings
+
+The remote controller hides settings that have no effect while another setting is off (for example the delta T while the pump runs on maximum duty, or the solar deltas without a solar connection). The heat pump itself accepts such values. The integration follows the remote controller:
+
+- A change to such a setting is refused, and the message names the setting it depends on and the value that one would need. The check can be switched off in the options of the integration.
+- The sensor `Settings without effect` counts these settings; its attributes list them with the setting in the way.
+- Nothing is refused while the value of the parent setting is not known.
+
+The rules come from the table "Settings that depend on other settings" of the HeishaMon topic documentation (service and operating manual of the M series, and the Aquarea Service Cloud on an M-series unit). Other series may differ. Not checked this way: the operating mode, the curves and the weekly timer, because their commands also carry values the rules do not cover.
+
 ### Faults
 
 The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44); its attributes hold the code and its meaning. A Repairs issue (Settings > System > Repairs) is shown at the same time and disappears when the fault is gone. Code meanings come from the error code tables of the H, J, K, L and M series service manuals. A fault can be reset with the button `Reset fault code` (SetReset) once its cause is removed.
