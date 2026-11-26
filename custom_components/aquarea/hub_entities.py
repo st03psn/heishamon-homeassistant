@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.util import dt as dt_util
 from homeassistant.util import slugify
 
 from . import build_device_info
@@ -44,6 +45,30 @@ def _blocked_settings(hub: HeatPumpHub) -> dict[str, Any]:
             ]
             for command, reasons in sorted(hub.blocked_commands().items())
         }
+    }
+
+
+def _last_change(hub: HeatPumpHub) -> Optional[str]:
+    if not hub.journal.entries:
+        return None
+    change = hub.journal.entries[-1]
+    # a state holds at most 255 characters
+    return f"{change.setting}: {change.old[:60]} → {change.new[:60]}"
+
+
+def _recent_changes(hub: HeatPumpHub) -> dict[str, Any]:
+    """The newest changes first, for the state attributes."""
+    return {
+        "changes": [
+            {
+                "at": dt_util.utc_from_timestamp(change.at).isoformat(),
+                "setting": change.setting,
+                "old": change.old,
+                "new": change.new,
+                "origin": change.origin,
+            }
+            for change in reversed(hub.journal.entries[-20:])
+        ]
     }
 
 
@@ -105,6 +130,13 @@ HUB_SENSORS: tuple[HubSensorDescription, ...] = (
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         value=lambda hub: _minutes(hub.cycles.last_pause_seconds),
+    ),
+    HubSensorDescription(
+        key="last_setting_change",
+        translation_key="last_setting_change",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value=_last_change,
+        attributes=_recent_changes,
     ),
     HubSensorDescription(
         key="settings_without_effect",

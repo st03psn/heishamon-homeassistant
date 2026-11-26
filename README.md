@@ -75,6 +75,17 @@ The remote controller hides settings that have no effect while another setting i
 
 The rules come from the table "Settings that depend on other settings" of the HeishaMon topic documentation (service and operating manual of the M series, and the Aquarea Service Cloud on an M-series unit). Not checked this way: the operating mode, the curves and the weekly timer, because their commands also carry values the rules do not cover.
 
+### Journal of setting changes
+
+The integration records every change of a setting of the heat pump (the readbacks of its numbers, selects and switches): which setting, old and new value, when, and where it came from.
+
+- `home_assistant`: the change followed a command of this integration within 60 seconds.
+- `other`: everything else, such as the remote controller, the Panasonic cloud, the HeishaMon web page or rules, or the heat pump itself.
+
+A command accounts for one change. Not recorded are states the heat pump sets back by itself: defrost, the forced runs (DHW, heater, sterilization) and the remaining time of the powerful mode.
+
+The sensor `Last setting change` shows the newest change and lists the last 20 in its attributes; the event `aquarea_setting_changed` is fired for automations. The last 200 changes are kept across restarts and are part of the diagnostics download. Values are the raw values HeishaMon publishes. A change made while Home Assistant was not running is recorded when it is seen, with that time.
+
 ### Faults
 
 The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44); its attributes hold the code and its meaning. A Repairs issue (Settings > System > Repairs) is shown at the same time and disappears when the fault is gone. Code meanings come from the error code tables of the H, J, K, L and M series service manuals. A fault can be reset with the button `Reset fault code` (SetReset) once its cause is removed.

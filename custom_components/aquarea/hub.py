@@ -23,6 +23,7 @@ from homeassistant.util import dt as dt_util
 from .const import CONF_SETTINGS_GUARD, DOMAIN
 from .definitions.values import read_heatpump_model
 from .logic.dependencies import Reason, blocked_commands, rules_apply_to
+from .logic.journal import Change, SettingsJournal
 from .logic.cycles import CycleTracker, RunFinished, RunStarted
 from .logic.state import OperatingState, Snapshot, operating_state
 
@@ -33,14 +34,26 @@ STORAGE_VERSION = 1
 TICK = timedelta(seconds=30)
 # counters are written to disk at the end of a run and at most this often
 SAVE_DELAY = 600
+# a setting change is written to disk after this many seconds
+CHANGE_SAVE_DELAY = 60
 
 RunEvent = RunStarted | RunFinished
+
+# fired on the Home Assistant bus when a setting of the heat pump changed
+EVENT_SETTING_CHANGED = f"{DOMAIN}_setting_changed"
 
 
 class HeatPumpHub:
     """State of one heat pump, shared by the entities of its config entry."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, mqtt_prefix: str) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        mqtt_prefix: str,
+        settings: Optional[dict[str, list[str]]] = None,
+    ) -> None:
+        """`settings` maps command names to the topic names of their readbacks."""
         self.hass = hass
         self.entry = entry
         self.mqtt_prefix = mqtt_prefix
@@ -51,6 +64,10 @@ class HeatPumpHub:
         self.snapshot = Snapshot()
         self.state: Optional[OperatingState] = None
         self.cycles = CycleTracker()
+        self._readbacks_of_command = dict(settings or {})
+        self.journal = SettingsJournal(
+            name for names in self._readbacks_of_command.values() for name in names
+        )
         self._store: Store = Store(hass, STORAGE_VERSION, storage_key(entry.entry_id))
         self._listeners: list[Callable[[], None]] = []
         self._run_listeners: list[Callable[[RunEvent], None]] = []
@@ -65,6 +82,10 @@ class HeatPumpHub:
                 self.cycles = CycleTracker.from_dict(stored["cycles"])
             except (KeyError, TypeError):
                 _LOGGER.warning("Stored compressor run counters are not readable, starting new")
+            try:
+                self.journal.restore(stored["journal"])
+            except (KeyError, TypeError, ValueError):
+                _LOGGER.warning("Stored settings journal is not readable, starting new")
 
     async def async_start(self) -> None:
         """Start listening."""
@@ -176,6 +197,9 @@ class HeatPumpHub:
         if self.topics.get(name) == payload:
             return
         self.topics[name] = payload
+        change = self.journal.update(dt_util.utcnow().timestamp(), name, payload)
+        if change is not None:
+            self._setting_changed(change)
         self._evaluate()
 
     @callback
@@ -207,13 +231,41 @@ class HeatPumpHub:
         for listener in list(self._listeners):
             listener()
 
+    def note_command(self, command_topic: str) -> None:
+        """Home Assistant sends this command; its change will count as asked for."""
+        now = dt_util.utcnow().timestamp()
+        for readback in self._readbacks_of_command.get(command_topic.rsplit("/", 1)[-1], ()):
+            self.journal.note_command(now, readback)
+
+    def _setting_changed(self, change: Change) -> None:
+        self.hass.bus.async_fire(
+            EVENT_SETTING_CHANGED,
+            {
+                "setting": change.setting,
+                "old": change.old,
+                "new": change.new,
+                "origin": change.origin,
+            },
+        )
+        # written within a minute, however many changes follow
+        self._saved_at = min(self._saved_at, change.at - SAVE_DELAY + CHANGE_SAVE_DELAY)
+
     def _data_to_store(self) -> dict[str, Any]:
-        return {"cycles": self.cycles.as_dict()}
+        return {"cycles": self.cycles.as_dict(), "journal": self.journal.as_dict()}
 
 
 def storage_key(entry_id: str) -> str:
     """Return the key of the file that holds the run counters of an entry."""
     return f"{DOMAIN}.{entry_id}.cycles"
+
+
+def note_command(hass: Optional[HomeAssistant], entry_id: str, command_topic: str) -> None:
+    """Tell the hub of a config entry that Home Assistant sends this command."""
+    if hass is None:
+        return
+    hub = find_hub(hass, entry_id)
+    if hub is not None:
+        hub.note_command(command_topic)
 
 
 def get_hub(hass: HomeAssistant, entry_id: str) -> HeatPumpHub:

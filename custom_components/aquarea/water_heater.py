@@ -24,6 +24,7 @@ from homeassistant.components.water_heater import WaterHeaterEntityDescription
 
 from .definitions.values import OperatingMode
 from . import build_device_info
+from .hub import note_command
 from .const import Feature
 from .features import FeatureGatedEntity
 from .const import DeviceType
@@ -143,6 +144,7 @@ class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
             _LOGGER.debug(
                 f"[DHW] Sending heatpump {'ON' if should_be_on else 'OFF'} command (attempt {attempt}/3)"
             )
+            note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetHeatpump")
             await async_publish(
                 self.hass,
                 f"{self.discovery_prefix}commands/SetHeatpump",
@@ -166,6 +168,7 @@ class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
         _LOGGER.debug(f"Changing {self.name} target temperature to {temperature})")
         payload = str(temperature)
         self.update_temperature_bounds()  # optimistic update
+        note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetDHWTemp")
         await async_publish(
             self.hass,
             f"{self.discovery_prefix}commands/SetDHWTemp",
@@ -375,6 +378,7 @@ class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
         else:
             new_operating_mode = self._operating_mode | OperatingMode.DHW
         _LOGGER.debug(f"[DHW] Setting operating mode to {new_operating_mode}")
+        note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetOperationMode")
         await async_publish(
             self.hass,
             f"{self.discovery_prefix}commands/SetOperationMode",
@@ -415,6 +419,7 @@ class HeishaMonDHW(FeatureGatedEntity, CommandRetryMixin, WaterHeaterEntity):
         else:
             # Normal case: just remove DHW from the mode
             _LOGGER.debug(f"[DHW] Setting operating mode to {new_operating_mode}")
+            note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetOperationMode")
             await async_publish(
                 self.hass,
                 f"{self.discovery_prefix}commands/SetOperationMode",

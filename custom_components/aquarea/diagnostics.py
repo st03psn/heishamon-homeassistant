@@ -23,5 +23,6 @@ async def async_get_config_entry_diagnostics(
         "online": hub.online,
         "operating_state": None if hub.state is None else hub.state.value,
         "cycles": hub.cycles.as_dict(),
+        "journal": hub.journal.as_dict()["entries"],
         "topics": dict(sorted(hub.topics.items())),
     }

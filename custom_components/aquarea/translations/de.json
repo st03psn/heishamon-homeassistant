@@ -78,6 +78,9 @@
       },
       "settings_without_effect": {
         "name": "Einstellungen ohne Wirkung"
+      },
+      "last_setting_change": {
+        "name": "Letzte Einstellungsänderung"
       }
     },
     "event": {

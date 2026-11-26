@@ -75,6 +75,7 @@ class HeishaMonMQTTNumber(FeatureGatedEntity, CommandRetryMixin, NumberEntity):
         hub = find_hub(self.hass, self.config_entry_entry_id)
         if hub is not None:
             hub.check_command(self.entity_description.command_topic)
+            hub.note_command(self.entity_description.command_topic)
         _LOGGER.debug(
             f"Changing {self.entity_description.name} to {value} (sent to {self.entity_description.command_topic})"
         )

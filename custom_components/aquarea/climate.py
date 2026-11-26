@@ -19,7 +19,7 @@ from homeassistant.components.climate import ClimateEntityDescription
 from .definitions.values import OperatingMode
 from . import build_device_info
 from .const import DeviceType
-from .hub import find_hub
+from .hub import find_hub, note_command
 from .logic.state import OperatingState
 from .retry_mixin import CommandRetryMixin
 
@@ -258,6 +258,7 @@ class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
             _LOGGER.debug(
                 f"{self._climate_type()} Sending heatpump {'ON' if should_be_on else 'OFF'} command (attempt {attempt}/3)"
             )
+            note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetHeatpump")
             await async_publish(
                 self.hass,
                 f"{self.discovery_prefix}commands/SetHeatpump",
@@ -347,6 +348,7 @@ class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
             topic = f"{self.discovery_prefix}commands/SetZ{self.zone_id}HeatRequestTemperature"
         else:
             topic = f"{self.discovery_prefix}commands/SetZ{self.zone_id}CoolRequestTemperature"
+        note_command(self.hass, self.config_entry_entry_id, topic)
         await async_publish(
             self.hass,
             topic,
@@ -596,6 +598,7 @@ class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
             _LOGGER.debug(
                 f"{self._climate_type()} Setting operation mode {new_operating_mode} for zone {self.zone_id}"
             )
+            note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetOperationMode")
             await async_publish(
                 self.hass,
                 f"{self.discovery_prefix}commands/SetOperationMode",
@@ -608,6 +611,7 @@ class HeishaMonZoneClimate(CommandRetryMixin, ClimateEntity):
             _LOGGER.debug(
                 f"{self._climate_type()} Setting operation mode {new_zone_state} for zone {self.zone_id}"
             )
+            note_command(self.hass, self.config_entry_entry_id, f"{self.discovery_prefix}commands/SetZones")
             await async_publish(
                 self.hass,
                 f"{self.discovery_prefix}commands/SetZones",

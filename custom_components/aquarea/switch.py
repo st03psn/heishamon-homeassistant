@@ -69,6 +69,7 @@ class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
         hub = find_hub(self.hass, self.config_entry_entry_id)
         if hub is not None:
             hub.check_command(self.entity_description.command_topic)
+            hub.note_command(self.entity_description.command_topic)
         _LOGGER.info(f"Turning on heatpump {self.entity_description.name}")
         await async_publish(
             self.hass,
@@ -90,6 +91,9 @@ class HeishaMonMQTTSwitch(FeatureGatedEntity, CommandRetryMixin, SwitchEntity):
 
     async def async_turn_off(self) -> None:
         # switching off is never refused
+        hub = find_hub(self.hass, self.config_entry_entry_id)
+        if hub is not None:
+            hub.note_command(self.entity_description.command_topic)
         _LOGGER.info(f"Turning off heatpump {self.entity_description.name}")
         await async_publish(
             self.hass,

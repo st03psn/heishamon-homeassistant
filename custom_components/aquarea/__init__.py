@@ -126,7 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ],
     )
     hass.data[DOMAIN][entry.entry_id]["features"] = tracker
-    hub = HeatPumpHub(hass, entry, mqtt_topic)
+    hub = HeatPumpHub(hass, entry, mqtt_topic, _settings_of(mqtt_topic))
     hass.data[DOMAIN][entry.entry_id]["hub"] = hub
     await hub.async_load()
 
@@ -210,6 +210,25 @@ def _remove_obsolete_sub_devices(
                 device_id=sub_device_ids.get(target, heatpump_device_id),
             )
         device_registry.async_remove_device(device.id)
+
+
+def _settings_of(mqtt_topic: str) -> dict[str, list[str]]:
+    """Map the command of every number, select and switch to the topic names of its readbacks.
+
+    One command can have several readbacks: SetCurves carries all curve points.
+    """
+    settings: dict[str, list[str]] = {}
+    main = f"{mqtt_topic}main/"
+    commands = f"{mqtt_topic}commands/"
+    for build in (build_numbers, build_selects, build_switches):
+        for description in build(mqtt_topic):
+            command = getattr(description, "command_topic", None) or ""
+            if description.key.startswith(main) and command.startswith(commands):
+                readbacks = settings.setdefault(command.removeprefix(commands), [])
+                readback = description.key.removeprefix(main)
+                if readback not in readbacks:
+                    readbacks.append(readback)
+    return settings
 
 
 # topics that earlier versions of the fork had as sensors and that are binary sensors now
