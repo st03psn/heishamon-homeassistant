@@ -93,3 +93,48 @@ async def test_nothing_hidden_for_other_models_offline_or_when_switched_off(
     assert hidden(hass, NUMBER) is None
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_shown_again_by_the_user_stays_shown(hass, mqtt_mock, freezer):
+    entry = await setup(hass)
+    registry = er.async_get(hass)
+    await publish(hass, freezer, Heat_Pump_Model=M_SERIES, Pump_Flowrate_Mode="1")
+    assert hidden(hass, NUMBER) == er.RegistryEntryHider.INTEGRATION
+    registry.async_update_entity(NUMBER, hidden_by=None)
+    await publish(hass, freezer, Main_Outlet_Temp="31")
+    await publish(hass, freezer, Main_Outlet_Temp="32")
+    assert hidden(hass, NUMBER) is None
+    # once it has an effect and loses it again, it is hidden again
+    await publish(hass, freezer, Pump_Flowrate_Mode="0")
+    await publish(hass, freezer, Pump_Flowrate_Mode="1")
+    assert hidden(hass, NUMBER) == er.RegistryEntryHider.INTEGRATION
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+async def test_switching_the_option_off_shows_them_even_offline(hass, mqtt_mock, freezer):
+    entry = await setup(hass)
+    await publish(hass, freezer, Heat_Pump_Model=M_SERIES, Pump_Flowrate_Mode="1")
+    assert hidden(hass, NUMBER) == er.RegistryEntryHider.INTEGRATION
+    # hidden through a blocked command as well (zone 2 settings with one zone);
+    # sent twice: enabling new entities reloads the entry, and the mocked broker
+    # does not deliver retained values again
+    z2 = "number.panasonic_heat_pump_main_z2_heat_request_temp"
+    for _ in range(2):
+        await publish(
+            hass, freezer, Heat_Pump_Model=M_SERIES, Pump_Flowrate_Mode="1", Zone_Configuration="21"
+        )
+    assert hidden(hass, z2) == er.RegistryEntryHider.INTEGRATION
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    hass.config_entries.async_update_entry(entry, options={CONF_HIDE_WITHOUT_EFFECT: False})
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, f"{PREFIX}LWT", "Offline")
+    freezer.tick(timedelta(seconds=11))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert hidden(hass, NUMBER) is None
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

@@ -5,7 +5,9 @@ The remote controller hides a setting while the setting it depends on is off
 entities whose readback or command has no effect with the current values of
 the heat pump are hidden in the entity registry, and shown again as soon as
 they have an effect. Only entities hidden by this integration are shown again;
-an entity the user hid stays hidden. To see all of them, switch the option off.
+an entity the user hid stays hidden. An entity the user shows again while it
+has no effect is left alone until it has an effect (kept in the entity's
+registry options, so across restarts). To see all of them, switch the option off.
 Nothing is changed while HeishaMon is offline or for models the rules are not
 known to hold for.
 """
@@ -26,6 +28,9 @@ _LOGGER = logging.getLogger(__name__)
 
 # wait for the burst of messages after a start before deciding
 SETTLE_SECONDS = 10
+# keys in the entity registry options of this integration
+HID = "hidden_without_effect"
+SHOWN_BY_USER = "shown_by_user"
 
 
 class ChildVisibility:
@@ -47,6 +52,9 @@ class ChildVisibility:
 
     def start(self) -> None:
         self._unsubscribe = self.hub.async_add_listener(self._hub_changed)
+        if not self.enabled:
+            # show again what was hidden before the option was switched off
+            self._hub_changed()
 
     @callback
     def stop(self) -> None:
@@ -76,8 +84,8 @@ class ChildVisibility:
     @callback
     def _apply(self, _now=None) -> None:
         self._cancel_later = None
-        # nothing is decided while HeishaMon is offline or the model is not covered
-        if self.hub.online is False or not self.hub.rules_apply:
+        if self.enabled and (self.hub.online is False or not self.hub.rules_apply):
+            # the values may be out of date or the rules may not hold: change nothing
             return
         registry = er.async_get(self.hass)
         hide = self.without_effect() if self.enabled else set()
@@ -86,15 +94,29 @@ class ChildVisibility:
             if not entity.unique_id.startswith(prefix):
                 continue
             topic_id = entity.unique_id.removeprefix(prefix)
+            ours = dict(entity.options.get(DOMAIN, {}))
             if topic_id in hide:
-                if entity.hidden_by is None:
+                if entity.hidden_by is None and ours.get(HID):
+                    # we hid it and someone showed it again: leave it until it has an effect
+                    ours.pop(HID)
+                    ours[SHOWN_BY_USER] = True
+                    registry.async_update_entity_options(entity.entity_id, DOMAIN, ours)
+                elif entity.hidden_by is None and not ours.get(SHOWN_BY_USER):
                     registry.async_update_entity(
                         entity.entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
                     )
+                    registry.async_update_entity_options(
+                        entity.entity_id, DOMAIN, {**ours, HID: True}
+                    )
                     _LOGGER.debug("Hiding %s: its setting has no effect", entity.entity_id)
-            elif entity.hidden_by == er.RegistryEntryHider.INTEGRATION:
-                registry.async_update_entity(entity.entity_id, hidden_by=None)
-                _LOGGER.debug("Showing %s again", entity.entity_id)
+            else:
+                if entity.hidden_by == er.RegistryEntryHider.INTEGRATION:
+                    registry.async_update_entity(entity.entity_id, hidden_by=None)
+                    _LOGGER.debug("Showing %s again", entity.entity_id)
+                if ours.get(HID) or ours.get(SHOWN_BY_USER):
+                    ours.pop(HID, None)
+                    ours.pop(SHOWN_BY_USER, None)
+                    registry.async_update_entity_options(entity.entity_id, DOMAIN, ours)
 
 
 def topic_ids_of_commands(descriptions: Iterable, mqtt_prefix: str) -> dict[str, list[str]]:
