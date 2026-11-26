@@ -93,6 +93,8 @@ The binary sensor `Fault` is on while the heat pump reports a fault code (TOP44)
 
 ### Entity names
 
+In German, names use the usual heating abbreviations: AT (Außentemperatur), VLT/RLT (Vor-/Rücklauftemperatur), WW (Warmwasser), WP (Wärmepumpe), ΔT (Spreizung). "Platine" marks functions of the real optional PCB, "EMU" the optional PCB emulated by HeishaMon, "Zone 1/2" the heating and cooling circuits. Status readbacks of a switch end in "(Status)".
+
 Entity names do not start with "Aquarea" (Home Assistant already shows the device name), are kept short and start with their topic (DHW, Heater, Heating, Cooling, Bivalent, Solar, Buffer, Pool, SG ready, Zone 1/2, Sensor offset, External, Emulated PCB ...), so that related entities sort next to each other on the device page. Readbacks of settings are shown under "Diagnostic". Entity IDs do not change. A switch whose topic already has a binary sensor gets no extra "(readonly)" copy.
 
 ### Emulated optional PCB
