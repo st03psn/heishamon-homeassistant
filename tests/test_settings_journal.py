@@ -70,3 +70,50 @@ async def test_changes_are_recorded_with_their_origin(hass, mqtt_mock, hass_stor
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def test_every_setting_is_followed(hass, mqtt_mock):
+    from custom_components.aquarea import _settings_of
+    from custom_components.aquarea.definitions.numbers import build_numbers
+    from custom_components.aquarea.definitions.selects import build_selects
+    from custom_components.aquarea.definitions.switches import build_switches
+    from custom_components.aquarea.logic.journal import TRANSIENT, SettingsJournal
+
+    settings = _settings_of(PREFIX)
+    followed = SettingsJournal(n for names in settings.values() for n in names).settings
+    main = f"{PREFIX}main/"
+    expected = {
+        d.key.removeprefix(main)
+        for build in (build_numbers, build_selects, build_switches)
+        for d in build(PREFIX)
+        if d.key.startswith(main) and getattr(d, "command_topic", None)
+    }
+    assert followed == expected - TRANSIENT
+    # one command, all its readbacks: the curves
+    assert len(settings["SetCurves"]) == 16
+
+
+async def test_change_through_the_climate_entity_is_asked_for(hass, mqtt_mock):
+    entry = MockConfigEntry(domain=DOMAIN, data={"discovery_prefix": PREFIX}, version=2)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    events = async_capture_events(hass, EVENT_SETTING_CHANGED)
+    for name, payload in (
+        ("Heatpump_State", "1"),
+        ("Operating_Mode_State", "0"),
+        ("Zones_State", "0"),
+        ("Z1_Heat_Request_Temp", "30"),
+    ):
+        await publish(hass, name, payload)
+    await hass.services.async_call(
+        "climate",
+        "set_temperature",
+        {"entity_id": "climate.panasonic_heat_pump_main_z1_temp", "temperature": 32},
+        blocking=True,
+    )
+    await publish(hass, "Z1_Heat_Request_Temp", "32")
+    assert events[-1].data["setting"] == "Z1_Heat_Request_Temp"
+    assert events[-1].data["origin"] == "home_assistant"
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

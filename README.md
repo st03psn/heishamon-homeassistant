@@ -82,6 +82,8 @@ The integration records every change of a setting of the heat pump (the readback
 - `home_assistant`: the change followed a command of this integration within 60 seconds.
 - `other`: everything else, such as the remote controller, the Panasonic cloud, the HeishaMon web page or rules, or the heat pump itself.
 
+A command accounts for one change. Not recorded are states the heat pump sets back by itself: defrost, the forced runs (DHW, heater, sterilization) and the remaining time of the powerful mode.
+
 The sensor `Last setting change` shows the newest change and lists the last 20 in its attributes; the event `aquarea_setting_changed` is fired for automations. The last 200 changes are kept across restarts and are part of the diagnostics download. Values are the raw values HeishaMon publishes. A change made while Home Assistant was not running is recorded when it is seen, with that time.
 
 ### Faults

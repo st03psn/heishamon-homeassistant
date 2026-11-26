@@ -9,6 +9,19 @@ from typing import Any, Optional
 COMMAND_WINDOW = 60.0
 MAX_ENTRIES = 200
 
+# Readbacks of a switch or select that the heat pump sets back by itself when a
+# run ends or a time is over. They are states, not settings, and would fill the
+# journal: defrost, the forced runs, and the remaining time of the powerful mode.
+TRANSIENT = frozenset(
+    {
+        "Defrosting_State",
+        "Force_DHW_State",
+        "Force_Heater_State",
+        "Sterilization_State",
+        "Powerful_Mode_Time",
+    }
+)
+
 ORIGIN_HOME_ASSISTANT = "home_assistant"
 # remote controller, Panasonic cloud, HeishaMon web page or rules, or the heat pump itself
 ORIGIN_OTHER = "other"
@@ -32,7 +45,7 @@ class SettingsJournal:
     """
 
     def __init__(self, settings: Iterable[str], max_entries: int = MAX_ENTRIES) -> None:
-        self.settings = frozenset(settings)
+        self.settings = frozenset(settings) - TRANSIENT
         self.max_entries = max_entries
         self.values: dict[str, str] = {}
         self.entries: list[Change] = []
@@ -48,9 +61,10 @@ class SettingsJournal:
             return None
         old = self.values.get(setting)
         self.values[setting] = value
-        if old is None or old == value:
+        if old is None or _same(old, value):
             return None
-        commanded = self._commanded_at.get(setting)
+        # a command accounts for one change only
+        commanded = self._commanded_at.pop(setting, None)
         asked = commanded is not None and 0 <= now - commanded <= COMMAND_WINDOW
         change = Change(
             at=now,
@@ -67,7 +81,37 @@ class SettingsJournal:
         """Return values and entries as plain data, to store them."""
         return {"values": dict(self.values), "entries": [asdict(e) for e in self.entries]}
 
-    def restore(self, data: dict[str, Any]) -> None:
-        """Take over stored values and entries; settings that no longer exist are dropped."""
-        self.values = {k: v for k, v in data.get("values", {}).items() if k in self.settings}
-        self.entries = [Change(**entry) for entry in data.get("entries", [])][-self.max_entries :]
+    def restore(self, data: Any) -> None:
+        """Take over stored values and entries; settings that no longer exist are dropped.
+
+        Raises ValueError when the data is not what as_dict returns; the
+        journal is unchanged then.
+        """
+        try:
+            values = {
+                str(k): str(v) for k, v in data["values"].items() if k in self.settings
+            }
+            entries = [
+                Change(
+                    at=float(e["at"]),
+                    setting=str(e["setting"]),
+                    old=str(e["old"]),
+                    new=str(e["new"]),
+                    origin=str(e["origin"]),
+                )
+                for e in data["entries"]
+            ]
+        except (KeyError, TypeError, AttributeError, ValueError) as error:
+            raise ValueError("stored journal is not readable") from error
+        self.values = values
+        self.entries = entries[-self.max_entries :]
+
+
+def _same(old: str, new: str) -> bool:
+    """Compare two payloads; "1" and "1.0" are the same value."""
+    if old == new:
+        return True
+    try:
+        return float(old) == float(new)
+    except ValueError:
+        return False

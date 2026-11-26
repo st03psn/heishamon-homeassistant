@@ -52,7 +52,8 @@ def _last_change(hub: HeatPumpHub) -> Optional[str]:
     if not hub.journal.entries:
         return None
     change = hub.journal.entries[-1]
-    return f"{change.setting}: {change.old} → {change.new}"
+    # a state holds at most 255 characters
+    return f"{change.setting}: {change.old[:60]} → {change.new[:60]}"
 
 
 def _recent_changes(hub: HeatPumpHub) -> dict[str, Any]:
