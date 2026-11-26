@@ -37,7 +37,16 @@ def _unmet(requirement: Requirement, values: Mapping[str, str]) -> list[Reason] 
     None: the rule cannot be judged (a parent value is unknown, or the rule
     has parts the data does not express). Empty list: the children work.
     """
-    if requirement.any_of or not requirement.when:
+    if requirement.any_of:
+        if requirement.when or not requirement.any_of_complete:
+            return None
+        actual = {c.name: values.get(c.name) for c in requirement.any_of}
+        if any(actual[c.name] in c.values for c in requirement.any_of):
+            return []
+        if any(value is None for value in actual.values()):
+            return None
+        return [Reason(c.topic, c.name, c.values, actual[c.name]) for c in requirement.any_of]
+    if not requirement.when:
         return None
     conditions: tuple[Condition, ...] = requirement.when
     actual = {condition.name: values.get(condition.name) for condition in conditions}

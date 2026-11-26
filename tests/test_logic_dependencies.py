@@ -71,7 +71,7 @@ def test_rules_that_cannot_be_judged_are_skipped():
 
 
 def test_data_is_consistent():
-    assert len(REQUIREMENTS) == 21
+    assert len(REQUIREMENTS) == 23
     assert sum(1 for r in REQUIREMENTS if r.blocks) == 1
     for requirement in REQUIREMENTS:
         for condition in requirement.when + requirement.any_of:
@@ -94,3 +94,18 @@ def test_rules_apply_to_the_m_series_only():
     assert not rules_apply_to("WH-SDC0509L3E5 9 1 ph HP - split L-series 3kW elec heating")
     assert not rules_apply_to("WH-ADC0309K3E5 9 1ph HP - K-series All-in-One R32")
     assert not rules_apply_to(None) and not rules_apply_to("")
+
+
+def test_dry_concrete_target_only_while_the_program_runs():
+    assert {"TOP144", "TOP152"} <= set(inactive_topics({"Dry_Concrete_State": "0"}))
+    assert "TOP152" not in inactive_topics({"Dry_Concrete_State": "1"})
+    assert "TOP152" not in inactive_topics({})
+
+
+def test_remote_control_temperature_only_with_an_internal_thermostat():
+    water = {"Z1_Sensor_Settings": "0", "Z2_Sensor_Settings": "0"}
+    assert "TOP33" in inactive_topics(water)
+    assert "TOP33" not in inactive_topics({**water, "Z2_Sensor_Settings": "2"})
+    assert "TOP33" not in inactive_topics({"Z1_Sensor_Settings": "2"})
+    # zone 2 unknown and zone 1 not internal: cannot be judged
+    assert "TOP33" not in inactive_topics({"Z1_Sensor_Settings": "0"})
