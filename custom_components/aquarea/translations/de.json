@@ -123,7 +123,7 @@
         "name": "2-Wege-Ventil"
       },
       "top21": {
-        "name": "Rohrtemperatur außen"
+        "name": "Außen-WT Temperatur"
       },
       "top23": {
         "name": "Heizen ΔT"
@@ -183,7 +183,7 @@
         "name": "Heißgastemperatur"
       },
       "top51": {
-        "name": "Rohrtemperatur innen"
+        "name": "Kältemittel flüssig Temperatur"
       },
       "top52": {
         "name": "Abtautemperatur"
