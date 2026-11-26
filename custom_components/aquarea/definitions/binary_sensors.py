@@ -168,73 +168,79 @@ def build_binary_sensors(
             key=f"{mqtt_prefix}main/Dry_Concrete_State",
             name="Aquarea Dry concrete",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            device_class=BinarySensorDeviceClass.RUNNING,
+            entity_registry_enabled_default=False,  # only used once, while the screed dries
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP150",
             key=f"{mqtt_prefix}main/Demand_Control",
-            name="Aquarea Demand control enabled",
-            state=bit_to_bool,
+            name="Aquarea Demand control",
+            state=read_enabled_disabled,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # external control on the optional PCB
             requires=(Feature.OPTIONAL_PCB,),
-            entity_registry_enabled_default=False,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP151",
             key=f"{mqtt_prefix}main/DHW_Defrost",
             name="Aquarea DHW defrost",
-            state=bit_to_bool,
+            state=read_enabled_disabled,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # K/L series option
             requires=(Feature.DHW,),
-            entity_registry_enabled_default=False,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP160",
             key=f"{mqtt_prefix}main/Quiet_Mode_Actual_State",
             name="Aquarea Quiet mode active",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            device_class=BinarySensorDeviceClass.RUNNING,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP161",
             key=f"{mqtt_prefix}main/Powerful_Mode_Actual_State",
             name="Aquarea Powerful mode active",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            device_class=BinarySensorDeviceClass.RUNNING,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP164",
             key=f"{mqtt_prefix}main/Bivalent_Boiler_Contact_State",
             name="Aquarea Bivalent boiler contact",
             state=bit_to_bool,
+            device_class=BinarySensorDeviceClass.RUNNING,
             requires=(Feature.BIVALENT,),
-            entity_registry_enabled_default=False,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP165",
             key=f"{mqtt_prefix}main/Z2_Active",
             name="Aquarea Zone 2 active",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            device_class=BinarySensorDeviceClass.RUNNING,
+            entity_registry_enabled_default=False,  # second zone is a less common setup
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP166",
             key=f"{mqtt_prefix}main/Z1_Active",
             name="Aquarea Zone 1 active",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            device_class=BinarySensorDeviceClass.RUNNING,
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP167",
             key=f"{mqtt_prefix}main/Backup_Heater_Enable",
             name="Aquarea Backup heater enabled",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # HeishaMon 4.4+ installer topic group is off by default
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP168",
             key=f"{mqtt_prefix}main/Cooling_Enable",
             name="Aquarea Cooling enabled",
             state=bit_to_bool,
-            entity_registry_enabled_default=False,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # HeishaMon 4.4+ installer topic group is off by default
         ),
         HeishaMonBinarySensorEntityDescription(
             heishamon_topic_id="TOP170",
@@ -264,6 +270,23 @@ def build_binary_sensors(
             name="Aquarea Defrost signal",
             state=bit_to_bool,
             entity_registry_enabled_default=False,
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP149",
+            key=f"{mqtt_prefix}main/SG_Ready_Control",
+            name="Aquarea SG Ready control",
+            state=read_enabled_disabled,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,  # SG Ready is a less common external-control setup
+            requires=(Feature.OPTIONAL_PCB,),
+        ),
+        HeishaMonBinarySensorEntityDescription(
+            heishamon_topic_id="TOP163",
+            key=f"{mqtt_prefix}main/External_Switch_State",
+            name="Aquarea External switch open",
+            state=bit_to_bool,
+            device_class=BinarySensorDeviceClass.OPENING,
+            entity_registry_enabled_default=False,  # external control on the optional PCB
         ),
     ]
 

@@ -173,14 +173,13 @@ def build_switches(mqtt_prefix: str) -> list[HeishaMonSwitchEntityDescription]:
             entity_registry_enabled_default=False,  # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
         ),
         HeishaMonSwitchEntityDescription(
-            heishamon_topic_id="SET55",
+            heishamon_topic_id="SET55",  # corresponds to TOP3
             key=f"{mqtt_prefix}main/Quiet_Mode_Schedule",
             command_topic=f"{mqtt_prefix}commands/SetQuietModeSchedule",
-            name="Aquarea Quiet mode schedule",
+            name="Aquarea Quiet Mode Schedule",
             entity_category=EntityCategory.CONFIG,
             state=bit_to_bool,
             firmware_marker="main/DHW_Heatup_Max_Time",
-            entity_registry_enabled_default=False,
         ),
         HeishaMonSwitchEntityDescription(
             heishamon_topic_id="SET56",

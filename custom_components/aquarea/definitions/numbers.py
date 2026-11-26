@@ -321,7 +321,7 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             initial_value=0,
         ),
         HeishaMonNumberEntityDescription(
-            heishamon_topic_id="SET49",
+            heishamon_topic_id="SET49",  # corresponds to TOP70
             key=f"{mqtt_prefix}main/Sterilization_Temp",
             command_topic=f"{mqtt_prefix}commands/SetSterilizationTemp",
             name="Aquarea Sterilization temperature",
@@ -331,14 +331,14 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             native_min_value=55,
             native_max_value=75,
             native_step=1,
-            state=float,
-            state_to_mqtt=integer_to_mqtt,
+            state=int,
+            state_to_mqtt=int,
+            entity_registry_enabled_default=False,  # needs a DHW tank; marked experimental in HeishaMon
             requires=(Feature.DHW,),
             firmware_marker="main/DHW_Heatup_Max_Time",
-            entity_registry_enabled_default=False,
         ),
         HeishaMonNumberEntityDescription(
-            heishamon_topic_id="SET50",
+            heishamon_topic_id="SET50",  # corresponds to TOP71
             key=f"{mqtt_prefix}main/Sterilization_Max_Time",
             command_topic=f"{mqtt_prefix}commands/SetSterilizationMaxTime",
             name="Aquarea Sterilization maximum time",
@@ -348,48 +348,48 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             native_min_value=5,
             native_max_value=60,
             native_step=5,
-            state=float,
-            state_to_mqtt=integer_to_mqtt,
+            state=int,
+            state_to_mqtt=int,
+            entity_registry_enabled_default=False,  # needs a DHW tank; marked experimental in HeishaMon
             requires=(Feature.DHW,),
             firmware_marker="main/DHW_Heatup_Max_Time",
-            entity_registry_enabled_default=False,
         ),
         HeishaMonNumberEntityDescription(
-            heishamon_topic_id="SET51",
+            heishamon_topic_id="SET51",  # corresponds to TOP79
             key=f"{mqtt_prefix}main/Heat_To_Cool_Temp",
             command_topic=f"{mqtt_prefix}commands/SetHeatToCoolTemp",
-            name="Aquarea Outdoor temperature heat to cool",
+            name="Aquarea Outdoor temperature heat->cool threshold",  # when in "auto" mode
             entity_category=EntityCategory.CONFIG,
             device_class=NumberDeviceClass.TEMPERATURE,
             native_unit_of_measurement="°C",
-            native_min_value=-127,
-            native_max_value=127,
+            native_min_value=11,
+            native_max_value=25,
             native_step=1,
-            state=float,
-            state_to_mqtt=integer_to_mqtt,
+            state=int,
+            state_to_mqtt=int,
+            entity_registry_enabled_default=False,  # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
             requires=(Feature.COOLING,),
             firmware_marker="main/DHW_Heatup_Max_Time",
-            entity_registry_enabled_default=False,
         ),
         HeishaMonNumberEntityDescription(
-            heishamon_topic_id="SET52",
+            heishamon_topic_id="SET52",  # corresponds to TOP80
             key=f"{mqtt_prefix}main/Cool_To_Heat_Temp",
             command_topic=f"{mqtt_prefix}commands/SetCoolToHeatTemp",
-            name="Aquarea Outdoor temperature cool to heat",
+            name="Aquarea Outdoor temperature cool->heat threshold",  # when in "auto" mode
             entity_category=EntityCategory.CONFIG,
             device_class=NumberDeviceClass.TEMPERATURE,
             native_unit_of_measurement="°C",
-            native_min_value=-127,
-            native_max_value=127,
+            native_min_value=5,
+            native_max_value=24,  # remote: 5 °C up to (heat->cool - 1 °C); SM p.110 says 5-14 °C, Service Cloud 5-25 °C
             native_step=1,
-            state=float,
-            state_to_mqtt=integer_to_mqtt,
+            state=int,
+            state_to_mqtt=int,
+            entity_registry_enabled_default=False,  # by default we hide all options related to less common setup (cooling, buffer, solar and pool)
             requires=(Feature.COOLING,),
             firmware_marker="main/DHW_Heatup_Max_Time",
-            entity_registry_enabled_default=False,
         ),
         HeishaMonNumberEntityDescription(
-            heishamon_topic_id="SET53",
+            heishamon_topic_id="SET53",  # corresponds to TOP158
             key=f"{mqtt_prefix}main/Room_Operation_Max_Time",
             command_topic=f"{mqtt_prefix}commands/SetRoomOperationMaxTime",
             name="Aquarea Room operation maximum time",
@@ -397,28 +397,28 @@ def build_numbers(mqtt_prefix: str) -> list[HeishaMonNumberEntityDescription]:
             device_class=NumberDeviceClass.DURATION,
             native_unit_of_measurement="min",
             native_min_value=30,
-            native_max_value=7620,
+            native_max_value=600,
             native_step=30,
-            state=float,
-            state_to_mqtt=integer_to_mqtt,
+            state=int,
+            state_to_mqtt=int,
+            entity_registry_enabled_default=False,  # only used with a DHW tank
             requires=(Feature.DHW,),
-            entity_registry_enabled_default=False,
         ),
         HeishaMonNumberEntityDescription(
-            heishamon_topic_id="SET54",
+            heishamon_topic_id="SET54",  # corresponds to TOP159
             key=f"{mqtt_prefix}main/DHW_Heatup_Max_Time",
             command_topic=f"{mqtt_prefix}commands/SetDHWHeatupMaxTime",
             name="Aquarea DHW heat-up maximum time",
             entity_category=EntityCategory.CONFIG,
             device_class=NumberDeviceClass.DURATION,
             native_unit_of_measurement="min",
-            native_min_value=1,
-            native_max_value=254,
+            native_min_value=5,
+            native_max_value=240,
             native_step=1,
-            state=float,
-            state_to_mqtt=integer_to_mqtt,
+            state=int,
+            state_to_mqtt=int,
+            entity_registry_enabled_default=False,  # only used with a DHW tank
             requires=(Feature.DHW,),
-            entity_registry_enabled_default=False,
         ),
         HeishaMonNumberEntityDescription(
             heishamon_topic_id="SET57",

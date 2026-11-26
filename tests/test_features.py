@@ -99,8 +99,12 @@ def test_new_topics_and_commands_are_defined():
     expected = [f"TOP{i}" for i in range(144, 197)]
     expected += [f"SET{i}" for i in range(49, 105) if i != 101]
     assert [i for i in expected if i not in ids] == []
+    # TOP144-TOP169 and SET49-SET55 are defined as in the original integration
+    # (tests/test_top144_top169_set49_set55.py), which enables some by default
+    original = {f"TOP{i}" for i in range(144, 170)} | {f"SET{i}" for i in range(49, 56)}
     for topic_id in expected:
-        assert ids[topic_id].entity_registry_enabled_default is False, topic_id
+        if topic_id not in original:
+            assert ids[topic_id].entity_registry_enabled_default is False, topic_id
 
 
 def test_number_ranges_and_payloads():
