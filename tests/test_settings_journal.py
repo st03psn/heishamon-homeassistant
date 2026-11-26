@@ -142,6 +142,8 @@ async def test_changes_are_readable(hass, mqtt_mock, hass_storage):
     assert labels.value("Holiday_Mode_State", "0") == "off"
     assert labels.value("Not_A_Setting", "7") == "7"
     assert labels.value("Z1_Heat_Request_Temp", "garbage") == "garbage"
+    # a reader that raises a bare Exception on an unknown mode
+    assert labels.value("Operating_Mode_State", "9") == "9"
     assert labels.origin("home_assistant") == "Home Assistant"
 
     hass.config.language = "de"

@@ -93,7 +93,7 @@ class SettingLabels:
         reader = getattr(description, "state", None)
         try:
             value = reader(raw) if reader is not None else raw
-        except (ValueError, TypeError, KeyError, IndexError):
+        except Exception:  # noqa: BLE001 - some readers raise a bare Exception on unknown values
             if domain != "number":
                 return raw
             value = raw  # int("-2.0") fails; the number text below reads it
