@@ -44,3 +44,6 @@ CONF_SETTINGS_GUARD = "settings_guard"
 
 # hide the entities of settings that have no effect while the setting they depend on is off
 CONF_HIDE_WITHOUT_EFFECT = "hide_without_effect"
+
+# API key of the optional HeishaMon web login (empty or missing: no login)
+CONF_API_KEY = "api_key"

@@ -12,12 +12,12 @@ from custom_components.aquarea.update import (
     ("status", "reason"),
     [(401, "Unauthorized"), (403, "Forbidden")],
 )
-def test_auth_failure_explains_web_update_password(status, reason):
+def test_auth_failure_points_to_api_key(status, reason):
     error = _firmware_upload_error(status, reason, "", "4.3.1")
 
     assert f"HTTP {status} {reason}" in str(error)
-    assert "does not send web/update credentials" in str(error)
-    assert "HeishaMon web UI" in str(error)
+    assert "API key" in str(error)
+    assert "options of the integration" in str(error)
 
 
 def test_other_upload_failure_reports_http_status():
@@ -25,7 +25,7 @@ def test_other_upload_failure_reports_http_status():
 
     assert "HTTP 500 Internal Server Error" in str(error)
     assert "version 4.3.1" in str(error)
-    assert "web/update credentials" not in str(error)
+    assert "API key" not in str(error)
 
 
 def test_firmware_reported_failure_is_detected_even_with_http_200():

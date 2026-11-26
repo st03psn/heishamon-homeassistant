@@ -18,9 +18,16 @@
         "data": {
           "entity_management": "Entities of optional parts",
           "settings_guard": "Refuse settings that have no effect while the setting they depend on is off",
-          "hide_without_effect": "Hide settings that have no effect while the setting they depend on is off"
+          "hide_without_effect": "Hide settings that have no effect while the setting they depend on is off",
+          "api_key": "HeishaMon API key"
+        },
+        "data_description": {
+          "api_key": "Only needed if a password is set on HeishaMon (security page). 32 hexadecimal characters; leave empty without login."
         }
       }
+    },
+    "error": {
+      "invalid_api_key": "The API key must be empty or consist of exactly 32 hexadecimal characters."
     }
   },
   "selector": {
@@ -1134,6 +1141,12 @@
   "exceptions": {
     "setting_needs_parent": {
       "message": "{command} has no effect now: {parent} is {actual}, it would have to be {needed}. Change that setting first, or switch off the check in the options of the integration."
+    },
+    "reboot_unauthorized": {
+      "message": "HeishaMon rejected the request because a web login is active. Enter the API key of HeishaMon (created on its security page) in the options of the integration."
+    },
+    "firmware_upload_connection_failed": {
+      "message": "Could not upload firmware version {version} to HeishaMon at {host}: {error}. The network or a restart of the board may have interrupted the upload. If a password is set on HeishaMon, a missing or wrong API key has the same effect: check the API key in the options of the integration."
     }
   }
 }

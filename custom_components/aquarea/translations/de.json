@@ -18,9 +18,16 @@
         "data": {
           "entity_management": "Entitäten optionaler Anlagenteile",
           "settings_guard": "Einstellungen ablehnen, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen",
-          "hide_without_effect": "Einstellungen ausblenden, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen"
+          "hide_without_effect": "Einstellungen ausblenden, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen",
+          "api_key": "HeishaMon-API-Schlüssel"
+        },
+        "data_description": {
+          "api_key": "Nur nötig, wenn bei HeishaMon ein Passwort gesetzt ist (Sicherheitsseite). 32 Hexadezimalzeichen; ohne Anmeldung leer lassen."
         }
       }
+    },
+    "error": {
+      "invalid_api_key": "Der API-Schlüssel muss leer sein oder aus genau 32 Hexadezimalzeichen bestehen."
     }
   },
   "selector": {
@@ -1134,6 +1141,12 @@
   "exceptions": {
     "setting_needs_parent": {
       "message": "{command} hat gerade keine Wirkung: {parent} ist {actual}, nötig wäre {needed}. Ändere zuerst diese Einstellung oder schalte die Prüfung in den Optionen der Integration aus."
+    },
+    "reboot_unauthorized": {
+      "message": "HeishaMon hat die Anfrage abgelehnt, weil eine Anmeldung aktiv ist. API-Schlüssel in den Optionen der Integration eintragen (er wird auf der Sicherheitsseite von HeishaMon erzeugt)."
+    },
+    "firmware_upload_connection_failed": {
+      "message": "Firmware-Version {version} konnte nicht zu HeishaMon unter {host} hochgeladen werden: {error}. Das Netz oder ein Neustart der Platine kann den Upload unterbrochen haben. Ist bei HeishaMon ein Passwort gesetzt, wirkt ein fehlender oder falscher API-Schlüssel genauso: API-Schlüssel in den Optionen der Integration prüfen."
     }
   }
 }
