@@ -89,7 +89,7 @@ async def test_cop_is_written_once_per_cycle(monkeypatch):
     assert delay == 1
 
     action(None)
-    assert writes == [round(5429 / 1382, 2)]
+    assert writes == [round(5429 / 1382, 1)]
 
     # the next cycle opens a new window
     send("main/Heat_Power_Production", "5515")
@@ -102,12 +102,12 @@ async def test_cop_keeps_last_value_during_defrost(monkeypatch):
     send("main/Heat_Power_Production", "5429")
     send("main/Heat_Power_Consumption", "1382")
     timers[-1][1](None)
-    assert writes == [round(5429 / 1382, 2)]
+    assert writes == [round(5429 / 1382, 1)]
 
     send("main/Defrosting_State", "1")
     timers[-1][1](None)
-    assert writes == [round(5429 / 1382, 2)]
-    assert entity.native_value == round(5429 / 1382, 2)
+    assert writes == [round(5429 / 1382, 1)]
+    assert entity.native_value == round(5429 / 1382, 1)
 
 
 async def test_pending_window_is_cancelled_on_remove(monkeypatch):

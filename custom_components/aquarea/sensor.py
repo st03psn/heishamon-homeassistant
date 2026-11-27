@@ -221,7 +221,7 @@ def compute_cop(values) -> Optional[float]:
     # < 0 or > 15 is not a COP. None keeps the last value.
     if cop < 0 or cop > 15:
         return None
-    return round(cop, 2)
+    return round(cop, 1)
 
 
 def extract_sum(values):
