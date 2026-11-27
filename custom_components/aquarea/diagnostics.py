@@ -20,7 +20,8 @@ async def async_get_config_entry_diagnostics(
 
     Topic payloads are values of the heat pump (temperatures, states,
     settings); they hold no credentials and no addresses. The API key in the options
-    is redacted.
+    is redacted; the certificate fingerprint is public (shown on the access page
+    of HeishaMon) and stays readable.
     """
     hub = get_hub(hass, entry.entry_id)
     return {

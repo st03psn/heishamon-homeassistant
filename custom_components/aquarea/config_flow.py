@@ -22,12 +22,14 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from .auth import normalize_api_key
+from .auth import normalize_api_key, normalize_fingerprint
 from .const import (
     CONF_API_KEY,
+    CONF_CERT_FINGERPRINT,
     CONF_ENTITY_MANAGEMENT,
     CONF_HIDE_WITHOUT_EFFECT,
     CONF_SETTINGS_GUARD,
+    CONF_USE_HTTPS,
     DOMAIN,
     ENTITY_MANAGEMENT_MODES,
     MODE_ENABLE_ONLY,
@@ -115,14 +117,22 @@ class HeishaMonOptionsFlow(OptionsFlow):
         if user_input is not None:
             user_input = dict(user_input)
             key = normalize_api_key(user_input.get(CONF_API_KEY))
+            fingerprint = normalize_fingerprint(user_input.get(CONF_CERT_FINGERPRINT))
             if key is None:
                 errors[CONF_API_KEY] = "invalid_api_key"
-            else:
+            if fingerprint is None:
+                errors[CONF_CERT_FINGERPRINT] = "invalid_cert_fingerprint"
+            if not errors:
                 # no login: store no key at all
                 if key:
                     user_input[CONF_API_KEY] = key
                 else:
                     user_input.pop(CONF_API_KEY, None)
+                # no fingerprint: verify against the system CAs
+                if fingerprint:
+                    user_input[CONF_CERT_FINGERPRINT] = fingerprint
+                else:
+                    user_input.pop(CONF_CERT_FINGERPRINT, None)
                 return self.async_create_entry(data=user_input)
         values = user_input if user_input is not None else self.config_entry.options
         return self.async_show_form(
@@ -153,6 +163,16 @@ class HeishaMonOptionsFlow(OptionsFlow):
                         CONF_API_KEY,
                         description={"suggested_value": values.get(CONF_API_KEY, "")},
                     ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+                    vol.Required(
+                        CONF_USE_HTTPS,
+                        default=values.get(CONF_USE_HTTPS, False),
+                    ): bool,
+                    vol.Optional(
+                        CONF_CERT_FINGERPRINT,
+                        description={
+                            "suggested_value": values.get(CONF_CERT_FINGERPRINT, "")
+                        },
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
                 }
             ),
         )
