@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable
 import logging
+import re
 from typing import Any, Optional
 
 import voluptuous as vol
@@ -27,11 +28,17 @@ from .const import (
     CONF_API_KEY,
     CONF_CERT_FINGERPRINT,
     CONF_ENTITY_MANAGEMENT,
+    CONF_FIRMWARE_REPOSITORY,
+    CONF_FIRMWARE_SOURCE,
     CONF_HIDE_WITHOUT_EFFECT,
     CONF_SETTINGS_GUARD,
     CONF_USE_HTTPS,
+    DEFAULT_FIRMWARE_SOURCE,
     DOMAIN,
     ENTITY_MANAGEMENT_MODES,
+    FIRMWARE_REPOSITORY_PATTERN,
+    FIRMWARE_SOURCE_CUSTOM,
+    FIRMWARE_SOURCES,
     MODE_ENABLE_ONLY,
 )
 
@@ -122,6 +129,10 @@ class HeishaMonOptionsFlow(OptionsFlow):
                 errors[CONF_API_KEY] = "invalid_api_key"
             if fingerprint is None:
                 errors[CONF_CERT_FINGERPRINT] = "invalid_cert_fingerprint"
+            repository = (user_input.get(CONF_FIRMWARE_REPOSITORY) or "").strip()
+            if user_input.get(CONF_FIRMWARE_SOURCE) == FIRMWARE_SOURCE_CUSTOM:
+                if not re.fullmatch(FIRMWARE_REPOSITORY_PATTERN, repository):
+                    errors[CONF_FIRMWARE_REPOSITORY] = "invalid_firmware_repository"
             if not errors:
                 # no login: store no key at all
                 if key:
@@ -133,6 +144,11 @@ class HeishaMonOptionsFlow(OptionsFlow):
                     user_input[CONF_CERT_FINGERPRINT] = fingerprint
                 else:
                     user_input.pop(CONF_CERT_FINGERPRINT, None)
+                # the repository is only used by the custom source
+                if user_input.get(CONF_FIRMWARE_SOURCE) == FIRMWARE_SOURCE_CUSTOM:
+                    user_input[CONF_FIRMWARE_REPOSITORY] = repository
+                else:
+                    user_input.pop(CONF_FIRMWARE_REPOSITORY, None)
                 return self.async_create_entry(data=user_input)
         values = user_input if user_input is not None else self.config_entry.options
         return self.async_show_form(
@@ -171,6 +187,22 @@ class HeishaMonOptionsFlow(OptionsFlow):
                         CONF_CERT_FINGERPRINT,
                         description={
                             "suggested_value": values.get(CONF_CERT_FINGERPRINT, "")
+                        },
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
+                    vol.Required(
+                        CONF_FIRMWARE_SOURCE,
+                        default=values.get(CONF_FIRMWARE_SOURCE, DEFAULT_FIRMWARE_SOURCE),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=FIRMWARE_SOURCES,
+                            mode=SelectSelectorMode.LIST,
+                            translation_key=CONF_FIRMWARE_SOURCE,
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_FIRMWARE_REPOSITORY,
+                        description={
+                            "suggested_value": values.get(CONF_FIRMWARE_REPOSITORY, "")
                         },
                     ): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
                 }

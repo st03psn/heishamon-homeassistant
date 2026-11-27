@@ -10,6 +10,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional, Any
 
+from awesomeversion import AwesomeVersion
+
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.components import mqtt
 from homeassistant.components.mqtt.client import async_publish
@@ -29,13 +31,189 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 from . import build_device_info
 from .auth import api_key_headers, board_connection, tls_error
-from .const import DOMAIN, DeviceType
+from .const import (
+    CONF_FIRMWARE_REPOSITORY,
+    CONF_FIRMWARE_SOURCE,
+    DEFAULT_FIRMWARE_SOURCE,
+    DOMAIN,
+    FIRMWARE_REPOSITORY_PATTERN,
+    FIRMWARE_SOURCE_CUSTOM,
+    FIRMWARE_SOURCE_ORIGINAL,
+    FORK_FIRMWARE_REPOSITORY,
+    ORIGINAL_FIRMWARE_REPOSITORY,
+    DeviceType,
+)
 from .translated_name import TranslatedNameMixin
 from .definitions.descriptions import HeishaMonEntityDescription
 from .definitions.values import read_board_type
 
 _LOGGER = logging.getLogger(__name__)
-HEISHAMON_REPOSITORY = "heishamon/HeishaMon"
+
+
+def firmware_repository(options) -> str | None:
+    """Return the owner/repo the firmware is taken from, None if not usable.
+
+    Entries created before the option existed have no value and use the fork.
+    """
+    source = options.get(CONF_FIRMWARE_SOURCE, DEFAULT_FIRMWARE_SOURCE)
+    if source == FIRMWARE_SOURCE_ORIGINAL:
+        return ORIGINAL_FIRMWARE_REPOSITORY
+    if source == FIRMWARE_SOURCE_CUSTOM:
+        repository = (options.get(CONF_FIRMWARE_REPOSITORY) or "").strip()
+        if re.fullmatch(FIRMWARE_REPOSITORY_PATTERN, repository):
+            return repository
+        return None
+    return FORK_FIRMWARE_REPOSITORY
+
+
+def latest_release_url(repository: str) -> str:
+    return f"https://api.github.com/repos/{repository}/releases/latest"
+
+
+def release_by_tag_url(repository: str, version: str) -> str:
+    return f"https://api.github.com/repos/{repository}/releases/tags/v{version}"
+
+
+def firmware_asset_names(model_file: str, version: str) -> tuple[str, str]:
+    """Names of the firmware binary and its checksum in a release."""
+    stem = f"HeishaMon.ino.{model_file}-v{version}"
+    return f"{stem}.bin", f"{stem}.md5"
+
+
+def raw_binaries_urls(
+    repository: str, model_path: str, model_file: str, version: str
+) -> tuple[str, str]:
+    """Files committed to main/binaries (how the original project publishes)."""
+    binary, checksum = firmware_asset_names(model_file, version)
+    base = f"https://github.com/{repository}/raw/refs/heads/main/binaries/{model_path}"
+    return f"{base}/{binary}", f"{base}/{checksum}"
+
+
+def firmware_download_urls(
+    repository: str,
+    release: dict | None,
+    model_path: str,
+    model_file: str,
+    version: str,
+) -> tuple[str, str]:
+    """Return the URLs of binary and checksum for a board model.
+
+    Release assets are preferred. Only the original project falls back to its
+    main/binaries folder; any other source must attach both files to the
+    release, otherwise nothing is downloaded.
+    """
+    binary, checksum = firmware_asset_names(model_file, version)
+    assets = {
+        asset.get("name"): asset.get("browser_download_url")
+        for asset in (release or {}).get("assets") or []
+    }
+    if assets.get(binary) and assets.get(checksum):
+        return assets[binary], assets[checksum]
+    if repository == ORIGINAL_FIRMWARE_REPOSITORY:
+        return raw_binaries_urls(repository, model_path, model_file, version)
+    raise HomeAssistantError(
+        translation_domain=DOMAIN,
+        translation_key="firmware_asset_missing",
+        translation_placeholders={
+            "version": version,
+            "repository": repository,
+            "asset": binary if not assets.get(binary) else checksum,
+        },
+    )
+
+
+# what update.install accepts as a version: it becomes part of URLs
+VERSION_PATTERN = re.compile(r"^[0-9A-Za-z._+-]+$")
+# largest firmware image accepted (the ESP32 images are below 2 MB)
+MAX_FIRMWARE_SIZE = 4 * 1024 * 1024
+MAX_CHECKSUM_SIZE = 1024
+
+
+def valid_version(version: str | None) -> bool:
+    """A version that is safe to put into a tag lookup or an asset name."""
+    return bool(
+        isinstance(version, str)
+        and VERSION_PATTERN.fullmatch(version)
+        and ".." not in version
+    )
+
+
+def comparable_version(version: str | None) -> AwesomeVersion | None:
+    """Parse a firmware version, None for builds without one (Alpha-<sha>, Nightly-<sha>)."""
+    if not isinstance(version, str):
+        return None
+    # firmware older than 3.2 does not report a version, we show "<= 3.1"
+    version = version.lstrip("<= ").lstrip("vV")
+    if not version[:1].isdigit():
+        return None
+    parsed = AwesomeVersion(version)
+    return parsed if parsed.valid else None
+
+
+def _split_version(version: AwesomeVersion) -> tuple[tuple[int, ...], str]:
+    """Numeric part, padded to three numbers, and the suffix after it."""
+    match = re.match(r"^(\d+(?:\.\d+)*)(.*)$", version.string)
+    numbers = tuple(int(n) for n in match.group(1).split("."))
+    numbers += (0,) * (3 - len(numbers))
+    return numbers, match.group(2)
+
+
+def _suffix_key(suffix: str) -> tuple:
+    """Order suffixes like semver pre-releases: numbers numerically, words by text."""
+    return tuple(
+        (0, int(part), "") if part.isdigit() else (1, 0, part.lower())
+        for part in re.findall(r"[0-9]+|[A-Za-z]+", suffix)
+    )
+
+
+def is_newer_version(latest_version: str, installed_version: str) -> bool:
+    """Only offer an update when both versions are real version numbers.
+
+    A build with a suffix ("3.2.0-st03psn.1") is not older than the release of
+    the same numbers without one ("3.2.0"), although semver sorts it below.
+    """
+    latest = comparable_version(latest_version)
+    installed = comparable_version(installed_version)
+    if latest is None or installed is None:
+        return False
+    latest_numbers, latest_suffix = _split_version(latest)
+    installed_numbers, installed_suffix = _split_version(installed)
+    if latest_numbers != installed_numbers:
+        return latest_numbers > installed_numbers
+    if latest_suffix and installed_suffix:
+        return _suffix_key(latest_suffix) > _suffix_key(installed_suffix)
+    # same numbers, at most one of them with a suffix: never an update
+    return False
+
+
+def parse_checksum(text: str | None) -> str:
+    """Accept a bare MD5 or the output of md5sum ("<hash>  <file>")."""
+    words = (text or "").split()
+    token = words[0] if words else ""
+    if not re.fullmatch(r"[0-9a-fA-F]{32}", token):
+        raise HomeAssistantError(
+            "The firmware checksum file does not contain an MD5 checksum: "
+            f"{(text or '')[:80]!r}"
+        )
+    return token.lower()
+
+
+async def read_capped(resp, limit: int, what: str) -> bytes:
+    """Read a download, refusing anything larger than limit bytes."""
+    too_large = HomeAssistantError(
+        f"The {what} is larger than {limit} bytes, it is not downloaded."
+    )
+    length = resp.headers.get("Content-Length") if resp.headers else None
+    if length is not None and length.isdigit() and int(length) > limit:
+        resp.release()
+        raise too_large
+    data = bytearray()
+    async for chunk in resp.content.iter_chunked(65536):
+        data += chunk
+        if len(data) > limit:
+            resp.release()
+            raise too_large
+    return bytes(data)
 
 
 def _firmware_http_error(
@@ -147,9 +325,15 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
         self._attr_supported_features = (
             UpdateEntityFeature.RELEASE_NOTES | UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS | UpdateEntityFeature.SPECIFIC_VERSION
         )
-        self._attr_release_url = f"https://github.com/{HEISHAMON_REPOSITORY}/releases"
+        self._repository = firmware_repository(config_entry.options)
+        self._attr_release_url = (
+            f"https://github.com/{self._repository}/releases"
+            if self._repository
+            else None
+        )
         self._model_type = None
         self._release_notes = None
+        self._latest_release: dict | None = None
         self._attr_in_progress = False
 
         self._ip_topic = f"{self.discovery_prefix}ip"
@@ -188,11 +372,9 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
                 field_value = json.loads(message.payload).get("version", None)
                 if field_value:
                     self.stats_firmware_contain_version = True
-                    if field_value.startswith("alpha"):
-                        # otherwise alpha are always considered late
-                        self._attr_installed_version = None
-                    else:
-                        self._attr_installed_version = field_value.lstrip('v')
+                    # development builds report "Alpha-<sha>" or "Nightly-<sha>":
+                    # shown as they are, version_is_newer never offers them an update
+                    self._attr_installed_version = field_value.lstrip('v')
                 else:
                     self.stats_firmware_contain_version = False
             # we only write value when we know for sure how to get version
@@ -216,33 +398,107 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
     def device_info(self):
         return build_device_info(self.hass, self.entity_description.device, self.discovery_prefix, self.config_entry_entry_id)
 
+    def version_is_newer(self, latest_version: str, installed_version: str) -> bool:
+        """Never offer an update to or from a build without a version number.
+
+        Home Assistant reports an update when it cannot compare the versions,
+        which would offer any release to an "Alpha-<sha>" build, possibly a
+        downgrade. Such builds can still be updated with update.install.
+        """
+        return is_newer_version(latest_version, installed_version)
+
     async def _update_latest_release(self):
         _LOGGER.debug("Starting refresh latest version info")
+        if self._repository is None:
+            _LOGGER.warning("No valid firmware repository configured, not looking for releases")
+            return
         session = async_get_clientsession(self.hass)
-        _LOGGER.info(f"Fetching https://api.github.com/repos/{HEISHAMON_REPOSITORY}/releases")
-        resp = await session.get(
-            f"https://api.github.com/repos/{HEISHAMON_REPOSITORY}/releases/latest"
-        )
-
-        if resp.status != 200:
-            _LOGGER.warn(
-                f"Impossible to get latest release from heishamon repository {HEISHAMON_REPOSITORY}"
+        url = latest_release_url(self._repository)
+        _LOGGER.info("Fetching %s", url)
+        # runs while the entity is added: never let GitHub break the entity
+        try:
+            resp = await session.get(url)
+            if resp.status == 404:
+                resp.release()
+                _LOGGER.info("Repository %s has no published release yet", self._repository)
+                return
+            if resp.status != 200:
+                resp.release()
+                _LOGGER.warning(
+                    "Impossible to get latest release from repository %s (HTTP %s)",
+                    self._repository,
+                    resp.status,
+                )
+                return
+            last_release = await resp.json()
+        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as e:
+            _LOGGER.warning(
+                "Impossible to get latest release from repository %s: %s",
+                self._repository,
+                e,
             )
             return
 
-        releases = await resp.json()
-        _LOGGER.debug(f"Received json with list of releases")
-        if len(releases) == 0:
-            _LOGGER.warn(
-                f"Not a single release was found for heishamon repository {HEISHAMON_REPOSITORY}"
+        tag = last_release.get("tag_name") if isinstance(last_release, dict) else None
+        version = re.sub(r"^v", "", tag) if isinstance(tag, str) else None
+        if not valid_version(version):
+            _LOGGER.warning(
+                "Latest release of repository %s has no usable tag name: %r",
+                self._repository,
+                tag,
             )
-        
-        last_release = await resp.json()
-        self._attr_latest_version = re.sub(r"^v", "", last_release["tag_name"])
-        self._attr_release_url = last_release["html_url"]
-        self._release_notes = last_release["body"]
+            return
+        self._latest_release = last_release
+        self._attr_latest_version = version
+        html_url = last_release.get("html_url")
+        if isinstance(html_url, str) and html_url.startswith("https://github.com/"):
+            self._attr_release_url = html_url
+        body = last_release.get("body")
+        self._release_notes = body if isinstance(body, str) else None
         _LOGGER.debug(f"Latest release is {self._attr_latest_version}")
         self.async_write_ha_state()
+
+    async def _release_for(self, session, version: str) -> dict | None:
+        """The release of a version, None if the repository has none for it."""
+        latest = self._latest_release
+        if latest is not None and re.sub(r"^v", "", latest.get("tag_name") or "") == version:
+            return latest
+        original = self._repository == ORIGINAL_FIRMWARE_REPOSITORY
+        try:
+            resp = await session.get(release_by_tag_url(self._repository, version))
+        except aiohttp.ClientError as e:
+            if original:
+                # its main/binaries folder is still there
+                _LOGGER.info("Release lookup in %s failed: %s", self._repository, e)
+                return None
+            raise HomeAssistantError(
+                f"Could not look up release v{version} of {self._repository}: {e}"
+            ) from e
+        if resp.status == 200:
+            try:
+                release = await resp.json()
+            except (aiohttp.ClientError, ValueError) as e:
+                raise HomeAssistantError(
+                    f"Could not read release v{version} of {self._repository}: {e}"
+                ) from e
+            if not isinstance(release, dict):
+                raise HomeAssistantError(
+                    f"Unexpected answer for release v{version} of {self._repository}."
+                )
+            return release
+        resp.release()
+        if resp.status == 404 or original:
+            _LOGGER.info(
+                "No release v%s in %s (HTTP %s)", version, self._repository, resp.status
+            )
+            return None
+        # e.g. a rate limit: not the same as a release without the file
+        raise _firmware_http_error(
+            f"look up release v{version} of {self._repository} for",
+            resp.status,
+            resp.reason or "",
+            version,
+        )
 
     @property
     def model_to_path(self) -> str | None:
@@ -262,9 +518,22 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
 
 
     def release_notes(self) -> str | None:
-        return f"⚠️ Automated upgrades will fetch `{self.model_to_path}` binaries.\n\nBeware!\n\n" + str(self._release_notes)
+        return (
+            f"⚠️ Automated upgrades will fetch `{self.model_to_path}` binaries "
+            f"from `{self._repository}`.\n\nBeware!\n\n" + (self._release_notes or "")
+        )
 
     async def async_install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
+        try:
+            await self._async_install(version)
+        finally:
+            # whatever happened, the entity must not stay in progress
+            self._attr_in_progress = False
+            self._attr_update_percentage = None
+            if self.hass is not None and self.entity_id:
+                self.async_write_ha_state()
+
+    async def _async_install(self, version: str | None) -> None:
         if self._model_type is None:
             raise HomeAssistantError(
                 "Cannot install HeishaMon firmware automatically because the board "
@@ -274,12 +543,31 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
             version = self._attr_latest_version
             _LOGGER.info(f"Will install latest version ({version}) of the firmware")
         else:
+            version = version.lstrip("v")
             _LOGGER.info(f"Will install version {version} of the firmware")
+        if version is not None and not valid_version(version):
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="firmware_version_invalid",
+                translation_placeholders={"version": str(version)[:80]},
+            )
+        if version is None or self._repository is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="firmware_version_unknown",
+                translation_placeholders={"repository": str(self._repository)},
+            )
+        session = async_get_clientsession(self.hass)
+        # resolved before the update is in progress: a missing asset is an error
+        # of its own, never a reason to download something else
+        release = await self._release_for(session, version)
+        binary_url, checksum_url = firmware_download_urls(
+            self._repository, release, self.model_to_path, self.model_to_file, version
+        )
         self._attr_in_progress = True
         self._attr_update_percentage = 0
-        session = async_get_clientsession(self.hass)
         try:
-            url=f"https://github.com/{HEISHAMON_REPOSITORY}/raw/refs/heads/main/binaries/{self.model_to_path}/HeishaMon.ino.{self.model_to_file}-v{version}.bin"
+            url = binary_url
             _LOGGER.debug(f"Will try to download url {url}")
             resp = await session.get(url)
 
@@ -294,10 +582,10 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
                     "download", resp.status, resp.reason or "", version
                 )
 
-            firmware_binary = await resp.read()
+            firmware_binary = await read_capped(resp, MAX_FIRMWARE_SIZE, "firmware image")
             _LOGGER.info(f"Firmware is {len(firmware_binary)} bytes long")
             self._attr_update_percentage = 10
-            url=f"https://github.com/{HEISHAMON_REPOSITORY}/raw/refs/heads/main/binaries/{self.model_to_path}/HeishaMon.ino.{self.model_to_file}-v{version}.md5"
+            url = checksum_url
             resp = await session.get(url)
 
             if resp.status != 200:
@@ -311,7 +599,11 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
                 raise _firmware_http_error(
                     "download checksum", resp.status, resp.reason or "", version
                 )
-            checksum = await resp.text()
+            checksum = parse_checksum(
+                (await read_capped(resp, MAX_CHECKSUM_SIZE, "checksum file")).decode(
+                    "ascii", errors="replace"
+                )
+            )
             self._attr_update_percentage = 20
             _LOGGER.info(f"Downloaded binary and checksum {checksum} of version {version}")
 

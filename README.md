@@ -31,6 +31,12 @@ New entities are created disabled and are only enabled once HeishaMon has publis
 
 The parts SG ready and cooling are recognised from TOP149 and TOP168, which older firmwares do not publish. Their entities are then neither enabled nor disabled automatically.
 
+### Firmware updates
+
+The option *Firmware source* chooses the GitHub repository the firmware update entity takes releases from: `st03psn/HeishaMon` (this fork, the default, also for entries created before the option existed), `heishamon/HeishaMon` (the original project) or a custom `owner/repo`. Installing a release of another project replaces the firmware on the board, including its security features.
+
+The latest release (`releases/latest` of the GitHub API, so not a prerelease) is offered. The firmware is downloaded from the release assets `HeishaMon.ino.esp32-v<version>.bin` / `.md5` (ESP32) or `HeishaMon.ino.d1-v<version>.bin` / `.md5` (ESP8266), where `<version>` is the tag without its leading `v`. Only for the original project the files in `binaries/` of its main branch are used when the release has no such assets; for any other source a missing file is an error and nothing is installed. Development builds (`Alpha-<sha>`, `Nightly-<sha>`) have no version number: the latest release is shown, but not offered as an update. Install it explicitly with the action `update.install` if wanted. A build with a suffix (`3.2.0-st03psn.1`) is not offered the release with the same numbers without a suffix (`3.2.0`), and the reverse is not offered either.
+
 ### Installation of the fork
 
 Add `https://github.com/st03psn/heishamon-homeassistant` as a custom repository (type integration) in the Marketplace / HACS. It uses the same folder (`custom_components/aquarea`) as the original integration, so only one of the two can be installed. On Home Assistant 2026.11 and later, uninstalling the original from the Marketplace while it is set up offers only "Delete and uninstall", which also removes the setup with its devices and entities. To keep them, replace the files in `custom_components/aquarea` by hand (Samba, SSH, file editor) and restart Home Assistant; the setup, entity IDs and history stay as they are.

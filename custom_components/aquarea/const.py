@@ -53,3 +53,19 @@ CONF_USE_HTTPS = "use_https"
 # SHA-256 fingerprint of the board's certificate, 64 lowercase hex characters
 # (empty or missing: verify the certificate against the CAs Home Assistant trusts)
 CONF_CERT_FINGERPRINT = "cert_fingerprint"
+
+# GitHub repository the firmware update entity takes HeishaMon releases from
+CONF_FIRMWARE_SOURCE = "firmware_source"
+# owner/repo, only used with FIRMWARE_SOURCE_CUSTOM
+CONF_FIRMWARE_REPOSITORY = "firmware_repository"
+FIRMWARE_SOURCE_FORK = "fork"
+FIRMWARE_SOURCE_ORIGINAL = "original"
+FIRMWARE_SOURCE_CUSTOM = "custom"
+FIRMWARE_SOURCES = [FIRMWARE_SOURCE_FORK, FIRMWARE_SOURCE_ORIGINAL, FIRMWARE_SOURCE_CUSTOM]
+# also the default of entries created before the option existed: offering the
+# original firmware would replace the hardened one of this fork
+DEFAULT_FIRMWARE_SOURCE = FIRMWARE_SOURCE_FORK
+FORK_FIRMWARE_REPOSITORY = "st03psn/HeishaMon"
+ORIGINAL_FIRMWARE_REPOSITORY = "heishamon/HeishaMon"
+# the repository name must not consist of dots only ("." and ".." are paths)
+FIRMWARE_REPOSITORY_PATTERN = r"^[A-Za-z0-9-]+/(?!\.+$)[A-Za-z0-9._-]+$"
