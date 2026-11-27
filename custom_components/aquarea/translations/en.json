@@ -9,5 +9,41 @@
         "description": "All configured!"
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Access to HeishaMon",
+        "description": "Used for the requests the integration sends directly to the board (reboot button, firmware update). MQTT is not affected.",
+        "data": {
+          "api_key": "HeishaMon API key",
+          "use_https": "Use HTTPS",
+          "cert_fingerprint": "Certificate fingerprint (SHA-256)"
+        },
+        "data_description": {
+          "api_key": "Only needed if a web password is set on HeishaMon. Create the key in the HeishaMon web interface (Settings, System, Access & security). 32 hexadecimal characters; leave empty without login.",
+          "use_https": "Talk to HeishaMon over HTTPS (reboot, firmware upload). Requires HTTPS to be enabled on HeishaMon (large board only). There is no fallback to HTTP.",
+          "cert_fingerprint": "Only used with HTTPS. Copy the SHA-256 fingerprint shown on the access page of HeishaMon (64 hexadecimal characters, colons and spaces are allowed); this is needed for the self-signed certificate of HeishaMon. Leave empty only if you uploaded a certificate that is issued by a certificate authority Home Assistant trusts and is valid for the IP address of the board: it is then verified like any web site."
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "The API key must be empty or consist of exactly 32 hexadecimal characters.",
+      "invalid_cert_fingerprint": "The certificate fingerprint must be empty or a SHA-256 fingerprint of exactly 64 hexadecimal characters (colons and spaces are allowed)."
+    }
+  },
+  "exceptions": {
+    "reboot_unauthorized": {
+      "message": "HeishaMon rejected the request because a web login is active. Enter the API key of HeishaMon (created on its access page) in the options of the integration."
+    },
+    "firmware_upload_connection_failed": {
+      "message": "Could not upload firmware version {version} to HeishaMon at {host}: {error}. The network or a restart of the board may have interrupted the upload. If a password is set on HeishaMon, a missing or wrong API key has the same effect: check the API key in the options of the integration."
+    },
+    "certificate_fingerprint_mismatch": {
+      "message": "The certificate of HeishaMon at {host} does not match the fingerprint in the options of the integration. The certificate has probably changed (regenerated or uploaded on HeishaMon). Copy the new SHA-256 fingerprint from the access page of HeishaMon into the options of the integration."
+    },
+    "certificate_verification_failed": {
+      "message": "The certificate of HeishaMon at {host} could not be verified against the certificate authorities Home Assistant trusts. Enter the SHA-256 fingerprint shown on the access page of HeishaMon in the options of the integration, or upload a trusted certificate that is valid for this address to HeishaMon."
+    }
   }
 }

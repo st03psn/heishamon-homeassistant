@@ -38,6 +38,12 @@ If you use any of these, enable **Settings → Topic groups → Installer settin
 The new installer entities are disabled by default in Home Assistant as well. Enable the topic group first, then enable the entities you need. The new SG Ready entities are also disabled by default because they only apply to less common external-control setups.
 
 
+### Web login (API key) and HTTPS
+
+The reboot button and the firmware update talk to the board directly over HTTP (everything else uses MQTT). If a web password is set on HeishaMon, these requests need its API key: create it in the HeishaMon web interface (*Settings → System → Access & security*) and enter it under **Configure** (the options of this integration). Leave the field empty for a board without web login.
+
+On the large board (ESP32-S3) HeishaMon can serve HTTPS. Switch on **Use HTTPS** in the options and paste the **certificate fingerprint (SHA-256)** shown on the HeishaMon access page: the integration then pins that certificate, so the self-signed certificate of the board works without disabling verification. Without a fingerprint the certificate is checked against the certificate authorities Home Assistant trusts. There is no fallback to HTTP once HTTPS is on, and a changed certificate gives an error that says to copy the new fingerprint.
+
 ## Alternatives
 
 If you own Panasonic CZ-TAW1 module and have access to Panasonic smart cloud: use [https://github.com/cjaliaga/home-assistant-aquarea](https://github.com/wpatrik14/home-assistant-aquarea) or https://github.com/ronhks/panasonic-aquarea-smart-cloud-mqtt.

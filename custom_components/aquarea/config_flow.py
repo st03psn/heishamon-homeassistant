@@ -5,12 +5,21 @@ from collections.abc import Awaitable
 import logging
 from typing import Any, Optional
 
-from homeassistant.core import HomeAssistant
+import voluptuous as vol
+
+from homeassistant.config_entries import ConfigEntry, OptionsFlow
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.config_entry_flow import DiscoveryFlowHandler
+from homeassistant.helpers.selector import (
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
 
-from .const import DOMAIN
+from .auth import normalize_api_key, normalize_fingerprint
+from .const import CONF_API_KEY, CONF_CERT_FINGERPRINT, CONF_USE_HTTPS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,6 +39,11 @@ class HeishaMonFlowHandler(DiscoveryFlowHandler[Awaitable[bool]], domain=DOMAIN)
 
         self._prefix: Optional[str] = None
         super().__init__(DOMAIN, "HeishaMon", _async_has_devices)
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return HeishaMonOptionsFlow()
 
     async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
         """Handle a flow initialized by MQTT discovery"""
@@ -76,4 +90,57 @@ class HeishaMonFlowHandler(DiscoveryFlowHandler[Awaitable[bool]], domain=DOMAIN)
 
         return self.async_create_entry(
             title=f"HeishaMon via {self._prefix} topic", data=data
+        )
+
+
+class HeishaMonOptionsFlow(OptionsFlow):
+    """Access to the HTTP endpoints of HeishaMon: API key of the web login, HTTPS."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            user_input = dict(user_input)
+            key = normalize_api_key(user_input.get(CONF_API_KEY))
+            fingerprint = normalize_fingerprint(user_input.get(CONF_CERT_FINGERPRINT))
+            if key is None:
+                errors[CONF_API_KEY] = "invalid_api_key"
+            if fingerprint is None:
+                errors[CONF_CERT_FINGERPRINT] = "invalid_cert_fingerprint"
+            if not errors:
+                # no login: store no key at all
+                if key:
+                    user_input[CONF_API_KEY] = key
+                else:
+                    user_input.pop(CONF_API_KEY, None)
+                # no fingerprint: verify against the CAs Home Assistant trusts
+                if fingerprint:
+                    user_input[CONF_CERT_FINGERPRINT] = fingerprint
+                else:
+                    user_input.pop(CONF_CERT_FINGERPRINT, None)
+                return self.async_create_entry(data=user_input)
+        values = user_input if user_input is not None else self.config_entry.options
+        return self.async_show_form(
+            step_id="init",
+            errors=errors,
+            data_schema=vol.Schema(
+                {
+                    # suggested value, not default: clearing the field must work
+                    vol.Optional(
+                        CONF_API_KEY,
+                        description={"suggested_value": values.get(CONF_API_KEY, "")},
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+                    vol.Required(
+                        CONF_USE_HTTPS,
+                        default=values.get(CONF_USE_HTTPS, False),
+                    ): bool,
+                    vol.Optional(
+                        CONF_CERT_FINGERPRINT,
+                        description={
+                            "suggested_value": values.get(CONF_CERT_FINGERPRINT, "")
+                        },
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
+                }
+            ),
         )
