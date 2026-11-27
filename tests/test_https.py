@@ -1,4 +1,4 @@
-"""HTTPS to the HeishaMon board, with a pinned certificate fingerprint or the system CAs."""
+"""HTTPS to the HeishaMon board, with a pinned certificate fingerprint or CA verification."""
 import hashlib
 import ssl
 
@@ -163,6 +163,15 @@ async def test_options_reject_invalid_fingerprint(hass, mqtt_mock, bad):
     await hass.config_entries.async_unload(entry.entry_id)
 
 
+async def test_options_reject_invalid_fingerprint_with_https_off(hass, mqtt_mock):
+    """Deliberately stricter than needed: junk is never stored."""
+    entry = await _setup(hass)
+    result = await _submit(hass, entry, use_https=False, cert_fingerprint="abc")
+    assert result["type"] == "form"
+    assert result["errors"] == {CONF_CERT_FINGERPRINT: "invalid_cert_fingerprint"}
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
 async def test_options_report_both_errors(hass, mqtt_mock):
     entry = await _setup(hass)
     result = await _submit(
@@ -271,7 +280,7 @@ async def test_reboot_certificate_not_trusted(hass, mqtt_mock, aioclient_mock, r
         await _press_reboot(hass)
     assert err.value.translation_key == "certificate_verification_failed"
     assert err.value.translation_placeholders == {"host": IP}
-    assert "system CAs" in str(err.value)
+    assert "certificate authorities" in str(err.value)
     assert [url for _, url, _ in _board_calls(request_kwargs)] == [f"https://{IP}/reboot"]
     await hass.config_entries.async_unload(entry.entry_id)
 

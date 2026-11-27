@@ -57,8 +57,8 @@ def board_connection(
       instead requires the SHA-256 of the board's (leaf) certificate to match,
       which is what makes the self-signed certificate of HeishaMon usable.
     - HTTPS on without a fingerprint: ``https://<host>`` and True, i.e. the
-      verifying SSL context of the Home Assistant session (system CAs and
-      hostname check), for a certificate uploaded to the board.
+      verifying SSL context of the Home Assistant session (certifi CA bundle
+      and hostname check), for a certificate uploaded to the board.
 
     There is no unverified mode and no fallback to HTTP once HTTPS is on.
     """

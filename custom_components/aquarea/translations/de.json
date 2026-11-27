@@ -26,7 +26,7 @@
         "data_description": {
           "api_key": "Nur nötig, wenn bei HeishaMon ein Passwort gesetzt ist (Sicherheitsseite). 32 Hexadezimalzeichen; ohne Anmeldung leer lassen.",
           "use_https": "Mit HeishaMon über HTTPS sprechen (Neustart, Firmware-Upload). HTTPS muss bei HeishaMon eingeschaltet sein. Es gibt keinen Rückfall auf HTTP.",
-          "cert_fingerprint": "Nur mit HTTPS. Den SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon kopieren (64 Hexadezimalzeichen, Doppelpunkte und Leerzeichen sind erlaubt); nötig für das selbstsignierte Zertifikat von HeishaMon. Nur leer lassen, wenn ein Zertifikat hochgeladen wurde, dem die System-Zertifizierungsstellen vertrauen und das für die IP-Adresse der Platine gilt: es wird dann wie bei jeder Website geprüft."
+          "cert_fingerprint": "Nur mit HTTPS. Den SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon kopieren (64 Hexadezimalzeichen, Doppelpunkte und Leerzeichen sind erlaubt); nötig für das selbstsignierte Zertifikat von HeishaMon. Nur leer lassen, wenn ein Zertifikat hochgeladen wurde, das von einer Zertifizierungsstelle stammt, der Home Assistant vertraut, und das für die IP-Adresse der Platine gilt: es wird dann wie bei jeder Website geprüft."
         }
       }
     },
@@ -1157,7 +1157,7 @@
       "message": "Das Zertifikat von HeishaMon unter {host} passt nicht zum Fingerabdruck in den Optionen der Integration. Das Zertifikat hat sich wahrscheinlich geändert (bei HeishaMon neu erzeugt oder hochgeladen). Den neuen SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon in die Optionen der Integration kopieren."
     },
     "certificate_verification_failed": {
-      "message": "Das Zertifikat von HeishaMon unter {host} konnte nicht über die System-Zertifizierungsstellen geprüft werden. Den SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon in den Optionen der Integration eintragen oder bei HeishaMon ein vertrauenswürdiges Zertifikat hochladen, das für diese Adresse gilt."
+      "message": "Das Zertifikat von HeishaMon unter {host} konnte nicht über die Zertifizierungsstellen geprüft werden, denen Home Assistant vertraut. Den SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon in den Optionen der Integration eintragen oder bei HeishaMon ein vertrauenswürdiges Zertifikat hochladen, das für diese Adresse gilt."
     }
   }
 }

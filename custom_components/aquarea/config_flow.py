@@ -128,7 +128,7 @@ class HeishaMonOptionsFlow(OptionsFlow):
                     user_input[CONF_API_KEY] = key
                 else:
                     user_input.pop(CONF_API_KEY, None)
-                # no fingerprint: verify against the system CAs
+                # no fingerprint: verify against the CAs Home Assistant trusts
                 if fingerprint:
                     user_input[CONF_CERT_FINGERPRINT] = fingerprint
                 else:
