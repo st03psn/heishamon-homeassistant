@@ -377,3 +377,16 @@ async def test_alpha_build_reported_over_mqtt_is_not_offered_an_update(hass, mqt
     await hass.async_block_till_done()
     assert hass.states.get(ENTITY_ID).state == "on"
     await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_failed_release_lookup_is_not_reported_as_missing_asset(hass, mqtt_mock, aioclient_mock):
+    aioclient_mock.get(
+        "https://api.github.com/repos/st03psn/HeishaMon/releases/tags/v4.5.0", status=403
+    )
+    entry = await _setup(hass)
+    with pytest.raises(HomeAssistantError) as err:
+        await _entity(hass).async_install("4.5.0", False)
+    assert err.value.translation_key is None
+    assert "HTTP 403" in str(err.value)
+    assert len(aioclient_mock.mock_calls) == 1
+    await hass.config_entries.async_unload(entry.entry_id)

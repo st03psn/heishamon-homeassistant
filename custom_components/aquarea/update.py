@@ -375,13 +375,31 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
         latest = self._latest_release
         if latest is not None and re.sub(r"^v", "", latest.get("tag_name", "")) == version:
             return latest
-        resp = await session.get(release_by_tag_url(self._repository, version))
-        if resp.status != 200:
+        original = self._repository == ORIGINAL_FIRMWARE_REPOSITORY
+        try:
+            resp = await session.get(release_by_tag_url(self._repository, version))
+        except aiohttp.ClientError as e:
+            if original:
+                # its main/binaries folder is still there
+                _LOGGER.info("Release lookup in %s failed: %s", self._repository, e)
+                return None
+            raise HomeAssistantError(
+                f"Could not look up release v{version} of {self._repository}: {e}"
+            ) from e
+        if resp.status == 200:
+            return await resp.json()
+        if resp.status == 404 or original:
             _LOGGER.info(
                 "No release v%s in %s (HTTP %s)", version, self._repository, resp.status
             )
             return None
-        return await resp.json()
+        # e.g. a rate limit: not the same as a release without the file
+        raise _firmware_http_error(
+            f"look up release v{version} of {self._repository} for",
+            resp.status,
+            resp.reason or "",
+            version,
+        )
 
     @property
     def model_to_path(self) -> str | None:
@@ -427,12 +445,7 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
         session = async_get_clientsession(self.hass)
         # resolved before the update is in progress: a missing asset is an error
         # of its own, never a reason to download something else
-        try:
-            release = await self._release_for(session, version)
-        except aiohttp.ClientError as e:
-            raise HomeAssistantError(
-                f"Could not look up release {version} of {self._repository}: {e}"
-            ) from e
+        release = await self._release_for(session, version)
         binary_url, checksum_url = firmware_download_urls(
             self._repository, release, self.model_to_path, self.model_to_file, version
         )
