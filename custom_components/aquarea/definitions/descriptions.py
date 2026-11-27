@@ -51,6 +51,10 @@ class MultiMQTTSensorEntityDescription(SensorEntityDescription):
     # 3 items, whose values will be the last received value from the topics a, b and c.
     # values will be None when we have not received any value for the corresponding topic yet.
     compute_state: Callable | None = None
+    # when set, messages arriving within this many seconds after the first one
+    # are collected and the state is computed once at the end of the window.
+    # HeishaMon publishes all topics of a cycle within a few milliseconds.
+    debounce_seconds: float | None = None
 
     # one of unique_id and heishamon_topic_id must be defined
     unique_id: Optional[str] = None
