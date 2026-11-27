@@ -87,6 +87,8 @@ async def test_options_flow(hass, mqtt_mock):
         "hide_without_effect": True,
         "settings_guard": True,
         "use_https": False,
+        # the firmware of this fork, also for entries from before the option
+        "firmware_source": "fork",
     }
     assert hass.data[DOMAIN][entry.entry_id]["features"].mode == MODE_UNAVAILABLE
     assert await hass.config_entries.async_unload(entry.entry_id)

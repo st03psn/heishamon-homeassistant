@@ -157,9 +157,22 @@ async def _update_entity(hass, entry):
 
 
 def _mock_github(aioclient_mock):
-    base = "https://github.com/heishamon/HeishaMon/raw/refs/heads/main/binaries/model-type-large"
-    aioclient_mock.get(f"{base}/HeishaMon.ino.esp32-v4.3.1.bin", content=b"firmware")
-    aioclient_mock.get(f"{base}/HeishaMon.ino.esp32-v4.3.1.md5", text="abc123")
+    """Release v4.3.1 of the fork (the default source) with its firmware assets."""
+    files = "https://github.com/st03psn/HeishaMon/releases/download/v4.3.1"
+    aioclient_mock.get(
+        "https://api.github.com/repos/st03psn/HeishaMon/releases/tags/v4.3.1",
+        json={
+            "tag_name": "v4.3.1",
+            "assets": [
+                {"name": n, "browser_download_url": f"{files}/{n}"}
+                for n in ("HeishaMon.ino.esp32-v4.3.1.bin", "HeishaMon.ino.esp32-v4.3.1.md5")
+            ],
+        },
+    )
+    aioclient_mock.get(f"{files}/HeishaMon.ino.esp32-v4.3.1.bin", content=b"firmware")
+    aioclient_mock.get(
+        f"{files}/HeishaMon.ino.esp32-v4.3.1.md5", text="0123456789abcdef0123456789abcdef"
+    )
 
 
 def _upload_calls(aioclient_mock):
