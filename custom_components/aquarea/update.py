@@ -28,7 +28,7 @@ from homeassistant.util import slugify
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 from . import build_device_info
-from .auth import api_key_headers
+from .auth import api_key_headers, board_connection, tls_error
 from .const import DOMAIN, DeviceType
 from .translated_name import TranslatedNameMixin
 from .definitions.descriptions import HeishaMonEntityDescription
@@ -358,20 +358,30 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
                 f"{checksum}\r\n"
                 f"--{boundary}--\r\n"
             ).encode()
+            base_url, ssl = board_connection(self.config_entry, self._heishamon_ip)
             resp = await session.post(
-                f"http://{self._heishamon_ip}/firmware",
+                f"{base_url}/firmware",
                 data=body,
                 headers={
                     'Content-Type': f'multipart/form-data; boundary={boundary}',
                     **api_key_headers(self.config_entry),
                 },
-                timeout=to
+                timeout=to,
+                ssl=ssl,
+                allow_redirects=False,  # never follow the board to plain http
             )
             response_body = await resp.text()
         except (TimeoutError, asyncio.TimeoutError):
             _LOGGER.info(f"Firmware upload complete, HeishaMon is rebooting (timeout is expected)")
             return
         except aiohttp.ClientError as e:
+            certificate_error = tls_error(e, self._heishamon_ip)
+            if certificate_error is not None:
+                _LOGGER.warning(
+                    "Certificate of HeishaMon at %s rejected during upload of "
+                    "firmware version %s: %r", self._heishamon_ip, version, e
+                )
+                raise certificate_error from e
             # a board with a login closes the connection without an answer
             # when the API key is missing or wrong
             _LOGGER.warning("Connection to HeishaMon failed during upload of firmware version %s: %s", version, e)

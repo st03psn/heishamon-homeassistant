@@ -19,15 +19,20 @@
           "entity_management": "Entitäten optionaler Anlagenteile",
           "settings_guard": "Einstellungen ablehnen, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen",
           "hide_without_effect": "Einstellungen ausblenden, die wirkungslos sind, solange die Einstellung aus ist, von der sie abhängen",
-          "api_key": "HeishaMon-API-Schlüssel"
+          "api_key": "HeishaMon-API-Schlüssel",
+          "use_https": "HTTPS verwenden",
+          "cert_fingerprint": "Zertifikat-Fingerabdruck (SHA-256)"
         },
         "data_description": {
-          "api_key": "Nur nötig, wenn bei HeishaMon ein Passwort gesetzt ist (Sicherheitsseite). 32 Hexadezimalzeichen; ohne Anmeldung leer lassen."
+          "api_key": "Nur nötig, wenn bei HeishaMon ein Passwort gesetzt ist (Sicherheitsseite). 32 Hexadezimalzeichen; ohne Anmeldung leer lassen.",
+          "use_https": "Mit HeishaMon über HTTPS sprechen (Neustart, Firmware-Upload). HTTPS muss bei HeishaMon eingeschaltet sein. Es gibt keinen Rückfall auf HTTP.",
+          "cert_fingerprint": "Nur mit HTTPS. Den SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon kopieren (64 Hexadezimalzeichen, Doppelpunkte und Leerzeichen sind erlaubt); nötig für das selbstsignierte Zertifikat von HeishaMon. Nur leer lassen, wenn ein Zertifikat hochgeladen wurde, das von einer Zertifizierungsstelle stammt, der Home Assistant vertraut, und das für die IP-Adresse der Platine gilt: es wird dann wie bei jeder Website geprüft."
         }
       }
     },
     "error": {
-      "invalid_api_key": "Der API-Schlüssel muss leer sein oder aus genau 32 Hexadezimalzeichen bestehen."
+      "invalid_api_key": "Der API-Schlüssel muss leer sein oder aus genau 32 Hexadezimalzeichen bestehen.",
+      "invalid_cert_fingerprint": "Der Zertifikat-Fingerabdruck muss leer sein oder ein SHA-256-Fingerabdruck aus genau 64 Hexadezimalzeichen (Doppelpunkte und Leerzeichen sind erlaubt)."
     }
   },
   "selector": {
@@ -1147,6 +1152,12 @@
     },
     "firmware_upload_connection_failed": {
       "message": "Firmware-Version {version} konnte nicht zu HeishaMon unter {host} hochgeladen werden: {error}. Das Netz oder ein Neustart der Platine kann den Upload unterbrochen haben. Ist bei HeishaMon ein Passwort gesetzt, wirkt ein fehlender oder falscher API-Schlüssel genauso: API-Schlüssel in den Optionen der Integration prüfen."
+    },
+    "certificate_fingerprint_mismatch": {
+      "message": "Das Zertifikat von HeishaMon unter {host} passt nicht zum Fingerabdruck in den Optionen der Integration. Das Zertifikat hat sich wahrscheinlich geändert (bei HeishaMon neu erzeugt oder hochgeladen). Den neuen SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon in die Optionen der Integration kopieren."
+    },
+    "certificate_verification_failed": {
+      "message": "Das Zertifikat von HeishaMon unter {host} konnte nicht über die Zertifizierungsstellen geprüft werden, denen Home Assistant vertraut. Den SHA-256-Fingerabdruck von der Zugangsseite von HeishaMon in den Optionen der Integration eintragen oder bei HeishaMon ein vertrauenswürdiges Zertifikat hochladen, das für diese Adresse gilt."
     }
   }
 }

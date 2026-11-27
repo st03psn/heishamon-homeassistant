@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import asyncio
 
+import aiohttp
+
 from homeassistant.components import mqtt
 from homeassistant.components.mqtt.client import async_publish
 from homeassistant.components.button import ButtonEntity
@@ -16,7 +18,7 @@ from homeassistant.util import slugify
 
 from .definitions.buttons import build_buttons
 from .definitions.descriptions import HeishaMonButtonEntityDescription
-from .auth import api_key_headers
+from .auth import api_key_headers, board_connection, tls_error
 from .const import DOMAIN, DeviceType
 from .translated_name import TranslatedNameMixin
 from .model_catalog import ModelCatalog, ModelRefreshError
@@ -130,18 +132,29 @@ class HeishaMonMQTTButton(TranslatedNameMixin, ButtonEntity):
                 await asyncio.sleep(1)
         _LOGGER.info(f"Pressing on heatpump {self.entity_description.name}")
         session = async_get_clientsession(self.hass)
-        url = f"http://{self._inner_state}/reboot"
+        base_url, ssl = board_connection(self._config_entry, self._inner_state)
+        url = f"{base_url}/reboot"
         _LOGGER.info(f"GET on {url}")
-        async with session.get(url, headers=api_key_headers(self._config_entry)) as resp:
-            if resp.status == 401:
-                raise HomeAssistantError(
-                    translation_domain=DOMAIN,
-                    translation_key="reboot_unauthorized",
-                )
-            if resp.status != 200:
-                raise HomeAssistantError("Impossible to reboot heishamon")
-            # we apparently need to read the output to let heishamon reboot
-            await resp.text()
+        try:
+            async with session.get(
+                url, headers=api_key_headers(self._config_entry), ssl=ssl,
+                allow_redirects=False,  # never follow the board to plain http
+            ) as resp:
+                if resp.status == 401:
+                    raise HomeAssistantError(
+                        translation_domain=DOMAIN,
+                        translation_key="reboot_unauthorized",
+                    )
+                if resp.status != 200:
+                    raise HomeAssistantError("Impossible to reboot heishamon")
+                # we apparently need to read the output to let heishamon reboot
+                await resp.text()
+        except aiohttp.ClientError as err:
+            error = tls_error(err, self._inner_state)
+            if error is None:
+                raise
+            _LOGGER.warning("Certificate of HeishaMon at %s rejected: %r", self._inner_state, err)
+            raise error from err
         _LOGGER.info("Successfully triggered heishamon reboot")
 
     async def async_added_to_hass(self) -> None:

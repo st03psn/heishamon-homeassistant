@@ -86,6 +86,7 @@ async def test_options_flow(hass, mqtt_mock):
         CONF_ENTITY_MANAGEMENT: MODE_UNAVAILABLE,
         "hide_without_effect": True,
         "settings_guard": True,
+        "use_https": False,
     }
     assert hass.data[DOMAIN][entry.entry_id]["features"].mode == MODE_UNAVAILABLE
     assert await hass.config_entries.async_unload(entry.entry_id)
