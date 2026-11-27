@@ -37,6 +37,24 @@ If you use any of these, enable **Settings → Topic groups → Installer settin
 
 The new installer entities are disabled by default in Home Assistant as well. Enable the topic group first, then enable the entities you need. The new SG Ready entities are also disabled by default because they only apply to less common external-control setups.
 
+### Recorder
+
+HeishaMon publishes its values every few seconds, so some entities write many rows to the Home Assistant database while the heat pump runs. If you don't need the history of an entity, you can exclude it from the [recorder](https://www.home-assistant.io/integrations/recorder/), for example:
+
+```yaml
+recorder:
+  exclude:
+    entity_globs:
+      - sensor.panasonic_heat_pump_stats*
+    entities:
+      - sensor.panasonic_heat_pump_main_high_pressure
+      - sensor.panasonic_heat_pump_main_low_pressure
+      - sensor.panasonic_heat_pump_main_fan1_motor_speed
+      - sensor.panasonic_heat_pump_main_expansion_valve
+```
+
+The entity IDs assume the default MQTT topic prefix `panasonic_heat_pump`. Excluded entities keep their current state in Home Assistant, but they have no history and no long-term statistics.
+
 
 ## Alternatives
 

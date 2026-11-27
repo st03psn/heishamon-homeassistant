@@ -25,6 +25,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.util import slugify
 
 from .const import DOMAIN, DeviceType
@@ -178,6 +179,9 @@ async def async_setup_entry(
             f"{discovery_prefix}extra/Cool_Power_Consumption_Extra",
         ],
         compute_state=compute_cop,
+        # production and consumption arrive as separate messages; computing
+        # after each one records an intermediate COP for every cycle.
+        debounce_seconds=1,
     )
     cop_sensor = MultiMQTTSensorEntity(hass, config_entry, description)
     sensors.append(cop_sensor)
@@ -217,7 +221,7 @@ def compute_cop(values) -> Optional[float]:
     # < 0 or > 15 is not a COP. None keeps the last value.
     if cop < 0 or cop > 15:
         return None
-    return round(cop, 2)
+    return round(cop, 1)
 
 
 def extract_sum(values):
@@ -316,6 +320,7 @@ class MultiMQTTSensorEntity(HeishaMonAvailability, SensorEntity):
         self._received_values: list[Optional[float]] = [None] * len(
             self.entity_description.topics
         )
+        self._cancel_debounce: Optional[Callable[[], None]] = None
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to MQTT events"""
@@ -330,17 +335,39 @@ class MultiMQTTSensorEntity(HeishaMonAvailability, SensorEntity):
                 )
             index = self.entity_description.topics.index(message.topic)
             self._received_values[index] = float(message.payload)
-            assert self.compute_state is not None
-            new_state = self.compute_state(self._received_values)
-            if new_state is None and self.compute_state is compute_cop:
-                return
-            self._attr_native_value = new_state
-            self.async_write_ha_state()
+            debounce = self.entity_description.debounce_seconds
+            if debounce is None:
+                self._update_state()
+            elif self._cancel_debounce is None:
+                self._cancel_debounce = async_call_later(
+                    self.hass, debounce, self._debounce_elapsed
+                )
 
+        self.async_on_remove(self._cancel_pending_debounce)
         for topic in self.entity_description.topics or []:
             await mqtt.async_subscribe(self.hass, topic, message_received, 1)
         if self.entity_description.state_class == SensorStateClass.MEASUREMENT:
             await self._async_subscribe_lwt()
+
+    @callback
+    def _debounce_elapsed(self, _now) -> None:
+        self._cancel_debounce = None
+        self._update_state()
+
+    @callback
+    def _cancel_pending_debounce(self) -> None:
+        if self._cancel_debounce is not None:
+            self._cancel_debounce()
+            self._cancel_debounce = None
+
+    @callback
+    def _update_state(self) -> None:
+        assert self.compute_state is not None
+        new_state = self.compute_state(self._received_values)
+        if new_state is None and self.compute_state is compute_cop:
+            return
+        self._attr_native_value = new_state
+        self.async_write_ha_state()
 
     @property
     def device_info(self):
