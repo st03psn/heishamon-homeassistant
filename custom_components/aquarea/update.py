@@ -368,6 +368,7 @@ class HeishaMonMQTTUpdate(TranslatedNameMixin, UpdateEntity):
                 },
                 timeout=to,
                 ssl=ssl,
+                allow_redirects=False,  # never follow the board to plain http
             )
             response_body = await resp.text()
         except (TimeoutError, asyncio.TimeoutError):

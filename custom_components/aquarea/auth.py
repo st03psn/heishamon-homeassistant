@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 
 import aiohttp
 
@@ -45,6 +46,12 @@ def api_key_headers(entry: ConfigEntry) -> dict[str, str]:
     return {"Authorization": f"Bearer {key}"} if key else {}
 
 
+@lru_cache(maxsize=8)
+def _fingerprint(fingerprint: str) -> aiohttp.Fingerprint:
+    """One Fingerprint object per pin: aiohttp keys its connection pool on it."""
+    return aiohttp.Fingerprint(bytes.fromhex(fingerprint))
+
+
 def board_connection(
     entry: ConfigEntry, host: str
 ) -> tuple[str, bool | aiohttp.Fingerprint]:
@@ -66,7 +73,7 @@ def board_connection(
         return f"http://{host}", True
     fingerprint = entry.options.get(CONF_CERT_FINGERPRINT)
     if fingerprint:
-        return f"https://{host}", aiohttp.Fingerprint(bytes.fromhex(fingerprint))
+        return f"https://{host}", _fingerprint(fingerprint)
     return f"https://{host}", True
 
 

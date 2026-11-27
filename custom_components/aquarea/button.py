@@ -137,7 +137,8 @@ class HeishaMonMQTTButton(TranslatedNameMixin, ButtonEntity):
         _LOGGER.info(f"GET on {url}")
         try:
             async with session.get(
-                url, headers=api_key_headers(self._config_entry), ssl=ssl
+                url, headers=api_key_headers(self._config_entry), ssl=ssl,
+                allow_redirects=False,  # never follow the board to plain http
             ) as resp:
                 if resp.status == 401:
                     raise HomeAssistantError(
