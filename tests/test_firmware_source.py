@@ -120,7 +120,7 @@ async def test_old_entry_defaults_to_the_fork(hass, mqtt_mock):
 
 @pytest.mark.parametrize(
     "repository",
-    ["", "noslash", "a/b/c", "own er/repo", "owner/re po", "owner_x/repo", "https://github.com/a/b"],
+    ["", "noslash", "a/b/c", "own er/repo", "owner/re po", "owner_x/repo", "https://github.com/a/b", "me/..", "me/."],
 )
 async def test_custom_repository_is_validated(hass, mqtt_mock, repository):
     entry = await _setup(hass)
@@ -390,3 +390,172 @@ async def test_failed_release_lookup_is_not_reported_as_missing_asset(hass, mqtt
     assert "HTTP 403" in str(err.value)
     assert len(aioclient_mock.mock_calls) == 1
     await hass.config_entries.async_unload(entry.entry_id)
+
+
+# robustness (review of PR 15)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"exc": __import__("aiohttp").ClientError("unreachable")},
+        {"exc": __import__("asyncio").TimeoutError()},
+        {"text": "not json"},
+        {"json": ["a", "list"]},
+        {"json": {}},
+        {"json": {"tag_name": None}},
+        {"json": {"tag_name": 450}},
+        {"json": {"tag_name": "v4.5.0/../../x"}},
+    ],
+)
+async def test_odd_release_answers_keep_the_entity_working(
+    hass, mqtt_mock, aioclient_mock, monkeypatch, response
+):
+    aioclient_mock.get(
+        "https://api.github.com/repos/st03psn/HeishaMon/releases/latest", **response
+    )
+    # the real lookup, as it runs while the entity is added
+    monkeypatch.setattr(HeishaMonMQTTUpdate, "_update_latest_release", REAL_LOOKUP)
+    entry = await _setup(hass)
+    entity = hass.data["update"].get_entity(ENTITY_ID)
+    assert entity is not None
+    assert hass.states.get(ENTITY_ID) is not None
+    assert entity.latest_version is None
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+def _mock_fork_release(aioclient_mock, md5=MD5, binary_kwargs=None):
+    release = _release("st03psn/HeishaMon", "4.5.0", ESP32_ASSETS)
+    files = "https://github.com/st03psn/HeishaMon/releases/download/v4.5.0"
+    aioclient_mock.get(
+        "https://api.github.com/repos/st03psn/HeishaMon/releases/tags/v4.5.0", json=release
+    )
+    aioclient_mock.get(
+        f"{files}/{ESP32_ASSETS[0]}", **(binary_kwargs or {"content": b"firmware"})
+    )
+    aioclient_mock.get(f"{files}/{ESP32_ASSETS[1]}", text=md5)
+
+
+@pytest.mark.parametrize(
+    "upload",
+    [
+        {"status": 500},
+        {"text": "Update failed! ERROR[12]: MD5 Failed"},
+        {"exc": __import__("aiohttp").ServerDisconnectedError("closed")},
+    ],
+)
+async def test_failed_upload_does_not_stay_in_progress(hass, mqtt_mock, aioclient_mock, upload):
+    _mock_fork_release(aioclient_mock)
+    aioclient_mock.post(f"http://{IP}/firmware", **upload)
+    entry = await _setup(hass)
+    entity = _entity(hass)
+    with pytest.raises(HomeAssistantError):
+        await entity.async_install("4.5.0", False)
+    await hass.async_block_till_done()
+    assert entity.in_progress is False
+    assert hass.states.get(ENTITY_ID).attributes["in_progress"] is False
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize(
+    ("latest", "installed", "newer"),
+    [
+        ("4.5.0", "dev", False),
+        ("dev", "4.5.0", False),
+        ("4.5.0", "v", False),
+        ("3.2.0", "3.2.0-st03psn.1", False),  # the fork build is not older
+        ("3.2", "3.2.0-st03psn.1", False),
+        ("3.2.1", "3.2.0-st03psn.1", True),
+        ("3.2.0-st03psn.2", "3.2.0-st03psn.1", True),
+        ("3.2.0-st03psn.1", "3.2.0-st03psn.2", False),
+        ("3.2.0-st03psn.1", "3.2.0", False),
+        ("3.2.0", "3.2", False),
+    ],
+)
+def test_versions_with_suffix_and_words(latest, installed, newer):
+    assert is_newer_version(latest, installed) is newer
+
+
+@pytest.mark.parametrize(
+    "version", ["../x", "a/b", "4.5.0?x=1", "4.5.0#x", "..", "4.5..0", "4.5.0 ", ""]
+)
+async def test_install_rejects_unsafe_versions(hass, mqtt_mock, aioclient_mock, version):
+    entry = await _setup(hass)
+    entity = _entity(hass)
+    with pytest.raises(HomeAssistantError) as err:
+        await entity.async_install(version, False)
+    assert err.value.translation_key == "firmware_version_invalid"
+    assert aioclient_mock.mock_calls == []
+    assert entity.in_progress is False
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_too_large_firmware_by_content_length(hass, mqtt_mock, aioclient_mock):
+    _mock_fork_release(
+        aioclient_mock,
+        binary_kwargs={
+            "content": b"firmware",
+            "headers": {"Content-Length": str(5 * 1024 * 1024)},
+        },
+    )
+    entry = await _setup(hass)
+    entity = _entity(hass)
+    with pytest.raises(HomeAssistantError, match="larger than"):
+        await entity.async_install("4.5.0", False)
+    assert not [c for c in aioclient_mock.mock_calls if c[0] == "POST"]
+    assert entity.in_progress is False
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_too_large_firmware_without_content_length(hass, mqtt_mock, aioclient_mock, monkeypatch):
+    import custom_components.aquarea.update as update
+
+    monkeypatch.setattr(update, "MAX_FIRMWARE_SIZE", 4)
+    _mock_fork_release(aioclient_mock)
+    entry = await _setup(hass)
+    with pytest.raises(HomeAssistantError, match="larger than 4 bytes"):
+        await _entity(hass).async_install("4.5.0", False)
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+def test_checksum_none_is_a_clear_error():
+    with pytest.raises(HomeAssistantError, match="MD5"):
+        parse_checksum(None)
+
+
+async def test_release_notes_without_body(hass, mqtt_mock, aioclient_mock):
+    release = _release("st03psn/HeishaMon", "4.5.0", ESP32_ASSETS)
+    release["body"] = None
+    aioclient_mock.get(
+        "https://api.github.com/repos/st03psn/HeishaMon/releases/latest", json=release
+    )
+    entry = await _setup(hass)
+    entity = hass.data["update"].get_entity(ENTITY_ID)
+    await REAL_LOOKUP(entity)
+    assert entity.latest_version == "4.5.0"
+    assert "None" not in entity.release_notes()
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("repository", ["me/.", "me/..", "me/...", "./x", "../x"])
+def test_dot_only_repository_names_are_rejected(repository):
+    options = {CONF_FIRMWARE_SOURCE: "custom", CONF_FIRMWARE_REPOSITORY: repository}
+    assert firmware_repository(options) is None
+
+
+def test_names_with_dots_are_accepted():
+    options = {CONF_FIRMWARE_SOURCE: "custom", CONF_FIRMWARE_REPOSITORY: "me/.github"}
+    assert firmware_repository(options) == "me/.github"
+
+
+@pytest.mark.parametrize(
+    ("latest", "installed", "newer"),
+    [
+        ("3.2.0-st03psn.10", "3.2.0-st03psn.9", True),
+        ("3.2.0-rc2", "3.2.0-rc1", True),
+        ("3.2.0-rc10", "3.2.0-rc9", True),
+        ("3.2.0-rc1", "3.2.0-rc1", False),
+    ],
+)
+def test_suffix_order(latest, installed, newer):
+    assert is_newer_version(latest, installed) is newer

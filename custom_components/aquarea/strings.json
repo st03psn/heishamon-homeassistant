@@ -1176,6 +1176,9 @@
     },
     "firmware_version_unknown": {
       "message": "No firmware release of {repository} is known yet, so there is nothing to install. Check the firmware source in the options of the integration."
+    },
+    "firmware_version_invalid": {
+      "message": "\"{version}\" is not a firmware version: only letters, digits and . _ + - are allowed."
     }
   }
 }

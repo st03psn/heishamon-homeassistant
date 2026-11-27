@@ -1176,6 +1176,9 @@
     },
     "firmware_version_unknown": {
       "message": "Von {repository} ist noch kein Firmware-Release bekannt, daher gibt es nichts zu installieren. Prüfe die Firmware-Quelle in den Optionen der Integration."
+    },
+    "firmware_version_invalid": {
+      "message": "„{version}“ ist keine Firmware-Version: erlaubt sind nur Buchstaben, Ziffern und . _ + -."
     }
   }
 }

@@ -67,4 +67,5 @@ FIRMWARE_SOURCES = [FIRMWARE_SOURCE_FORK, FIRMWARE_SOURCE_ORIGINAL, FIRMWARE_SOU
 DEFAULT_FIRMWARE_SOURCE = FIRMWARE_SOURCE_FORK
 FORK_FIRMWARE_REPOSITORY = "st03psn/HeishaMon"
 ORIGINAL_FIRMWARE_REPOSITORY = "heishamon/HeishaMon"
-FIRMWARE_REPOSITORY_PATTERN = r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+# the repository name must not consist of dots only ("." and ".." are paths)
+FIRMWARE_REPOSITORY_PATTERN = r"^[A-Za-z0-9-]+/(?!\.+$)[A-Za-z0-9._-]+$"
